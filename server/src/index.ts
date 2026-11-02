@@ -51,7 +51,6 @@ import automationRoutes from './routes/automations';
 import integrationRoutes from './routes/integrations';
 import teamRoutes from './routes/team';
 import bookingRoutes from './routes/booking';
-import inquiriesRoutes from './routes/inquiries';
 import { automationWorker } from './services/automationWorker';
 import { userStore } from './services/userStore';
 import jwt from 'jsonwebtoken';
@@ -108,7 +107,6 @@ app.use('/api/automations', automationRoutes);
 app.use('/api/integrations', integrationRoutes);
 app.use('/api/team', teamRoutes);
 app.use('/api/booking', bookingRoutes);
-app.use('/api/inquiries', inquiriesRoutes);
 
 // Health Check Endpoint for Load Balancers & Uptime Monitors
 app.get('/health', (_req, res) => {

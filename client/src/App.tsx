@@ -23,7 +23,6 @@ import TermsOfService from './pages/TermsOfService';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import ContactUs from './pages/ContactUs';
 import RefundPolicy from './pages/RefundPolicy';
-import ServicesCatalog from './pages/ServicesCatalog';
 
 import MeshBackground from './components/MeshBackground';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -155,10 +154,6 @@ const App = () => {
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/login" element={<Login onBack={() => window.location.href = '/'} />} />
             
-            {/* Services & Architecture Catalog */}
-            <Route path="/services" element={<ServicesCatalog />} />
-            <Route path="/catalog" element={<ServicesCatalog />} />
-
             {/* Mandatory Public Legal & Compliance Pages (RBI / DPDP / Consumer Protection) */}
             <Route path="/terms" element={<TermsOfService />} />
             <Route path="/terms-of-service" element={<TermsOfService />} />
