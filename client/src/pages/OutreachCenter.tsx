@@ -14,6 +14,7 @@ import TemplateGalleryModal from '../components/TemplateGalleryModal';
 import DispatchTrackerModal from '../components/DispatchTrackerModal';
 import EmailProviderModal from '../components/EmailProviderModal';
 import SentEmailHistoryModal from '../components/SentEmailHistoryModal';
+import WhatsAppBatchQueueModal from '../components/WhatsAppBatchQueueModal';
 import { EMAIL_TEMPLATES } from '../data/emailTemplates';
 import type { TemplateId } from '../data/emailTemplates';
 import { WHATSAPP_TEMPLATES, EMAIL_CAPTURE_BRIDGE_SCRIPT, WHATSAPP_MEDIA_PRESETS } from '../data/whatsappTemplates';
@@ -132,6 +133,7 @@ const OutreachCenter = () => {
     WHATSAPP_TEMPLATES[1]?.defaultMessage || WHATSAPP_TEMPLATES[0].defaultMessage
   );
   const [copiedWhatsApp, setCopiedWhatsApp] = useState(false);
+  const [isWhatsAppQueueOpen, setIsWhatsAppQueueOpen] = useState(false);
 
   const whatsAppMessage = (isAbTesting && activeVariant === 'B') ? whatsAppMessageB : whatsAppMessageA;
   const setWhatsAppMessage = (updater: any) => {
@@ -256,50 +258,52 @@ const OutreachCenter = () => {
   const [selectedCalendarSlot, setSelectedCalendarSlot] = useState(0);
 
   // Fetch real leads from DB
-  useEffect(() => {
-    const fetchUserLeads = async () => {
-      if (!user?._id && !user?.email) return;
-      try {
-        const res = await axios.get(`${API_URL}/api/leads`, {
-          headers: { 
-            userid: user?._id || '',
-            useremail: user?.email || ''
+  const fetchUserLeads = async () => {
+    if (!user?._id && !user?.email) return;
+    try {
+      const res = await axios.get(`${API_URL}/api/leads`, {
+        headers: { 
+          userid: user?._id || '',
+          useremail: user?.email || ''
+        }
+      });
+      let rawLeads = Array.isArray(res.data) ? res.data : [];
+      if (rawLeads.length === 0) {
+        try {
+          const raw = (user?.email && localStorage.getItem(`strovr_leads_cache_${user.email}`)) ||
+                      (user?._id && localStorage.getItem(`strovr_leads_cache_${user._id}`));
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed) && parsed.length > 0) rawLeads = parsed;
           }
-        });
-        let rawLeads = Array.isArray(res.data) ? res.data : [];
-        if (rawLeads.length === 0) {
-          try {
-            const raw = (user?.email && localStorage.getItem(`strovr_leads_cache_${user.email}`)) ||
-                        (user?._id && localStorage.getItem(`strovr_leads_cache_${user._id}`));
-            if (raw) {
-              const parsed = JSON.parse(raw);
-              if (Array.isArray(parsed) && parsed.length > 0) rawLeads = parsed;
-            }
-          } catch {}
-        }
-
-        if (rawLeads.length > 0) {
-          const mapped = rawLeads.map((l: any) => ({
-            _id: l._id,
-            businessName: l.businessName || 'Unnamed Business',
-            location: l.location || user?.target_audience || 'Local Market',
-            category: l.category || 'Local Business',
-            fieldOfWork: l.category || 'Professional Services',
-            firstName: l.businessName ? l.businessName.split(' ')[0] : 'Partner',
-            phone: l.phone || '',
-            rating: l.rating || '4.8',
-            email: l.email || `contact@${(l.businessName || 'company').toLowerCase().replace(/[^a-z0-9]/g, '')}.com`
-          }));
-          setLeadsList(mapped);
-          setSelectedPreviewLead(mapped[0]);
-        } else {
-          setLeadsList([]);
-          setSelectedPreviewLead(null);
-        }
-      } catch (err) {
-        console.error('Failed to load leads for preview', err);
+        } catch {}
       }
-    };
+
+      if (rawLeads.length > 0) {
+        const mapped = rawLeads.map((l: any) => ({
+          _id: l._id,
+          businessName: l.businessName || 'Unnamed Business',
+          location: l.location || user?.target_audience || 'Local Market',
+          category: l.category || 'Local Business',
+          fieldOfWork: l.category || 'Professional Services',
+          firstName: l.businessName ? l.businessName.split(' ')[0] : 'Partner',
+          phone: l.phone || '',
+          rating: l.rating || '4.8',
+          email: l.email || `contact@${(l.businessName || 'company').toLowerCase().replace(/[^a-z0-9]/g, '')}.com`,
+          status: l.status || 'New'
+        }));
+        setLeadsList(mapped);
+        setSelectedPreviewLead((prev: any) => prev || mapped[0]);
+      } else {
+        setLeadsList([]);
+        setSelectedPreviewLead(null);
+      }
+    } catch (err) {
+      console.error('Failed to load leads for preview', err);
+    }
+  };
+
+  useEffect(() => {
     fetchUserLeads();
   }, [user?._id]);
 
@@ -1039,28 +1043,28 @@ const OutreachCenter = () => {
           <div className="shrink-0 bg-white border-b border-[#E5E0D5] px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 shadow-2xs">
             <div className="flex flex-wrap items-center gap-4 text-xs font-delight">
               <div className="flex items-center gap-2 text-slate-700">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Outbox:</span>
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Outbox:</span>
                 {connectedMailbox ? (
                   <button
                     type="button"
                     onClick={() => setIsProviderModalOpen(true)}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/80 transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition-colors cursor-pointer"
                     title="Click to view SendGrid outbox settings"
                   >
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     <span>{connectedMailbox.fromEmail || connectedMailbox.user}</span>
-                    <span className="text-[10px] text-emerald-600 font-bold">(SendGrid Web API)</span>
+                    <span className="text-xs text-emerald-700 font-bold">(SendGrid Active)</span>
                   </button>
                 ) : (
                   <button
                     type="button"
                     onClick={() => setIsProviderModalOpen(true)}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200/90 transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 transition-colors cursor-pointer"
                     title="No SendGrid outbox connected. Click to configure."
                   >
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                     <span>Outbox: Disconnected (SendGrid Setup Required)</span>
-                    <span className="underline font-bold ml-0.5">+ Connect</span>
+                    <span className="underline font-bold ml-1">+ Connect</span>
                   </button>
                 )}
               </div>
@@ -1068,12 +1072,26 @@ const OutreachCenter = () => {
               <div className="h-4 w-px bg-slate-200 hidden sm:block" />
 
               <div className="flex items-center gap-2 text-slate-700">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">WhatsApp:</span>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">WhatsApp:</span>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  <span>{activeSmsTransport ? activeSmsTransport.name : 'Direct Web Bridge'}</span>
+                  <span>Direct Web Bridge · 100% Account Safe</span>
                 </span>
               </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsHistoryModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-delight font-semibold bg-white border border-[#E5E0D5] hover:bg-slate-50 text-slate-700 transition-colors cursor-pointer shadow-2xs"
+              >
+                <History className="w-3.5 h-3.5 text-slate-500" />
+                <span>Sent History</span>
+                <span className="text-xs font-bold text-slate-900 bg-slate-100 px-1.5 py-0.2 rounded">
+                  {user?.emails_sent || 0}/{user?.emails_limit || 50}
+                </span>
+              </button>
             </div>
           </div>
 
@@ -1164,9 +1182,9 @@ const OutreachCenter = () => {
                           <div className={`w-3 h-3 rounded-full bg-white absolute top-0.5 transition-all ${isAbTesting ? 'left-3.5' : 'left-0.5'}`} />
                         </div>
                       )}
-                      <span className="text-[11px] font-semibold">A/B Split</span>
+                      <span className="text-xs font-semibold">A/B Split</span>
                       {isAbTestingLocked && (
-                        <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-sm bg-blue-100 text-blue-700 border border-blue-200 uppercase tracking-wider">
+                        <span className="text-xs font-bold px-1.5 py-0.2 rounded-sm bg-blue-100 text-blue-700 border border-blue-200 uppercase tracking-wider">
                           BASIC
                         </span>
                       )}
@@ -1180,7 +1198,7 @@ const OutreachCenter = () => {
             {isAbTesting && (
               <div className="px-4 py-2 bg-gradient-to-r from-indigo-900 via-slate-900 to-indigo-950 text-white border-b border-indigo-800/50 flex flex-wrap items-center justify-between gap-2.5">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-delight uppercase tracking-wider text-indigo-200 font-bold">Variant:</span>
+                  <span className="text-xs font-delight uppercase tracking-wider text-indigo-200 font-bold">Variant:</span>
                   <div className="flex items-center gap-1 bg-white/10 p-0.5 rounded-lg border border-white/15">
                     <button
                       type="button"
@@ -1222,7 +1240,7 @@ const OutreachCenter = () => {
                     }
                     setActiveVariant('B');
                   }}
-                  className="text-[11px] font-delight bg-white/15 hover:bg-white/25 text-white border border-white/20 px-3 py-1 rounded-md transition-colors cursor-pointer flex items-center gap-1.5 font-semibold"
+                  className="text-xs font-delight bg-white/15 hover:bg-white/25 text-white border border-white/20 px-3 py-1 rounded-md transition-colors cursor-pointer flex items-center gap-1.5 font-semibold"
                 >
                   <Copy className="w-3 h-3 text-slate-300" />
                   <span>Clone A &rarr; B</span>
@@ -1240,7 +1258,7 @@ const OutreachCenter = () => {
                   >
                     <Layout className="w-3.5 h-3.5 text-indigo-600 group-hover:scale-105 transition-transform" />
                     <span>{activeTemplateConfig.name}</span>
-                    <span className="text-[10px] font-delight font-medium text-indigo-500 bg-white px-1.5 py-0.2 rounded-md border border-indigo-200/60">Change (8)</span>
+                    <span className="text-xs font-delight font-medium text-indigo-500 bg-white px-1.5 py-0.2 rounded-md border border-indigo-200/60">Change (8)</span>
                   </button>
 
                   <button
@@ -1264,7 +1282,7 @@ const OutreachCenter = () => {
                   >
                     <History className="w-3.5 h-3.5 text-indigo-600" />
                     <span>Sent History</span>
-                    <span className="text-[10.5px] font-bold text-indigo-900 bg-indigo-50 border border-indigo-200/80 px-1.5 py-0.5 rounded-md">
+                    <span className="text-xs font-bold text-indigo-900 bg-indigo-50 border border-indigo-200/80 px-1.5 py-0.5 rounded-md">
                       {user?.emails_sent || 0}/{user?.emails_limit || 50}
                     </span>
                   </button>
@@ -1313,31 +1331,41 @@ const OutreachCenter = () => {
               </div>
             )}
 
-            {/* WhatsApp Template Selector Bar */}
+            {/* WhatsApp Top Toolbar */}
             {activeChannel === 'whatsapp' && (
-              <div className="px-4 py-2.5 border-b border-slate-100 bg-white flex flex-wrap items-center justify-between gap-3">
+              <div className="px-4 py-2.5 border-b border-[#E5E0D5] bg-[#FAF8F5] flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2 text-xs font-delight">
-                  <span className="text-slate-400 font-medium">Active Script:</span>
-                  <span className="font-bold text-slate-900 bg-emerald-50 text-emerald-800 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                    {WHATSAPP_TEMPLATES.find(t => t.id === selectedWhatsAppId)?.name || '1. The Local Compliment Hook'}
+                  <span className="text-slate-500 font-medium">Selected Angle:</span>
+                  <span className="font-bold text-slate-900 bg-white text-emerald-900 px-3 py-1 rounded-lg border border-[#E5E0D5] shadow-2xs">
+                    {WHATSAPP_TEMPLATES.find(t => t.id === selectedWhatsAppId)?.name || 'The Local Compliment Hook'}
                   </span>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <button
+                    type="button"
+                    onClick={() => setIsWhatsAppQueueOpen(true)}
+                    className="bg-[#1E6B52] hover:bg-[#165440] text-white px-3.5 py-1.5 rounded-lg text-xs font-delight font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    title="Launch 30-contact click-to-send WhatsApp queue"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    <span>Launch 30-Contact Queue</span>
+                  </button>
+
+                  <button
                     onClick={handleCopyWhatsApp}
-                    className="bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-delight font-semibold transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                    className="bg-white border border-[#E5E0D5] hover:border-slate-300 hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-delight font-semibold transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
                   >
                     {copiedWhatsApp ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
-                    <span>{copiedWhatsApp ? 'Copied' : 'Copy Script'}</span>
+                    <span>{copiedWhatsApp ? 'Copied' : 'Copy'}</span>
                   </button>
 
                   <button
                     onClick={() => handleOpenWhatsAppWeb(previewLead)}
-                    className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-delight font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs shadow-emerald-200"
+                    className="bg-white hover:bg-slate-50 border border-[#E5E0D5] text-slate-800 px-3 py-1.5 rounded-lg text-xs font-delight font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
                   >
-                    <Send className="w-3 h-3" />
-                    <span>WhatsApp Web</span>
+                    <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Single Send</span>
                   </button>
                 </div>
               </div>
@@ -1352,15 +1380,21 @@ const OutreachCenter = () => {
                   {/* 10 Structured WhatsApp Hook Selector Pills */}
                   <div className="border border-[#E5E0D5] rounded-xl p-4 bg-[#FAF8F5] shadow-2xs">
                     <div className="flex items-center justify-between mb-3">
-                      <label className="text-xs font-delight font-bold text-slate-900 flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#1E6B52]" />
-                        <span>01. Conversational Hooks</span>
-                      </label>
-                      <span className="text-[10px] font-delight font-medium text-slate-400">
-                        {WHATSAPP_TEMPLATES.length} Proven Angles
+                      <div>
+                        <label className="text-xs font-delight font-bold text-slate-900 flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-[#1E6B52]" />
+                          <span>01. Conversational Hooks</span>
+                        </label>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          Select a proven high-reply angle tailored for B2B prospects.
+                        </p>
+                      </div>
+                      <span className="text-xs font-delight font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                        {WHATSAPP_TEMPLATES.length} Angles
                       </span>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-56 overflow-y-auto pr-1 custom-scrollbar">
                       {WHATSAPP_TEMPLATES.map((tpl) => {
                         const isSelected = selectedWhatsAppId === tpl.id;
                         return (
@@ -1370,19 +1404,19 @@ const OutreachCenter = () => {
                             onClick={() => handleSelectWhatsAppTemplate(tpl)}
                             className={`text-left p-3 rounded-xl border text-xs transition-all flex flex-col justify-between cursor-pointer ${
                               isSelected 
-                                ? 'bg-[#1E6B52] text-white border-[#1E6B52] shadow-xs' 
-                                : 'bg-white border-[#E5E0D5] hover:border-[#1E6B52] hover:bg-white text-slate-800 shadow-2xs'
+                                ? 'bg-[#1E6B52] text-white border-[#1E6B52] shadow-xs ring-1 ring-[#1E6B52]' 
+                                : 'bg-white border-[#E5E0D5] hover:border-slate-400 text-slate-800 shadow-2xs'
                             }`}
                           >
                             <div className="flex items-center justify-between w-full mb-1">
-                              <span className="font-delight font-bold truncate">{tpl.name}</span>
-                              <span className={`text-[9px] font-delight font-bold px-1.5 py-0.2 rounded-full shrink-0 ml-1.5 ${
-                                isSelected ? 'bg-white/20 text-white' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              <span className="font-delight font-bold truncate text-xs">{tpl.name}</span>
+                              <span className={`text-xs font-delight font-medium px-2 py-0.5 rounded-md shrink-0 ml-1.5 ${
+                                isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'
                               }`}>
                                 {tpl.badge}
                               </span>
                             </div>
-                            <span className={`text-[11px] font-medium line-clamp-1 ${isSelected ? 'text-emerald-100' : 'text-slate-500'}`}>
+                            <span className={`text-xs font-medium line-clamp-1 ${isSelected ? 'text-emerald-100' : 'text-slate-500'}`}>
                               {tpl.hookType}
                             </span>
                           </button>
@@ -1393,84 +1427,93 @@ const OutreachCenter = () => {
 
                   {/* Merge Tags & Message Body */}
                   <div className="border border-[#E5E0D5] rounded-xl overflow-hidden shadow-2xs bg-white">
-                    <div className="px-4 py-2.5 bg-[#FAF8F5] border-b border-[#E5E0D5] flex items-center justify-between flex-wrap gap-2">
-                      <label className="text-xs font-delight font-bold text-slate-800">02. Message Layout & Text</label>
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        {mergeTags.map((tag) => {
-                          const isBooking = tag.includes('booking');
-                          const isName = tag.includes('name');
-                          const isLoc = tag.includes('location');
-                          const colorClass = isBooking 
-                            ? 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100 hover:border-indigo-300'
-                            : isName
-                            ? 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100 hover:border-amber-300'
-                            : isLoc
-                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300'
-                            : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200 hover:border-slate-300';
-                          return (
-                            <button
-                              key={tag}
-                              type="button"
-                              onClick={() => insertTag(tag)}
-                              className={`text-[10px] font-delight font-semibold px-2 py-0.5 rounded-md border transition-all cursor-pointer shadow-2xs ${colorClass}`}
-                            >
-                              + {tag}
-                            </button>
-                          );
-                        })}
+                    <div className="px-4 py-3 bg-[#FAF8F5] border-b border-[#E5E0D5] flex items-center justify-between flex-wrap gap-2">
+                      <div>
+                        <label className="text-xs font-delight font-bold text-slate-900 flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-[#1E6B52]" />
+                          <span>02. Message Text</span>
+                        </label>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          Personalize your message with prospect merge tags.
+                        </p>
+                      </div>
+                      <div className="text-xs text-slate-500 font-delight">
+                        {whatsAppMessage.length} characters · ~{whatsAppMessage.trim().split(/\s+/).filter(Boolean).length} words
                       </div>
                     </div>
+
+                    {/* Clean Merge Tags Bar */}
+                    <div className="px-4 py-2 bg-white border-b border-slate-100 flex items-center gap-1.5 flex-wrap">
+                      <span className="text-xs font-delight font-semibold text-slate-400 mr-1">Insert:</span>
+                      {[
+                        { tag: '{{business_name}}', label: 'Business Name' },
+                        { tag: '{{first_name}}', label: 'First Name' },
+                        { tag: '{{location}}', label: 'Location' },
+                        { tag: '{{field_of_work}}', label: 'Industry' },
+                        { tag: '{{phone}}', label: 'Phone' },
+                        { tag: '{{booking_link}}', label: 'Booking Link' }
+                      ].map(({ tag, label }) => (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => insertTag(tag)}
+                          className="text-xs font-delight font-medium px-2.5 py-1 rounded-lg bg-[#FAF8F5] hover:bg-slate-100 text-slate-700 border border-[#E5E0D5] transition-colors cursor-pointer"
+                        >
+                          + {label}
+                        </button>
+                      ))}
+                    </div>
+
                     <textarea 
-                      rows={6}
+                      rows={7}
                       value={whatsAppMessage}
                       onChange={(e) => setWhatsAppMessage(e.target.value)}
-                      className="w-full p-4 text-xs font-sans outline-none leading-relaxed bg-white border-0 text-slate-800 placeholder:text-slate-400"
+                      placeholder="Compose your personalized WhatsApp outreach..."
+                      className="w-full p-4 text-xs sm:text-sm font-sans outline-none leading-relaxed bg-white border-0 text-slate-800 placeholder:text-slate-400 resize-y min-h-[140px]"
                     />
                   </div>
 
-                  {/* Rich Media & Document Attachments (Picture + PDF Files) */}
+                  {/* Deliverables & Media Collateral (Picture + PDF) */}
                   <div className="border border-[#E5E0D5] rounded-xl p-4 bg-[#FAF8F5] shadow-2xs space-y-4">
-                    
                     {/* Header Strip */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-slate-100">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-slate-200">
                       <div>
                         <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-md bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
+                          <div className="w-6 h-6 rounded-md bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700">
                             <Paperclip className="w-3.5 h-3.5" />
                           </div>
                           <label className="text-xs font-delight font-bold text-slate-900">
-                            03. Media & Attachments
+                            03. Deliverables &amp; Media Collateral
                           </label>
-                          <span className="text-[10px] font-delight font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                          <span className="text-xs font-delight font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
                             Picture + PDF
                           </span>
                         </div>
-                        <p className="text-[11px] text-slate-500 mt-1">
-                          Attach promotional pictures and PDF pitch decks or brochures to make your WhatsApp message look exceptionally neat and professional.
+                        <p className="text-xs text-slate-500 mt-1">
+                          Attach promotional visuals and PDF pitch decks or brochures sent alongside your message.
                         </p>
                       </div>
 
-                      {/* Quick Presets & Actions */}
-                      <div className="flex items-center gap-1.5 flex-wrap">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <button
                           type="button"
                           onClick={() => handleApplyMediaPreset(WHATSAPP_MEDIA_PRESETS[0])}
-                          className="text-[10px] font-delight font-bold px-2.5 py-1 rounded-md bg-slate-900 text-white hover:bg-slate-800 transition-colors cursor-pointer shadow-2xs flex items-center gap-1"
+                          className="text-xs font-delight font-semibold px-3 py-1.5 rounded-lg bg-slate-900 text-white hover:bg-slate-800 transition-colors cursor-pointer shadow-xs flex items-center gap-1.5"
                           title="Load Executive Presentation & Analytics Deck"
                         >
                           <Paperclip className="w-3 h-3 text-slate-300" />
-                          <span>Load Pro Media Pack</span>
+                          <span>Load Executive Pack</span>
                         </button>
 
                         {(whatsAppImage.enabled || whatsAppPdf.enabled) && (
                           <button
                             type="button"
                             onClick={handleCopyMediaLinks}
-                            className="text-[10px] font-delight font-semibold px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer flex items-center gap-1"
+                            className="text-xs font-delight font-semibold px-3 py-1.5 rounded-lg bg-white border border-[#E5E0D5] text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer flex items-center gap-1.5"
                             title="Copy file links to clipboard"
                           >
                             {copiedMediaLinks ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3 text-slate-400" />}
-                            <span>{copiedMediaLinks ? 'Links Copied' : 'Copy Links'}</span>
+                            <span>{copiedMediaLinks ? 'Links Copied' : 'Copy File Links'}</span>
                           </button>
                         )}
                       </div>
@@ -1478,7 +1521,7 @@ const OutreachCenter = () => {
 
                     {/* Presets Quick-Select Chips */}
                     <div className="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar">
-                      <span className="text-[10px] font-delight font-bold text-slate-400 shrink-0 uppercase tracking-wider">
+                      <span className="text-xs font-delight font-bold text-slate-400 shrink-0">
                         Presets:
                       </span>
                       {WHATSAPP_MEDIA_PRESETS.map((preset) => {
@@ -1488,14 +1531,14 @@ const OutreachCenter = () => {
                             key={preset.id}
                             type="button"
                             onClick={() => handleApplyMediaPreset(preset)}
-                            className={`px-2.5 py-1 rounded-lg text-[11px] font-delight font-semibold border transition-all cursor-pointer shrink-0 flex items-center gap-1.5 ${
+                            className={`px-3 py-1.5 rounded-lg text-xs font-delight font-semibold border transition-all cursor-pointer shrink-0 flex items-center gap-1.5 ${
                               isCurrent
-                                ? 'bg-emerald-50 text-emerald-800 border-emerald-300 shadow-2xs'
-                                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:text-slate-900'
+                                ? 'bg-emerald-50 text-emerald-900 border-emerald-300 shadow-xs'
+                                : 'bg-white text-slate-700 border-[#E5E0D5] hover:bg-slate-50'
                             }`}
                           >
                             <span>{preset.title}</span>
-                            <span className="text-[9px] opacity-70 px-1 py-0.2 rounded bg-slate-100">
+                            <span className="text-xs text-slate-500 px-1.5 py-0.2 rounded bg-slate-100">
                               {preset.badge}
                             </span>
                           </button>
@@ -1503,48 +1546,38 @@ const OutreachCenter = () => {
                       })}
                     </div>
 
-                    {/* Two Column Cards: Picture Asset (Left) + PDF Document (Right) */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                    {/* Two Column Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       
                       {/* CARD 1: PICTURE / IMAGE ATTACHMENT */}
-                      <div className={`p-3.5 rounded-xl border transition-all ${
-                        whatsAppImage.enabled 
-                          ? 'bg-white border-emerald-300 shadow-xs ring-1 ring-emerald-200/50' 
-                          : 'bg-slate-50/70 border-slate-200 opacity-90'
+                      <div className={`p-4 rounded-xl border transition-all ${
+                        whatsAppImage.enabled ? 'bg-white border-[#1E6B52]/40 shadow-xs' : 'bg-slate-50 border-[#E5E0D5] opacity-80'
                       }`}>
-                        {/* Header & Toggle */}
-                        <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-slate-100">
-                          <div className="flex items-center gap-2">
-                            <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${
-                              whatsAppImage.enabled ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-slate-200 text-slate-500'
-                            }`}>
+                        <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-[#1E6B52] border border-emerald-200 flex items-center justify-center">
                               <Image className="w-4 h-4" />
                             </div>
                             <div>
                               <div className="text-xs font-delight font-bold text-slate-900">Picture Attachment</div>
-                              <div className="text-[10px] text-slate-400 font-medium">Image preview banner in chat</div>
+                              <div className="text-xs text-slate-500">Visual banner in chat</div>
                             </div>
                           </div>
-
                           <button
                             type="button"
                             onClick={() => setWhatsAppImage(prev => ({ ...prev, enabled: !prev.enabled }))}
-                            className={`px-2.5 py-1 rounded-full text-[10px] font-delight font-bold transition-all cursor-pointer ${
-                              whatsAppImage.enabled
-                                ? 'bg-emerald-600 text-white shadow-2xs'
-                                : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
+                            className={`px-3 py-1 rounded-full text-xs font-delight font-bold transition-all cursor-pointer ${
+                              whatsAppImage.enabled ? 'bg-[#1E6B52] text-white' : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
                             }`}
                           >
                             {whatsAppImage.enabled ? 'Attached' : '+ Attach'}
                           </button>
                         </div>
 
-                        {/* When Image Enabled */}
                         {whatsAppImage.enabled ? (
-                          <div className="space-y-2.5 text-xs">
-                            {/* Preview Thumbnail */}
-                            <div className="relative rounded-lg overflow-hidden border border-slate-200 bg-slate-900/5 flex items-center gap-3 p-2">
-                              <div className="w-14 h-14 rounded-md overflow-hidden bg-slate-200 shrink-0 border border-slate-300/80">
+                          <div className="space-y-3 text-xs">
+                            <div className="rounded-lg overflow-hidden border border-slate-200 bg-slate-50 flex items-center gap-3 p-2.5">
+                              <div className="w-14 h-14 rounded-md overflow-hidden bg-slate-200 shrink-0 border border-slate-300">
                                 <img 
                                   src={whatsAppImage.url} 
                                   alt="Preview" 
@@ -1555,41 +1588,36 @@ const OutreachCenter = () => {
                                 />
                               </div>
                               <div className="min-w-0 flex-1">
-                                <div className="font-delight font-bold text-slate-800 text-[11px] truncate">
-                                  {whatsAppImage.fileName || 'Attached_Image.jpg'}
+                                <div className="font-delight font-bold text-slate-900 truncate">
+                                  {whatsAppImage.fileName || 'Visual_Preview.jpg'}
                                 </div>
-                                <div className="text-[10px] text-slate-500 truncate mt-0.5">
-                                  {whatsAppImage.caption || 'High-res image asset'}
+                                <div className="text-xs text-slate-500 truncate mt-0.5">
+                                  {whatsAppImage.caption || 'Analytics Overview'}
                                 </div>
-                                <span className="inline-block text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded mt-1 border border-emerald-100">
-                                  Visual Ready
-                                </span>
                               </div>
                               <button
                                 type="button"
                                 onClick={() => setWhatsAppImage(prev => ({ ...prev, enabled: false }))}
-                                className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                                title="Remove Picture"
+                                className="p-1 rounded text-slate-400 hover:text-rose-600 transition-colors"
                               >
-                                <X className="w-3.5 h-3.5" />
+                                <X className="w-4 h-4" />
                               </button>
                             </div>
 
-                            {/* Image Source Input */}
                             <div>
-                              <label className="block text-[10px] font-delight font-semibold text-slate-600 mb-1">
+                              <label className="block text-xs font-delight font-semibold text-slate-700 mb-1">
                                 Image URL / Source
                               </label>
-                              <div className="flex items-center gap-1.5">
+                              <div className="flex items-center gap-2">
                                 <input 
                                   type="url"
                                   value={whatsAppImage.url}
                                   onChange={(e) => setWhatsAppImage({ ...whatsAppImage, url: e.target.value })}
                                   placeholder="https://example.com/image.jpg"
-                                  className="flex-1 bg-white border border-slate-200 rounded-md px-2.5 py-1.5 text-xs font-mono outline-none focus:border-emerald-500"
+                                  className="flex-1 bg-white border border-[#E5E0D5] rounded-lg px-3 py-2 text-xs font-mono outline-none focus:border-[#1E6B52]"
                                 />
-                                <label className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-md text-[11px] font-delight font-semibold text-slate-700 cursor-pointer transition-colors flex items-center gap-1 shrink-0">
-                                  <Upload className="w-3 h-3" />
+                                <label className="px-3 py-2 bg-slate-100 hover:bg-slate-200 border border-[#E5E0D5] rounded-lg text-xs font-delight font-semibold text-slate-700 cursor-pointer transition-colors flex items-center gap-1.5 shrink-0">
+                                  <Upload className="w-3.5 h-3.5" />
                                   <span>Upload</span>
                                   <input 
                                     type="file" 
@@ -1601,109 +1629,93 @@ const OutreachCenter = () => {
                               </div>
                             </div>
 
-                            {/* Caption Input */}
                             <div>
-                              <label className="block text-[10px] font-delight font-semibold text-slate-600 mb-1">
-                                Caption / Overlay Title
+                              <label className="block text-xs font-delight font-semibold text-slate-700 mb-1">
+                                Caption / Title
                               </label>
                               <input 
                                 type="text"
                                 value={whatsAppImage.caption || ''}
                                 onChange={(e) => setWhatsAppImage({ ...whatsAppImage, caption: e.target.value })}
                                 placeholder="e.g. Growth Analytics & Deliverability Metrics"
-                                className="w-full bg-white border border-slate-200 rounded-md px-2.5 py-1.5 text-xs font-delight outline-none focus:border-emerald-500"
+                                className="w-full bg-white border border-[#E5E0D5] rounded-lg px-3 py-2 text-xs font-delight outline-none focus:border-[#1E6B52]"
                               />
                             </div>
                           </div>
                         ) : (
-                          <div className="py-4 text-center text-[11px] text-slate-400 font-delight">
-                            Picture attachment disabled. Click "+ Attach" to include a visual graphic.
+                          <div className="py-4 text-center text-xs text-slate-400 font-delight">
+                            Image attachment inactive. Click "+ Attach" to include a visual asset.
                           </div>
                         )}
                       </div>
 
                       {/* CARD 2: PDF DOCUMENT ATTACHMENT */}
-                      <div className={`p-3.5 rounded-xl border transition-all ${
-                        whatsAppPdf.enabled 
-                          ? 'bg-white border-rose-300 shadow-xs ring-1 ring-rose-200/50' 
-                          : 'bg-slate-50/70 border-slate-200 opacity-90'
+                      <div className={`p-4 rounded-xl border transition-all ${
+                        whatsAppPdf.enabled ? 'bg-white border-[#1E6B52]/40 shadow-xs' : 'bg-slate-50 border-[#E5E0D5] opacity-80'
                       }`}>
-                        {/* Header & Toggle */}
-                        <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-slate-100">
-                          <div className="flex items-center gap-2">
-                            <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${
-                              whatsAppPdf.enabled ? 'bg-rose-50 text-rose-600 border border-rose-200' : 'bg-slate-200 text-slate-500'
-                            }`}>
+                        <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 flex items-center justify-center">
                               <FileText className="w-4 h-4" />
                             </div>
                             <div>
                               <div className="text-xs font-delight font-bold text-slate-900">PDF Document</div>
-                              <div className="text-[10px] text-slate-400 font-medium">Native document card in chat</div>
+                              <div className="text-xs text-slate-500">Document card in chat</div>
                             </div>
                           </div>
-
                           <button
                             type="button"
                             onClick={() => setWhatsAppPdf(prev => ({ ...prev, enabled: !prev.enabled }))}
-                            className={`px-2.5 py-1 rounded-full text-[10px] font-delight font-bold transition-all cursor-pointer ${
-                              whatsAppPdf.enabled
-                                ? 'bg-rose-600 text-white shadow-2xs'
-                                : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
+                            className={`px-3 py-1 rounded-full text-xs font-delight font-bold transition-all cursor-pointer ${
+                              whatsAppPdf.enabled ? 'bg-rose-700 text-white' : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
                             }`}
                           >
                             {whatsAppPdf.enabled ? 'Attached' : '+ Attach'}
                           </button>
                         </div>
 
-                        {/* When PDF Enabled */}
                         {whatsAppPdf.enabled ? (
-                          <div className="space-y-2.5 text-xs">
-                            {/* Document Preview Badge */}
-                            <div className="relative rounded-lg border border-rose-200 bg-rose-50/40 p-2.5 flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-lg bg-rose-500 text-white flex flex-col items-center justify-center shrink-0 shadow-2xs">
+                          <div className="space-y-3 text-xs">
+                            <div className="rounded-lg border border-rose-200 bg-rose-50/40 p-2.5 flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-lg bg-rose-600 text-white flex flex-col items-center justify-center shrink-0">
                                 <FileText className="w-5 h-5" />
-                                <span className="text-[7px] font-black uppercase leading-none mt-0.5">PDF</span>
+                                <span className="text-[8px] font-black uppercase leading-none mt-0.5">PDF</span>
                               </div>
                               <div className="min-w-0 flex-1">
-                                <div className="font-delight font-bold text-slate-900 text-[11px] truncate">
+                                <div className="font-delight font-bold text-slate-900 truncate text-xs">
                                   {whatsAppPdf.fileName.replace(/{{business_name}}/g, previewLead.businessName) || 'Document.pdf'}
                                 </div>
-                                <div className="text-[10px] text-slate-500 font-medium mt-0.5 flex items-center gap-1.5">
+                                <div className="text-xs text-slate-500 font-medium mt-0.5 flex items-center gap-1.5">
                                   <span>{whatsAppPdf.pageCount || '6 pages'}</span>
                                   <span>•</span>
-                                  <span className="font-semibold text-slate-700">{whatsAppPdf.fileSize || '2.4 MB'}</span>
-                                  <span>•</span>
-                                  <span className="text-rose-700 font-bold">Document</span>
+                                  <span>{whatsAppPdf.fileSize || '2.4 MB'}</span>
                                 </div>
                               </div>
                               <button
                                 type="button"
                                 onClick={() => setWhatsAppPdf(prev => ({ ...prev, enabled: false }))}
-                                className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                                title="Remove PDF"
+                                className="p-1 rounded text-slate-400 hover:text-rose-600 transition-colors"
                               >
-                                <X className="w-3.5 h-3.5" />
+                                <X className="w-4 h-4" />
                               </button>
                             </div>
 
-                            {/* Document File Name Input */}
                             <div>
-                              <label className="block text-[10px] font-delight font-semibold text-slate-600 mb-1">
-                                File Name (Supports merge tags)
+                              <label className="block text-xs font-delight font-semibold text-slate-700 mb-1">
+                                File Name (Supports &#123;&#123;business_name&#125;&#125;)
                               </label>
                               <input 
                                 type="text"
                                 value={whatsAppPdf.fileName}
                                 onChange={(e) => setWhatsAppPdf({ ...whatsAppPdf, fileName: e.target.value })}
                                 placeholder="e.g. {{business_name}}_Growth_Blueprint.pdf"
-                                className="w-full bg-white border border-slate-200 rounded-md px-2.5 py-1.5 text-xs font-mono outline-none focus:border-rose-500"
+                                className="w-full bg-white border border-[#E5E0D5] rounded-lg px-3 py-2 text-xs font-mono outline-none focus:border-rose-500"
                               />
                             </div>
 
-                            {/* PDF URL & Upload Button */}
-                            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
-                              <div className="sm:col-span-8">
-                                <label className="block text-[10px] font-delight font-semibold text-slate-600 mb-1">
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 min-w-0">
+                                <label className="block text-xs font-delight font-semibold text-slate-700 mb-1">
                                   Document Hosted URL
                                 </label>
                                 <input 
@@ -1711,13 +1723,12 @@ const OutreachCenter = () => {
                                   value={whatsAppPdf.url}
                                   onChange={(e) => setWhatsAppPdf({ ...whatsAppPdf, url: e.target.value })}
                                   placeholder="https://www.strovr.space/deck.pdf"
-                                  className="w-full bg-white border border-slate-200 rounded-md px-2.5 py-1.5 text-xs font-mono outline-none focus:border-rose-500"
+                                  className="w-full bg-white border border-[#E5E0D5] rounded-lg px-3 py-2 text-xs font-mono outline-none focus:border-rose-500"
                                 />
                               </div>
-
-                              <div className="sm:col-span-4 flex flex-col justify-end">
-                                <label className="w-full px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-md text-[11px] font-delight font-semibold text-slate-700 cursor-pointer transition-colors flex items-center justify-center gap-1">
-                                  <Upload className="w-3 h-3 text-slate-500" />
+                              <div className="shrink-0 flex flex-col justify-end">
+                                <label className="px-3 py-2 bg-slate-100 hover:bg-slate-200 border border-[#E5E0D5] rounded-lg text-xs font-delight font-semibold text-slate-700 cursor-pointer transition-colors flex items-center gap-1.5 mt-5">
+                                  <Upload className="w-3.5 h-3.5" />
                                   <span>Upload PDF</span>
                                   <input 
                                     type="file" 
@@ -1728,34 +1739,10 @@ const OutreachCenter = () => {
                                 </label>
                               </div>
                             </div>
-
-                            {/* Size & Pages */}
-                            <div className="grid grid-cols-2 gap-2">
-                              <div>
-                                <label className="block text-[10px] font-delight font-semibold text-slate-600 mb-1">File Size</label>
-                                <input 
-                                  type="text"
-                                  value={whatsAppPdf.fileSize}
-                                  onChange={(e) => setWhatsAppPdf({ ...whatsAppPdf, fileSize: e.target.value })}
-                                  placeholder="e.g. 2.4 MB"
-                                  className="w-full bg-white border border-slate-200 rounded-md px-2 py-1 text-xs font-mono outline-none focus:border-rose-500"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-[10px] font-delight font-semibold text-slate-600 mb-1">Page Count</label>
-                                <input 
-                                  type="text"
-                                  value={whatsAppPdf.pageCount || ''}
-                                  onChange={(e) => setWhatsAppPdf({ ...whatsAppPdf, pageCount: e.target.value })}
-                                  placeholder="e.g. 6 pages"
-                                  className="w-full bg-white border border-slate-200 rounded-md px-2 py-1 text-xs font-mono outline-none focus:border-rose-500"
-                                />
-                              </div>
-                            </div>
                           </div>
                         ) : (
-                          <div className="py-4 text-center text-[11px] text-slate-400 font-delight">
-                            PDF attachment disabled. Click "+ Attach" to include a presentation or brochure.
+                          <div className="py-4 text-center text-xs text-slate-400 font-delight">
+                            PDF attachment inactive. Click "+ Attach" to include a presentation or brochure.
                           </div>
                         )}
                       </div>
@@ -1769,16 +1756,16 @@ const OutreachCenter = () => {
                     <div className="min-w-0">
                       <div className="text-xs font-delight font-bold text-slate-900 flex items-center gap-1.5">
                         <MessageSquare className="w-3.5 h-3.5 text-[#1E6B52]" />
-                        <span>04. Follow-Up Script · Email Capture Bridge</span>
+                        <span>04. Follow-Up Script: Email Capture Bridge</span>
                       </div>
-                      <p className="text-[11px] text-emerald-800/80 truncate mt-0.5 font-medium">
+                      <p className="text-xs text-slate-600 truncate mt-0.5 font-medium">
                         "{EMAIL_CAPTURE_BRIDGE_SCRIPT}"
                       </p>
                     </div>
                     <button
                       type="button"
                       onClick={handleInsertBridgeScript}
-                      className="bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-300 text-xs font-delight font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer shrink-0 shadow-2xs"
+                      className="bg-white hover:bg-emerald-50 text-emerald-800 border border-[#E5E0D5] text-xs font-delight font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer shrink-0 shadow-2xs"
                     >
                       + Append Bridge
                     </button>
@@ -1832,19 +1819,19 @@ const OutreachCenter = () => {
                                 <span className="text-xs font-delight font-bold text-slate-900 group-hover:text-[#C85A32] transition-colors">
                                   Dynamic Copywriting Studio
                                 </span>
-                                <span className="text-[9px] font-delight font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">
+                                <span className="text-xs font-delight font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">
                                   Template Frameworks
                                 </span>
-                                <span className="text-[9px] font-delight font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                                <span className="text-xs font-delight font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
                                   {user?.ai_pitches_limit === -1 ? 'Unlimited Drafts' : `${Math.max(0, (user?.ai_pitches_limit ?? 5) - (user?.ai_pitches_used || 0))} Drafts Left`}
                                 </span>
                                 {aiSuccessMessage && (
-                                  <span className="text-[10px] font-delight font-semibold text-emerald-600 flex items-center gap-1">
+                                  <span className="text-xs font-delight font-semibold text-emerald-600 flex items-center gap-1">
                                     <Check className="w-3 h-3" /> Populated
                                   </span>
                                 )}
                               </div>
-                              <p className="text-[11px] font-delight text-slate-500 truncate mt-0.5">
+                              <p className="text-xs font-delight text-slate-500 truncate mt-0.5">
                                 Generate customized pitch and positioning frameworks for <span className="font-semibold text-slate-700">{previewLead.businessName}</span>
                               </p>
                             </div>
@@ -1868,14 +1855,14 @@ const OutreachCenter = () => {
                                   <h4 className="text-xs font-bold text-white font-delight tracking-tight">
                                     Dynamic Copywriting Studio
                                   </h4>
-                                  <span className="text-[9px] font-delight uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/10 text-white font-semibold">
+                                  <span className="text-xs font-delight uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/10 text-white font-semibold">
                                     Direct Blueprint Engine
                                   </span>
-                                  <span className="text-[9px] font-delight uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">
+                                  <span className="text-xs font-delight uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">
                                     {user?.ai_pitches_limit === -1 ? 'Unlimited Drafts' : `${Math.max(0, (user?.ai_pitches_limit ?? 5) - (user?.ai_pitches_used || 0))} Drafts Left`}
                                   </span>
                                 </div>
-                                <p className="text-[11px] text-slate-300 font-delight mt-0.5">
+                                <p className="text-xs text-slate-300 font-delight mt-0.5">
                                   Generating custom layout for <span className="text-white font-semibold">{previewLead.businessName}</span>
                                 </p>
                               </div>
@@ -1895,10 +1882,10 @@ const OutreachCenter = () => {
                             {/* Stage 1: Voice & Tone Matrix (4 Selectable Cards) */}
                             <div>
                               <div className="flex items-center justify-between mb-2">
-                                <span className="text-[10px] font-delight font-bold uppercase tracking-wider text-slate-400">
-                                  01 / Select Voice &amp; Tone Profile
+                                <span className="text-xs font-delight font-bold uppercase tracking-wider text-slate-400">
+                                  01. Voice Profile &amp; Tone Profile
                                 </span>
-                                <span className="text-[10px] font-delight text-slate-500">
+                                <span className="text-xs font-delight text-slate-500">
                                   Active: <strong className="text-indigo-600 capitalize font-bold">{aiTone}</strong>
                                 </span>
                               </div>
@@ -1922,7 +1909,7 @@ const OutreachCenter = () => {
                                       }`}
                                     >
                                       <div className="text-xs font-bold font-delight truncate">{toneItem.title}</div>
-                                      <div className={`text-[10px] font-delight mt-0.5 truncate ${active ? 'text-indigo-100' : 'text-slate-500'}`}>
+                                      <div className={`text-xs font-delight mt-0.5 truncate ${active ? 'text-indigo-100' : 'text-slate-500'}`}>
                                         {toneItem.desc}
                                       </div>
                                     </button>
@@ -1933,7 +1920,7 @@ const OutreachCenter = () => {
 
                             {/* Stage 2: 1-Click Scenario Blueprints (Bento Tiles) */}
                             <div>
-                              <span className="block text-[10px] font-delight font-bold uppercase tracking-wider text-slate-400 mb-2">
+                              <span className="block text-xs font-delight font-bold uppercase tracking-wider text-slate-400 mb-2">
                                 02. Campaign Presets
                               </span>
                               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -1955,9 +1942,9 @@ const OutreachCenter = () => {
                                   >
                                     <div className="flex items-center justify-between w-full">
                                       <span className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 transition-colors font-delight">{chip.label}</span>
-                                      <span className="text-[10px] text-slate-400 group-hover:text-indigo-600 font-delight">&rarr;</span>
+                                      <span className="text-xs text-slate-400 group-hover:text-indigo-600 font-delight">&rarr;</span>
                                     </div>
-                                    <span className="text-[10px] text-slate-500 font-delight mt-0.5 truncate">{chip.sub}</span>
+                                    <span className="text-xs text-slate-500 font-delight mt-0.5 truncate">{chip.sub}</span>
                                   </button>
                                 ))}
                               </div>
@@ -1965,7 +1952,7 @@ const OutreachCenter = () => {
 
                             {/* Stage 3: Custom Directive Prompt & Action */}
                             <div className="pt-2 border-t border-slate-100 space-y-2.5">
-                              <span className="block text-[10px] font-delight font-bold uppercase tracking-wider text-slate-400">
+                              <span className="block text-xs font-delight font-bold uppercase tracking-wider text-slate-400">
                                 03. Custom Objective
                               </span>
                               <div className="flex flex-col sm:flex-row gap-2">
@@ -2003,7 +1990,7 @@ const OutreachCenter = () => {
                               </div>
 
                               <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-                                <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-delight text-slate-400">
+                                <div className="flex flex-wrap items-center gap-1.5 text-xs font-delight text-slate-400">
                                   <span>Target Blocks:</span>
                                   {['Subject', 'Preheader', 'Headline', 'Body Copy', 'Primary CTA'].map(b => (
                                     <span key={b} className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-md font-delight font-medium">
@@ -2012,7 +1999,7 @@ const OutreachCenter = () => {
                                   ))}
                                 </div>
                                 {aiSuccessMessage && (
-                                  <span className="text-[11px] font-delight font-semibold text-emerald-600 flex items-center gap-1">
+                                  <span className="text-xs font-delight font-semibold text-emerald-600 flex items-center gap-1">
                                     <Check className="w-3.5 h-3.5" /> {aiSuccessMessage}
                                   </span>
                                 )}
@@ -2111,7 +2098,7 @@ const OutreachCenter = () => {
                                   key={tag}
                                   type="button"
                                   onClick={() => insertTag(tag)}
-                                  className={`text-[10px] font-delight font-semibold px-2 py-0.5 rounded-md border transition-all cursor-pointer shadow-2xs ${colorClass}`}
+                                  className={`text-xs font-delight font-semibold px-2 py-0.5 rounded-md border transition-all cursor-pointer shadow-2xs ${colorClass}`}
                                 >
                                   + {tag}
                                 </button>
@@ -2137,7 +2124,7 @@ const OutreachCenter = () => {
                               <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>
                               <span>Call to Action</span>
                             </span>
-                            <span className="text-[10px] font-delight font-semibold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-md border border-indigo-200/60">
+                            <span className="text-xs font-delight font-semibold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-md border border-indigo-200/60">
                               Primary Button
                             </span>
                           </div>
@@ -2174,7 +2161,7 @@ const OutreachCenter = () => {
                               <Calendar className="w-3.5 h-3.5 text-indigo-600" />
                               <span>Interactive Booking Card Settings</span>
                             </h5>
-                            <span className="text-[10px] font-delight font-semibold text-indigo-800 bg-indigo-50 border border-indigo-200/80 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
+                            <span className="text-xs font-delight font-semibold text-indigo-800 bg-indigo-50 border border-indigo-200/80 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
                               <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
                               <span>Google Calendar</span>
                             </span>
@@ -2183,7 +2170,7 @@ const OutreachCenter = () => {
                           {/* Host Details */}
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                             <div>
-                              <label className="block text-[10px] font-delight font-bold text-slate-600 mb-1">Host Name</label>
+                              <label className="block text-xs font-delight font-bold text-slate-600 mb-1">Host Name</label>
                               <input 
                                 type="text"
                                 placeholder="Host Name"
@@ -2193,7 +2180,7 @@ const OutreachCenter = () => {
                               />
                             </div>
                             <div>
-                              <label className="block text-[10px] font-delight font-bold text-slate-600 mb-1">Host Title</label>
+                              <label className="block text-xs font-delight font-bold text-slate-600 mb-1">Host Title</label>
                               <input 
                                 type="text"
                                 placeholder="Growth Director"
@@ -2203,7 +2190,7 @@ const OutreachCenter = () => {
                               />
                             </div>
                             <div>
-                              <label className="block text-[10px] font-delight font-bold text-slate-600 mb-1">Call Duration</label>
+                              <label className="block text-xs font-delight font-bold text-slate-600 mb-1">Call Duration</label>
                               <input 
                                 type="text"
                                 placeholder="15 mins"
@@ -2216,7 +2203,7 @@ const OutreachCenter = () => {
 
                           {/* Host Avatar URL */}
                           <div>
-                            <label className="block text-[10px] font-delight font-bold text-slate-600 mb-1">Host Avatar Image URL</label>
+                            <label className="block text-xs font-delight font-bold text-slate-600 mb-1">Host Avatar Image URL</label>
                             <input 
                               type="text"
                               placeholder="https://images.unsplash.com/..."
@@ -2228,11 +2215,11 @@ const OutreachCenter = () => {
 
                           {/* Interactive Time Slots */}
                           <div>
-                            <label className="block text-[10px] font-delight font-bold text-slate-700 mb-1.5">Interactive Time Slots (Clickable Chips)</label>
+                            <label className="block text-xs font-delight font-bold text-slate-700 mb-1.5">Interactive Time Slots (Clickable Chips)</label>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                               {(templateData.timeSlots || []).map((slot: any, idx: number) => (
                                 <div key={idx} className="p-2.5 bg-white border border-indigo-100 hover:border-indigo-200 rounded-xl flex items-center gap-2 shadow-2xs transition-all">
-                                  <span className="text-[10px] font-bold text-indigo-500 w-5">#{idx + 1}</span>
+                                  <span className="text-xs font-bold text-indigo-500 w-5">#{idx + 1}</span>
                                   <input 
                                     type="text"
                                     value={slot.label}
@@ -2257,7 +2244,7 @@ const OutreachCenter = () => {
                           <div className="space-y-2">
                             <div className="flex items-center justify-between">
                               <h5 className="font-delight text-xs font-semibold text-slate-800">Column 1 Content & Action</h5>
-                              <span className="text-[10px] font-delight font-medium text-slate-600 bg-slate-200 px-1.5 py-0.5 rounded-xs">Option A</span>
+                              <span className="text-xs font-delight font-medium text-slate-600 bg-slate-200 px-1.5 py-0.5 rounded-xs">Option A</span>
                             </div>
                             <input 
                               type="text"
@@ -2275,7 +2262,7 @@ const OutreachCenter = () => {
                             />
                             <div className="space-y-1.5 pt-1">
                               <div>
-                                <label className="block text-[10px] font-delight font-semibold text-slate-600">Button 1 Label</label>
+                                <label className="block text-xs font-delight font-semibold text-slate-600">Button 1 Label</label>
                                 <input 
                                   type="text"
                                   placeholder="Col 1 Button Label"
@@ -2285,7 +2272,7 @@ const OutreachCenter = () => {
                                 />
                               </div>
                               <div>
-                                <label className="block text-[10px] font-delight font-semibold text-slate-600">Button 1 Destination URL</label>
+                                <label className="block text-xs font-delight font-semibold text-slate-600">Button 1 Destination URL</label>
                                 <input 
                                   type="text"
                                   placeholder="https://yoursite.com/inbound"
@@ -2300,7 +2287,7 @@ const OutreachCenter = () => {
                           <div className="space-y-2">
                             <div className="flex items-center justify-between">
                               <h5 className="font-delight text-xs font-semibold text-slate-800">Column 2 Content & Action</h5>
-                              <span className="text-[10px] font-delight font-medium text-slate-600 bg-slate-200 px-1.5 py-0.5 rounded-xs">Option B</span>
+                              <span className="text-xs font-delight font-medium text-slate-600 bg-slate-200 px-1.5 py-0.5 rounded-xs">Option B</span>
                             </div>
                             <input 
                               type="text"
@@ -2318,7 +2305,7 @@ const OutreachCenter = () => {
                             />
                             <div className="space-y-1.5 pt-1">
                               <div>
-                                <label className="block text-[10px] font-delight font-semibold text-slate-600">Button 2 Label</label>
+                                <label className="block text-xs font-delight font-semibold text-slate-600">Button 2 Label</label>
                                 <input 
                                   type="text"
                                   placeholder="Col 2 Button Label"
@@ -2328,7 +2315,7 @@ const OutreachCenter = () => {
                                 />
                               </div>
                               <div>
-                                <label className="block text-[10px] font-delight font-semibold text-slate-600">Button 2 Destination URL</label>
+                                <label className="block text-xs font-delight font-semibold text-slate-600">Button 2 Destination URL</label>
                                 <input 
                                   type="text"
                                   placeholder="https://yoursite.com/outbound"
@@ -2349,7 +2336,7 @@ const OutreachCenter = () => {
                             <h5 className="font-delight text-xs font-semibold text-slate-800 flex items-center gap-1.5">
                               <span>Interactive Cost Benchmark & ROI Comparison</span>
                             </h5>
-                            <span className="text-[10px] font-delight font-medium text-blue-700 bg-blue-100 px-2 py-0.5 rounded">
+                            <span className="text-xs font-delight font-medium text-blue-700 bg-blue-100 px-2 py-0.5 rounded">
                               Value Audit
                             </span>
                           </div>
@@ -2358,7 +2345,7 @@ const OutreachCenter = () => {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             {/* Legacy Side */}
                             <div className="p-3 bg-white border border-rose-200 rounded-md space-y-2">
-                              <span className="text-[10px] font-delight font-bold text-rose-700 uppercase">Legacy Method / Competitor</span>
+                              <span className="text-xs font-delight font-bold text-rose-700 uppercase">Legacy Method / Competitor</span>
                               <input 
                                 type="text"
                                 placeholder="Method Title (e.g. Traditional Agency)"
@@ -2395,7 +2382,7 @@ const OutreachCenter = () => {
 
                             {/* Strovr Side */}
                             <div className="p-3 bg-white border border-emerald-300 rounded-md space-y-2">
-                              <span className="text-[10px] font-delight font-bold text-emerald-700 uppercase">Strovr Autonomous Engine</span>
+                              <span className="text-xs font-delight font-bold text-emerald-700 uppercase">Strovr Autonomous Engine</span>
                               <input 
                                 type="text"
                                 placeholder="Pulse Title (e.g. Strovr Autonomous Engine)"
@@ -2433,7 +2420,7 @@ const OutreachCenter = () => {
 
                           {/* 3 Metric Pills */}
                           <div>
-                            <label className="block text-[10px] font-delight font-semibold text-slate-700 mb-1">Key ROI Highlight Counters</label>
+                            <label className="block text-xs font-delight font-semibold text-slate-700 mb-1">Key ROI Highlight Counters</label>
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                               {(templateData.roiMetrics || []).map((m: any, idx: number) => (
                                 <div key={idx} className="p-2 bg-white border border-slate-200 rounded-md space-y-1">
@@ -2456,7 +2443,7 @@ const OutreachCenter = () => {
                                       next[idx] = { ...next[idx], label: e.target.value };
                                       setTemplateData({ ...templateData, roiMetrics: next });
                                     }}
-                                    className="w-full text-[10px] text-slate-500 border-0 outline-none p-0"
+                                    className="w-full text-xs text-slate-500 border-0 outline-none p-0"
                                     placeholder="Label"
                                   />
                                 </div>
@@ -2472,7 +2459,7 @@ const OutreachCenter = () => {
                           <h5 className="font-delight text-xs font-semibold text-slate-800">Alternating Story Blocks (Z-Pattern)</h5>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div className="p-3 bg-white border border-slate-200 rounded-md space-y-2">
-                              <span className="text-[10px] font-delight font-medium text-slate-500 uppercase">Step 01 Story Block</span>
+                              <span className="text-xs font-delight font-medium text-slate-500 uppercase">Step 01 Story Block</span>
                               <input 
                                 type="text"
                                 placeholder="Step 1 Title"
@@ -2506,7 +2493,7 @@ const OutreachCenter = () => {
                             </div>
 
                             <div className="p-3 bg-white border border-slate-200 rounded-md space-y-2">
-                              <span className="text-[10px] font-delight font-medium text-slate-500 uppercase">Step 02 Story Block</span>
+                              <span className="text-xs font-delight font-medium text-slate-500 uppercase">Step 02 Story Block</span>
                               <input 
                                 type="text"
                                 placeholder="Step 2 Title"
@@ -2584,11 +2571,11 @@ const OutreachCenter = () => {
                             <div>
                               <h5 className="font-delight text-xs font-semibold text-slate-900 flex items-center gap-2">
                                 <span>Dynamic Product & Catalog Grid</span>
-                                <span className="text-[10px] font-delight font-medium bg-slate-200 text-slate-800 px-1.5 py-0.5 rounded-xs">
+                                <span className="text-xs font-delight font-medium bg-slate-200 text-slate-800 px-1.5 py-0.5 rounded-xs">
                                   {templateData.products.length} {templateData.products.length === 1 ? 'Item' : 'Catalog Items'}
                                 </span>
                               </h5>
-                              <p className="text-[11px] text-slate-500 mt-0.5">Attach custom pictures, badges, descriptions, and catalog offerings.</p>
+                              <p className="text-xs text-slate-500 mt-0.5">Attach custom pictures, badges, descriptions, and catalog offerings.</p>
                             </div>
                             <button
                               type="button"
@@ -2626,7 +2613,7 @@ const OutreachCenter = () => {
                             {templateData.products.map((p, idx) => (
                               <div key={idx} className="p-3 bg-white border border-slate-200 rounded-md space-y-2 text-xs shadow-xs relative">
                                 <div className="flex items-center justify-between border-b border-slate-100 pb-1">
-                                  <span className="font-delight text-[11px] font-semibold text-slate-700">
+                                  <span className="font-delight text-xs font-semibold text-slate-700">
                                     Item #{idx + 1}
                                   </span>
                                   {templateData.products!.length > 1 && (
@@ -2646,7 +2633,7 @@ const OutreachCenter = () => {
 
                                 {/* Upload Picture */}
                                 <div>
-                                  <label className="block text-[10px] font-delight font-semibold text-slate-500 mb-1 flex items-center justify-between">
+                                  <label className="block text-xs font-delight font-semibold text-slate-500 mb-1 flex items-center justify-between">
                                     <span className="flex items-center gap-1">
                                       <Upload className="w-3 h-3 text-slate-600" />
                                       <span>Upload Picture</span>
@@ -2659,7 +2646,7 @@ const OutreachCenter = () => {
                                           next[idx].imageUrl = '';
                                           setTemplateData({ ...templateData, products: next });
                                         }}
-                                        className="text-[10px] text-rose-600 hover:underline font-delight font-medium cursor-pointer"
+                                        className="text-xs text-rose-600 hover:underline font-delight font-medium cursor-pointer"
                                       >
                                         Remove
                                       </button>
@@ -2672,7 +2659,7 @@ const OutreachCenter = () => {
                                         <img src={p.imageUrl} alt="" className="w-full h-full object-cover" />
                                       </div>
                                       <div className="flex-1 min-w-0">
-                                        <label className="inline-flex items-center gap-1 text-[10px] font-delight font-semibold text-slate-700 hover:text-slate-900 underline cursor-pointer">
+                                        <label className="inline-flex items-center gap-1 text-xs font-delight font-semibold text-slate-700 hover:text-slate-900 underline cursor-pointer">
                                           <Upload className="w-3 h-3" />
                                           <span>Change</span>
                                           <input 
@@ -2687,7 +2674,7 @@ const OutreachCenter = () => {
                                   ) : (
                                     <label className="border border-dashed border-slate-300 hover:border-slate-400 bg-slate-50 hover:bg-slate-100 rounded-md p-2.5 flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors text-center">
                                       <Upload className="w-3.5 h-3.5 text-slate-500" />
-                                      <span className="text-[10px] font-delight font-semibold text-slate-700">Click to Upload (Max 5MB)</span>
+                                      <span className="text-xs font-delight font-semibold text-slate-700">Click to Upload (Max 5MB)</span>
                                       <input 
                                         type="file" 
                                         accept="image/*" 
@@ -2700,7 +2687,7 @@ const OutreachCenter = () => {
 
                                 {/* Product Name */}
                                 <div>
-                                  <label className="block text-[10px] font-delight font-semibold text-slate-500">Name</label>
+                                  <label className="block text-xs font-delight font-semibold text-slate-500">Name</label>
                                   <input 
                                     type="text" 
                                     value={p.name}
@@ -2717,7 +2704,7 @@ const OutreachCenter = () => {
                                 {/* Category & Badge */}
                                 <div className="grid grid-cols-2 gap-1.5">
                                   <div>
-                                    <label className="block text-[10px] font-delight font-semibold text-slate-500">Tag</label>
+                                    <label className="block text-xs font-delight font-semibold text-slate-500">Tag</label>
                                     <input 
                                       type="text" 
                                       value={p.category || ''}
@@ -2727,11 +2714,11 @@ const OutreachCenter = () => {
                                         setTemplateData({ ...templateData, products: next });
                                       }}
                                       placeholder="Category"
-                                      className="w-full border border-slate-200 rounded-md p-1 text-[11px] font-delight font-medium outline-none focus:border-slate-400"
+                                      className="w-full border border-slate-200 rounded-md p-1 text-xs font-delight font-medium outline-none focus:border-slate-400"
                                     />
                                   </div>
                                   <div>
-                                    <label className="block text-[10px] font-delight font-semibold text-slate-500">Badge</label>
+                                    <label className="block text-xs font-delight font-semibold text-slate-500">Badge</label>
                                     <input 
                                       type="text" 
                                       value={p.badge || ''}
@@ -2741,7 +2728,7 @@ const OutreachCenter = () => {
                                         setTemplateData({ ...templateData, products: next });
                                       }}
                                       placeholder="Badge"
-                                      className="w-full border border-slate-200 rounded-md p-1 text-[11px] font-delight font-medium outline-none focus:border-slate-400"
+                                      className="w-full border border-slate-200 rounded-md p-1 text-xs font-delight font-medium outline-none focus:border-slate-400"
                                     />
                                   </div>
                                 </div>
@@ -2749,7 +2736,7 @@ const OutreachCenter = () => {
                                 {/* Price & Button Text */}
                                 <div className="grid grid-cols-2 gap-1.5">
                                   <div>
-                                    <label className="block text-[10px] font-delight font-semibold text-slate-500">Price</label>
+                                    <label className="block text-xs font-delight font-semibold text-slate-500">Price</label>
                                     <input 
                                       type="text" 
                                       value={p.price}
@@ -2758,11 +2745,11 @@ const OutreachCenter = () => {
                                         next[idx].price = e.target.value;
                                         setTemplateData({ ...templateData, products: next });
                                       }}
-                                      className="w-full font-delight font-medium text-slate-900 border border-slate-200 rounded-md p-1 text-[11px] outline-none focus:border-slate-400"
+                                      className="w-full font-delight font-medium text-slate-900 border border-slate-200 rounded-md p-1 text-xs outline-none focus:border-slate-400"
                                     />
                                   </div>
                                   <div>
-                                    <label className="block text-[10px] font-delight font-semibold text-slate-500">Button</label>
+                                    <label className="block text-xs font-delight font-semibold text-slate-500">Button</label>
                                     <input 
                                       type="text" 
                                       value={p.ctaText || 'Select'}
@@ -2771,13 +2758,13 @@ const OutreachCenter = () => {
                                         next[idx].ctaText = e.target.value;
                                         setTemplateData({ ...templateData, products: next });
                                       }}
-                                      className="w-full border border-slate-200 rounded-md p-1 text-[11px] font-delight font-medium outline-none focus:border-slate-400"
+                                      className="w-full border border-slate-200 rounded-md p-1 text-xs font-delight font-medium outline-none focus:border-slate-400"
                                     />
                                   </div>
                                 </div>
 
                                 <div>
-                                  <label className="block text-[10px] font-delight font-semibold text-slate-500">Action URL</label>
+                                  <label className="block text-xs font-delight font-semibold text-slate-500">Action URL</label>
                                   <input 
                                     type="text" 
                                     value={p.ctaUrl || 'https://'}
@@ -2786,7 +2773,7 @@ const OutreachCenter = () => {
                                       next[idx].ctaUrl = e.target.value;
                                       setTemplateData({ ...templateData, products: next });
                                     }}
-                                    className="w-full border border-slate-200 rounded-md p-1 text-[11px] font-delight font-medium outline-none focus:border-slate-400"
+                                    className="w-full border border-slate-200 rounded-md p-1 text-xs font-delight font-medium outline-none focus:border-slate-400"
                                   />
                                 </div>
                               </div>
@@ -2807,11 +2794,11 @@ const OutreachCenter = () => {
                             <div>
                               <span className="text-xs font-delight font-bold text-slate-800 flex items-center gap-1.5">
                                 <span>Email Attachments &amp; Decks</span>
-                                <span className="text-[10px] font-medium text-indigo-700 bg-indigo-50 px-2 py-0.2 rounded border border-indigo-200/60">
+                                <span className="text-xs font-medium text-indigo-700 bg-indigo-50 px-2 py-0.2 rounded border border-indigo-200/60">
                                   All Layouts
                                 </span>
                               </span>
-                              <p className="text-[10px] text-slate-500 font-sans">
+                              <p className="text-xs text-slate-500 font-sans">
                                 Attach collateral (PDF decks, audits, case studies, pricing) dispatched with every outbound email.
                               </p>
                             </div>
@@ -2829,7 +2816,7 @@ const OutreachCenter = () => {
                             <button
                               type="button"
                               onClick={() => emailFileInputRef.current?.click()}
-                              className="bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-delight font-semibold px-2.5 py-1.5 rounded-lg shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer border border-slate-900"
+                              className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-delight font-semibold px-2.5 py-1.5 rounded-lg shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer border border-slate-900"
                               title="Upload custom attachment from your computer"
                             >
                               <Upload className="w-3 h-3" />
@@ -2841,7 +2828,7 @@ const OutreachCenter = () => {
                         <div className="p-4 space-y-3">
                           {/* Quick B2B Presets */}
                           <div>
-                            <span className="text-[10px] font-delight font-semibold uppercase tracking-wider text-slate-400 block mb-1.5">
+                            <span className="text-xs font-delight font-semibold uppercase tracking-wider text-slate-400 block mb-1.5">
                               Quick B2B Presets:
                             </span>
                             <div className="flex flex-wrap gap-1.5">
@@ -2852,7 +2839,7 @@ const OutreachCenter = () => {
                                     key={preset.id}
                                     type="button"
                                     onClick={() => handleAddPresetAttachment(preset)}
-                                    className={`text-[10px] font-delight font-semibold px-2.5 py-1 rounded-md border transition-all cursor-pointer flex items-center gap-1 shadow-2xs ${
+                                    className={`text-xs font-delight font-semibold px-2.5 py-1 rounded-md border transition-all cursor-pointer flex items-center gap-1 shadow-2xs ${
                                       isAdded 
                                         ? 'bg-emerald-50 text-emerald-800 border-emerald-300' 
                                         : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
@@ -2871,7 +2858,7 @@ const OutreachCenter = () => {
                             <div className="text-center py-5 border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
                               <Paperclip className="w-5 h-5 text-slate-400 mx-auto mb-1.5" />
                               <p className="text-xs font-delight font-medium text-slate-600">No collateral attached yet</p>
-                              <p className="text-[10px] text-slate-400">Upload a file or choose a quick B2B preset above.</p>
+                              <p className="text-xs text-slate-400">Upload a file or choose a quick B2B preset above.</p>
                             </div>
                           ) : (
                             <div className="space-y-2">
@@ -2907,10 +2894,10 @@ const OutreachCenter = () => {
                                         >
                                           <Check className="w-3 h-3 stroke-[3]" />
                                         </button>
-                                        <span className={`text-[9px] font-delight font-extrabold uppercase px-1.5 py-0.2 rounded border ${badgeColor}`}>
+                                        <span className={`text-xs font-delight font-extrabold uppercase px-1.5 py-0.2 rounded border ${badgeColor}`}>
                                           {att.fileType.toUpperCase()}
                                         </span>
-                                        <span className="text-[11px] font-sans text-slate-500 font-medium">
+                                        <span className="text-xs font-sans text-slate-500 font-medium">
                                           {att.fileSize}
                                         </span>
                                       </div>
@@ -2939,7 +2926,7 @@ const OutreachCenter = () => {
                                     </div>
 
                                     <div>
-                                      <label className="block text-[10px] font-delight font-semibold text-slate-500 mb-1">
+                                      <label className="block text-xs font-delight font-semibold text-slate-500 mb-1">
                                         File Name (Merge tags supported: <span className="font-mono text-indigo-600">&#123;&#123;business_name&#125;&#125;</span>)
                                       </label>
                                       <input 
@@ -2971,7 +2958,7 @@ const OutreachCenter = () => {
                     <div className="space-y-4 animate-in fade-in duration-150">
                       <div>
                         <h4 className="text-xs font-delight font-semibold text-slate-900 mb-0.5">Layout & Responsive Geometry</h4>
-                        <p className="text-[11px] text-slate-500">Configure global container parameters for all screen viewports.</p>
+                        <p className="text-xs text-slate-500">Configure global container parameters for all screen viewports.</p>
                       </div>
 
                       <div className="grid grid-cols-2 gap-3">
@@ -3038,7 +3025,7 @@ const OutreachCenter = () => {
                             <ShieldCheck className="w-4 h-4 text-emerald-600" />
                             <span>Mandatory Unsubscribe Compliance Footer</span>
                           </div>
-                          <p className="text-[11px] text-emerald-800/80 font-medium">
+                          <p className="text-xs text-emerald-800/80 font-medium">
                             Enforces CAN-SPAM and GDPR legal opt-out links on every outbound email automatically.
                           </p>
                         </div>
@@ -3056,14 +3043,14 @@ const OutreachCenter = () => {
             </div>
 
             {/* Bottom Actions */}
-            <div className="px-5 py-3.5 border-t border-slate-200/80 bg-white/95 backdrop-blur-xs flex flex-col sm:flex-row items-center justify-between gap-3 rounded-b-2xl">
+            <div className="px-5 py-3.5 border-t border-[#E5E0D5] bg-white flex flex-col sm:flex-row items-center justify-between gap-3 rounded-b-2xl">
               <div className="flex items-center gap-2.5 w-full sm:w-auto shrink-0 flex-wrap">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span className="text-[11.5px] font-delight font-medium text-slate-600">
-                  {activeChannel === 'whatsapp' ? 'WhatsApp wa.me API Bridge Active' : 'SendGrid Web API Transport Ready'}
+                <span className="text-xs font-delight font-medium text-slate-600">
+                  {activeChannel === 'whatsapp' ? 'WhatsApp wa.me Bridge Active · Free & Account Safe' : 'SendGrid Web API Transport Ready'}
                 </span>
                 {activeChannel === 'email' && emailAttachments.some(a => a.enabled) && (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-[10.5px] font-delight font-bold">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-delight font-bold">
                     <Paperclip className="w-3 h-3 text-indigo-600" />
                     <span>{emailAttachments.filter(a => a.enabled).length} Deck{emailAttachments.filter(a => a.enabled).length > 1 ? 's' : ''} Attached</span>
                   </span>
@@ -3071,39 +3058,32 @@ const OutreachCenter = () => {
               </div>
               
               {activeChannel === 'whatsapp' ? (
-                <div className="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
-                  {(whatsAppImage.enabled || whatsAppPdf.enabled) && (
-                    <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-delight font-bold">
-                      <Paperclip className="w-3 h-3 text-emerald-600" />
-                      <span>{whatsAppImage.enabled && whatsAppPdf.enabled ? 'Picture + PDF Ready' : whatsAppImage.enabled ? 'Picture Ready' : 'PDF Ready'}</span>
-                    </span>
-                  )}
-                  {(whatsAppImage.enabled || whatsAppPdf.enabled) && (
-                    <button 
-                      type="button"
-                      onClick={handleCopyMediaLinks}
-                      className="bg-white border border-slate-200 hover:bg-slate-50 px-3 py-1.5 rounded-xl text-xs font-delight font-bold text-slate-700 shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
-                      title="Copy asset file URLs to clipboard"
-                    >
-                      {copiedMediaLinks ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
-                      <span>{copiedMediaLinks ? 'Links Copied' : 'Copy Links'}</span>
-                    </button>
-                  )}
+                <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end flex-wrap">
                   <button 
                     type="button"
                     onClick={handleCopyWhatsApp}
-                    className="bg-white border border-slate-200 hover:bg-slate-50 px-3.5 py-1.5 rounded-xl text-xs font-delight font-bold text-slate-700 shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
+                    className="bg-white border border-[#E5E0D5] hover:bg-slate-50 px-3.5 py-2 rounded-xl text-xs font-delight font-semibold text-slate-700 shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
                   >
-                    {copiedWhatsApp ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <ExternalLink className="w-3.5 h-3.5 text-slate-400" />}
-                    <span>{copiedWhatsApp ? 'Copied' : 'Copy Script'}</span>
+                    {copiedWhatsApp ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
+                    <span>{copiedWhatsApp ? 'Copied' : 'Copy Message'}</span>
                   </button>
+
                   <button 
                     type="button"
                     onClick={() => handleOpenWhatsAppWeb(previewLead)}
-                    className="bg-[#1E6B52] hover:bg-[#165440] text-white px-4.5 py-2 rounded-xl text-xs font-delight font-semibold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                    className="bg-white border border-[#E5E0D5] hover:bg-slate-50 px-3.5 py-2 rounded-xl text-xs font-delight font-semibold text-slate-700 shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Single in WhatsApp</span>
+                  </button>
+
+                  <button 
+                    type="button"
+                    onClick={() => setIsWhatsAppQueueOpen(true)}
+                    className="bg-[#1E6B52] hover:bg-[#165440] text-white px-5 py-2 rounded-xl text-xs font-delight font-bold shadow-xs transition-all flex items-center gap-2 cursor-pointer"
                   >
                     <Send className="w-3.5 h-3.5" />
-                    <span>WhatsApp Web</span>
+                    <span>Launch 30-Contact Queue</span>
                   </button>
                 </div>
               ) : (
@@ -3164,24 +3144,17 @@ const OutreachCenter = () => {
             {/* Viewport & Lead Controls */}
             <div className="shrink-0 px-5 py-2.5 border-b border-[#E5E0D5] bg-white flex flex-wrap items-center justify-between gap-3 relative z-30">
               <div className="flex items-center gap-3">
-                {/* Traffic-light chrome dots */}
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-rose-400/90 shadow-2xs"></span>
-                  <span className="w-2.5 h-2.5 rounded-full bg-amber-400/90 shadow-2xs"></span>
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400/90 shadow-2xs"></span>
-                </div>
-                <div className="h-4 w-px bg-slate-200" />
-                <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-[11px] font-delight font-bold">
+                <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-delight font-bold">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                   <span>Live Render</span>
                 </div>
 
                 {/* Viewport Switcher */}
-                <div className="flex bg-slate-100/90 p-0.5 rounded-lg border border-slate-200 text-xs font-delight">
+                <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs font-delight">
                   <button 
                     onClick={() => setPreviewViewport('desktop')}
                     className={`px-3 py-1 rounded-md font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
-                      previewViewport === 'desktop' ? 'bg-white text-indigo-950 font-bold shadow-2xs' : 'text-slate-500 hover:text-slate-800'
+                      previewViewport === 'desktop' ? 'bg-white text-slate-900 font-bold shadow-2xs' : 'text-slate-500 hover:text-slate-800'
                     }`}
                   >
                     <Monitor className="w-3.5 h-3.5" />
@@ -3190,7 +3163,7 @@ const OutreachCenter = () => {
                   <button 
                     onClick={() => setPreviewViewport('mobile')}
                     className={`px-3 py-1 rounded-md font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
-                      previewViewport === 'mobile' ? 'bg-white text-indigo-950 font-bold shadow-2xs' : 'text-slate-500 hover:text-slate-800'
+                      previewViewport === 'mobile' ? 'bg-white text-slate-900 font-bold shadow-2xs' : 'text-slate-500 hover:text-slate-800'
                     }`}
                   >
                     <Smartphone className="w-3.5 h-3.5" />
@@ -3200,12 +3173,12 @@ const OutreachCenter = () => {
 
                 {/* A/B Variant Preview Indicator */}
                 {isAbTesting && (
-                  <div className="flex items-center bg-slate-100/90 p-0.5 rounded-lg border border-slate-200 text-xs font-delight">
+                  <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs font-delight">
                     <button 
                       type="button"
                       onClick={() => setActiveVariant('A')}
                       className={`px-2.5 py-1 rounded-md font-medium transition-all cursor-pointer flex items-center gap-1 ${
-                        activeVariant === 'A' ? 'bg-indigo-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-indigo-600'
+                        activeVariant === 'A' ? 'bg-[#191716] text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'
                       }`}
                     >
                       <span>Variant A</span>
@@ -3214,7 +3187,7 @@ const OutreachCenter = () => {
                       type="button"
                       onClick={() => setActiveVariant('B')}
                       className={`px-2.5 py-1 rounded-md font-medium transition-all cursor-pointer flex items-center gap-1 ${
-                        activeVariant === 'B' ? 'bg-indigo-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-indigo-600'
+                        activeVariant === 'B' ? 'bg-[#191716] text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'
                       }`}
                     >
                       <span>Variant B</span>
@@ -3228,7 +3201,7 @@ const OutreachCenter = () => {
                 <button
                   type="button"
                   onClick={handleToggleLeadDropdown}
-                  className="flex items-center gap-2 bg-white hover:bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-delight text-slate-700 shadow-2xs transition-all cursor-pointer hover:border-indigo-300"
+                  className="flex items-center gap-2 bg-white hover:bg-slate-50 px-3 py-1.5 rounded-xl border border-[#E5E0D5] text-xs font-delight text-slate-700 shadow-2xs transition-all cursor-pointer hover:border-slate-400"
                   title="Click to select target lead for live hydration"
                 >
                   <span className="text-slate-400">Preview as:</span>
@@ -3238,12 +3211,12 @@ const OutreachCenter = () => {
 
                 {/* Dropdown Menu */}
                 {isLeadDropdownOpen && (
-                  <div className={`absolute ${dropdownAlign === 'left' ? 'left-0' : 'right-0'} mt-1.5 w-[280px] sm:w-80 max-w-[calc(100vw-32px)] bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden z-50 animate-in fade-in duration-150 font-delight font-medium`}>
-                    <div className="p-3 border-b border-slate-100 bg-slate-50/80">
+                  <div className={`absolute ${dropdownAlign === 'left' ? 'left-0' : 'right-0'} mt-1.5 w-[280px] sm:w-80 max-w-[calc(100vw-32px)] bg-white border border-[#E5E0D5] rounded-2xl shadow-xl overflow-hidden z-50 animate-in fade-in duration-150 font-delight font-medium`}>
+                    <div className="p-3 border-b border-slate-100 bg-[#FAF8F5]">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Select Target Lead</span>
-                        <span className="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-bold">
-                          {availableLeads.length} Harvested
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Select Target Prospect</span>
+                        <span className="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">
+                          {availableLeads.length} Leads
                         </span>
                       </div>
                       <div className="relative">
@@ -3252,8 +3225,8 @@ const OutreachCenter = () => {
                           type="text"
                           value={leadSearchQuery}
                           onChange={(e) => setLeadSearchQuery(e.target.value)}
-                          placeholder="Search your workspace leads..."
-                          className="w-full bg-white border border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 rounded-xl pl-8 pr-3 py-1.5 text-xs outline-none font-delight font-medium transition-all"
+                          placeholder="Search workspace leads..."
+                          className="w-full bg-white border border-[#E5E0D5] focus:border-slate-500 rounded-xl pl-8 pr-3 py-1.5 text-xs outline-none font-delight font-medium transition-all"
                           autoFocus
                         />
                       </div>
@@ -3271,21 +3244,21 @@ const OutreachCenter = () => {
                               setIsLeadDropdownOpen(false);
                             }}
                             className={`w-full text-left p-2.5 rounded-xl transition-colors flex items-center justify-between group cursor-pointer ${
-                              isSelected ? 'bg-indigo-50/80 text-indigo-950 font-bold' : 'hover:bg-slate-50 text-slate-700'
+                              isSelected ? 'bg-emerald-50 text-emerald-950 font-bold' : 'hover:bg-slate-50 text-slate-700'
                             }`}
                           >
                             <div className="min-w-0 pr-2">
                               <div className="text-xs font-semibold text-slate-900 line-clamp-2 break-words">
                                 {lead.businessName}
                               </div>
-                              <div className="text-[10px] text-slate-400 flex items-center gap-1.5 mt-0.5">
+                              <div className="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5">
                                 <span>{lead.category || lead.fieldOfWork}</span>
                                 <span>•</span>
                                 <span>{lead.location}</span>
                               </div>
                             </div>
                             {isSelected && (
-                              <Check className="w-4 h-4 text-indigo-600 shrink-0" />
+                              <Check className="w-4 h-4 text-[#1E6B52] shrink-0" />
                             )}
                           </button>
                         );
@@ -3296,8 +3269,8 @@ const OutreachCenter = () => {
                           <div className="text-xs font-bold text-slate-800">
                             No harvested leads in workspace yet
                           </div>
-                          <p className="text-[11px] text-slate-500 font-normal leading-relaxed">
-                            Previewing with your workspace profile ({workspaceProfileLead.businessName}). Harvest prospects in Lead Finder to preview real leads here.
+                          <p className="text-xs text-slate-500 font-normal leading-relaxed">
+                            Previewing with workspace profile ({workspaceProfileLead.businessName}). Harvest prospects in Lead Finder to preview real leads here.
                           </p>
                         </div>
                       ) : filteredAvailableLeads.length === 0 ? (
@@ -3329,18 +3302,18 @@ const OutreachCenter = () => {
                   <div className="border-b border-slate-100 p-4 bg-gradient-to-r from-slate-50/90 via-indigo-50/20 to-white text-xs font-delight">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center font-bold text-[10px] shadow-2xs">
+                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center font-bold text-xs shadow-2xs">
                           ST
                         </div>
-                        <div className="text-[11px] text-slate-600 font-medium">
+                        <div className="text-xs text-slate-600 font-medium">
                           <span className="font-bold text-slate-900">{user?.name || 'Workspace Operator'}</span> &lt;{user?.email || 'outreach@strovr.space'}&gt;
                         </div>
                       </div>
-                      <span className="text-[10px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200/70 px-2 py-0.5 rounded-full">
+                      <span className="text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200/70 px-2 py-0.5 rounded-full">
                         Primary Inbox
                       </span>
                     </div>
-                    <div className="text-[11px] text-slate-500 font-medium mb-2 pl-8">
+                    <div className="text-xs text-slate-500 font-medium mb-2 pl-8">
                       To: <span className="text-slate-800 font-semibold">{previewLead.email || `contact@${previewLead.businessName.toLowerCase().replace(/[^a-z0-9]/g, '') || 'biz'}.com`}</span>
                     </div>
                     <div 
@@ -3360,7 +3333,7 @@ const OutreachCenter = () => {
                         </div>
                         {templateData.preheader && (
                           <span 
-                            className="text-[10px] font-delight font-medium text-slate-600 uppercase tracking-wider bg-slate-100 px-2 py-0.5 rounded-xs border border-slate-200"
+                            className="text-xs font-delight font-medium text-slate-600 uppercase tracking-wider bg-slate-100 px-2 py-0.5 rounded-xs border border-slate-200"
                             dangerouslySetInnerHTML={{ __html: renderPreviewHtml(templateData.preheader) }}
                           />
                         )}
@@ -3414,7 +3387,7 @@ const OutreachCenter = () => {
                       <div className="w-full h-40 bg-slate-900 rounded-md flex items-center justify-center text-white p-6 shadow-xs relative overflow-hidden border border-slate-800">
                         <div className="relative z-10 text-center space-y-1">
                           <span 
-                            className="text-[10px] font-delight font-semibold uppercase tracking-wider bg-white/10 px-2.5 py-0.5 rounded-sm inline-block border border-white/20"
+                            className="text-xs font-delight font-semibold uppercase tracking-wider bg-white/10 px-2.5 py-0.5 rounded-sm inline-block border border-white/20"
                             dangerouslySetInnerHTML={{ __html: renderPreviewHtml(templateData.preheader || `${previewLead.location} Growth Focus`) }}
                           />
                           <h3 className="font-bold text-sm tracking-tight">{previewLead.fieldOfWork} Suite</h3>
@@ -3449,7 +3422,7 @@ const OutreachCenter = () => {
                     <div className="p-6 sm:p-8 space-y-4">
                       {/* Top live scheduling pill */}
                       <div className="text-center">
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-800 text-[11px] font-delight font-bold">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-800 text-xs font-delight font-bold">
                           <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
                           <span>Google Calendar Engine &bull; Instant Confirmation</span>
                         </span>
@@ -3467,12 +3440,12 @@ const OutreachCenter = () => {
                             <h4 className="font-bold text-xs text-slate-900 font-delight truncate">
                               {templateData.hostName || 'Alex Roberts'}
                             </h4>
-                            <p className="text-[11px] text-slate-500 truncate">
+                            <p className="text-xs text-slate-500 truncate">
                               {templateData.hostTitle || 'Growth Director, Strovr'}
                             </p>
                           </div>
                         </div>
-                        <div className="shrink-0 px-2.5 py-1 rounded bg-white border border-slate-200 text-[11px] font-delight font-semibold text-slate-700">
+                        <div className="shrink-0 px-2.5 py-1 rounded bg-white border border-slate-200 text-xs font-delight font-semibold text-slate-700">
                           ⏱️ {templateData.duration || '15 mins'}
                         </div>
                       </div>
@@ -3498,7 +3471,7 @@ const OutreachCenter = () => {
                       {/* Interactive Time Slots Grid */}
                       <div className="space-y-2 pt-1">
                         <div className="text-center">
-                          <span className="text-[11px] font-delight font-bold uppercase tracking-wider text-slate-600">
+                          <span className="text-xs font-delight font-bold uppercase tracking-wider text-slate-600">
                             Select a Preferred Time Slot (Google Meet)
                           </span>
                         </div>
@@ -3532,7 +3505,7 @@ const OutreachCenter = () => {
                       {/* Meeting Agenda Bullets */}
                       {templateData.meetingAgenda && templateData.meetingAgenda.length > 0 && (
                         <div className="p-3 bg-slate-50 border border-slate-200 rounded-md space-y-1.5">
-                          <span className="text-[10px] font-delight font-bold uppercase tracking-wider text-slate-500 block mb-1">
+                          <span className="text-xs font-delight font-bold uppercase tracking-wider text-slate-500 block mb-1">
                             Session Agenda:
                           </span>
                           {templateData.meetingAgenda.map((item: string, idx: number) => (
@@ -3555,7 +3528,7 @@ const OutreachCenter = () => {
                         >
                           {templateData.ctaText || 'Get in Touch'}
                         </a>
-                        <p className="text-[11px] text-slate-400 font-sans mt-2">
+                        <p className="text-xs text-slate-400 font-sans mt-2">
                           Direct Google Meet invite &bull; Instant calendar sync
                         </p>
                       </div>
@@ -3571,7 +3544,7 @@ const OutreachCenter = () => {
                         </div>
                         {templateData.preheader && (
                           <span 
-                            className="text-[10px] font-delight font-semibold uppercase tracking-wider text-slate-600 bg-slate-100 px-2 py-0.5 rounded-xs border border-slate-200 inline-block"
+                            className="text-xs font-delight font-semibold uppercase tracking-wider text-slate-600 bg-slate-100 px-2 py-0.5 rounded-xs border border-slate-200 inline-block"
                             dangerouslySetInnerHTML={{ __html: renderPreviewHtml(templateData.preheader) }}
                           />
                         )}
@@ -3593,13 +3566,13 @@ const OutreachCenter = () => {
                           </div>
                           <div>
                             <h4 className="font-semibold text-xs text-slate-900 font-delight mb-1">{templateData.col1Title}</h4>
-                            <p className="text-[11px] text-slate-500 leading-snug font-sans">{templateData.col1Body}</p>
+                            <p className="text-xs text-slate-500 leading-snug font-sans">{templateData.col1Body}</p>
                           </div>
                           <a 
                             href={templateData.col1CtaUrl || '#'} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="w-full py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-md text-[11px] font-delight font-medium text-center block transition-colors shadow-xs cursor-pointer"
+                            className="w-full py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-md text-xs font-delight font-medium text-center block transition-colors shadow-xs cursor-pointer"
                           >
                             {templateData.col1Cta || 'Learn More'}
                           </a>
@@ -3611,13 +3584,13 @@ const OutreachCenter = () => {
                           </div>
                           <div>
                             <h4 className="font-semibold text-xs text-slate-900 font-delight mb-1">{templateData.col2Title}</h4>
-                            <p className="text-[11px] text-slate-500 leading-snug font-sans">{templateData.col2Body}</p>
+                            <p className="text-xs text-slate-500 leading-snug font-sans">{templateData.col2Body}</p>
                           </div>
                           <a 
                             href={templateData.col2CtaUrl || '#'} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="w-full py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-md text-[11px] font-delight font-medium text-center block transition-colors shadow-xs cursor-pointer"
+                            className="w-full py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-md text-xs font-delight font-medium text-center block transition-colors shadow-xs cursor-pointer"
                           >
                             {templateData.col2Cta || 'Learn More'}
                           </a>
@@ -3636,7 +3609,7 @@ const OutreachCenter = () => {
                           LP
                         </div>
                         <span 
-                          className="text-[10px] font-delight font-semibold text-slate-500 uppercase tracking-wider bg-slate-100 px-2 py-0.5 rounded-xs border border-slate-200"
+                          className="text-xs font-delight font-semibold text-slate-500 uppercase tracking-wider bg-slate-100 px-2 py-0.5 rounded-xs border border-slate-200"
                           dangerouslySetInnerHTML={{ __html: renderPreviewHtml(templateData.preheader || 'Monthly Partner Brief') }}
                         />
                       </div>
@@ -3673,7 +3646,7 @@ const OutreachCenter = () => {
                             </div>
                             <div>
                               <h4 className="font-semibold text-xs text-slate-900 font-delight">{templateData.col1Title}</h4>
-                              <p className="text-[11px] text-slate-500 leading-snug mt-0.5 font-sans">{templateData.col1Body}</p>
+                              <p className="text-xs text-slate-500 leading-snug mt-0.5 font-sans">{templateData.col1Body}</p>
                             </div>
                           </div>
                           {templateData.col1Cta && (
@@ -3681,7 +3654,7 @@ const OutreachCenter = () => {
                               href={templateData.col1CtaUrl || '#'} 
                               target="_blank" 
                               rel="noopener noreferrer"
-                              className="text-[11px] font-delight font-medium text-slate-900 hover:underline inline-block pt-1"
+                              className="text-xs font-delight font-medium text-slate-900 hover:underline inline-block pt-1"
                             >
                               {templateData.col1Cta} →
                             </a>
@@ -3695,7 +3668,7 @@ const OutreachCenter = () => {
                             </div>
                             <div>
                               <h4 className="font-semibold text-xs text-slate-900 font-delight">{templateData.col2Title}</h4>
-                              <p className="text-[11px] text-slate-500 leading-snug mt-0.5 font-sans">{templateData.col2Body}</p>
+                              <p className="text-xs text-slate-500 leading-snug mt-0.5 font-sans">{templateData.col2Body}</p>
                             </div>
                           </div>
                           {templateData.col2Cta && (
@@ -3703,7 +3676,7 @@ const OutreachCenter = () => {
                               href={templateData.col2CtaUrl || '#'} 
                               target="_blank" 
                               rel="noopener noreferrer"
-                              className="text-[11px] font-delight font-medium text-slate-900 hover:underline inline-block pt-1"
+                              className="text-xs font-delight font-medium text-slate-900 hover:underline inline-block pt-1"
                             >
                               {templateData.col2Cta} →
                             </a>
@@ -3725,7 +3698,7 @@ const OutreachCenter = () => {
                       {/* Wide Top Visual (Pyramid Base) */}
                       <div className="w-full h-32 bg-slate-50 border border-slate-200 rounded-md p-5 flex flex-col items-center justify-center text-center space-y-1">
                         <span 
-                          className="text-[10px] font-delight font-semibold uppercase tracking-wider text-slate-600 bg-slate-200 px-2 py-0.5 rounded-xs"
+                          className="text-xs font-delight font-semibold uppercase tracking-wider text-slate-600 bg-slate-200 px-2 py-0.5 rounded-xs"
                           dangerouslySetInnerHTML={{ __html: renderPreviewHtml(templateData.preheader || 'Exclusive 500-Lead Reserve') }}
                         />
                         <h3 className="font-bold text-sm text-slate-900 tracking-tight">
@@ -3768,7 +3741,7 @@ const OutreachCenter = () => {
                     <div className="p-6 sm:p-8 space-y-4">
                       {/* Top benchmark pill */}
                       <div className="text-center">
-                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-800 text-[11px] font-delight font-bold">
+                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-800 text-xs font-delight font-bold">
                           <span>Cost Benchmark &bull; Projected ROI Analysis</span>
                         </span>
                       </div>
@@ -3795,7 +3768,7 @@ const OutreachCenter = () => {
                       <div className={`grid gap-3 pt-1 ${previewViewport === 'mobile' ? 'grid-cols-1' : 'grid-cols-2'}`}>
                         {/* Current Legacy */}
                         <div className="p-4 bg-rose-50/60 border border-rose-200 rounded-lg space-y-2">
-                          <span className="text-[10px] font-delight font-bold uppercase tracking-wider text-rose-700 bg-rose-100 px-2 py-0.5 rounded">
+                          <span className="text-xs font-delight font-bold uppercase tracking-wider text-rose-700 bg-rose-100 px-2 py-0.5 rounded">
                             {templateData.comparisonCurrent?.badge || 'Legacy Method'}
                           </span>
                           <h4 className="font-bold text-xs text-rose-950 font-delight">
@@ -3804,7 +3777,7 @@ const OutreachCenter = () => {
                           <div className="text-lg font-extrabold text-rose-800 line-through">
                             {templateData.comparisonCurrent?.monthlyCost || '₹45,000 / mo'}
                           </div>
-                          <div className="text-[11px] text-rose-800 space-y-0.5 font-sans">
+                          <div className="text-xs text-rose-800 space-y-0.5 font-sans">
                             <div>&bull; Time: <strong>{templateData.comparisonCurrent?.timeSpent || '14 hrs/week'}</strong></div>
                             <div>&bull; Success: <strong>{templateData.comparisonCurrent?.replyRate || '1.8% Response'}</strong></div>
                           </div>
@@ -3812,7 +3785,7 @@ const OutreachCenter = () => {
 
                         {/* Strovr Solution */}
                         <div className="p-4 bg-emerald-50/70 border-2 border-emerald-400 rounded-lg space-y-2 shadow-xs">
-                          <span className="text-[10px] font-delight font-bold uppercase tracking-wider text-emerald-800 bg-emerald-200 px-2 py-0.5 rounded">
+                          <span className="text-xs font-delight font-bold uppercase tracking-wider text-emerald-800 bg-emerald-200 px-2 py-0.5 rounded">
                             {templateData.comparisonPulse?.badge || '8.4x Lower CAC'}
                           </span>
                           <h4 className="font-bold text-xs text-emerald-950 font-delight">
@@ -3821,7 +3794,7 @@ const OutreachCenter = () => {
                           <div className="text-xl font-extrabold text-emerald-900">
                             {templateData.comparisonPulse?.monthlyCost || '₹999 / mo'}
                           </div>
-                          <div className="text-[11px] text-emerald-800 space-y-0.5 font-sans">
+                          <div className="text-xs text-emerald-800 space-y-0.5 font-sans">
                             <div>&bull; Time: <strong>{templateData.comparisonPulse?.timeSpent || '15 mins/week'}</strong></div>
                             <div>&bull; Success: <strong>{templateData.comparisonPulse?.replyRate || '28.4% Response'}</strong></div>
                           </div>
@@ -3844,7 +3817,7 @@ const OutreachCenter = () => {
                             }`}
                           >
                             <div className="text-sm font-extrabold font-delight">{m.metric}</div>
-                            <div className="text-[10px] text-slate-500 font-medium leading-tight mt-0.5">{m.label}</div>
+                            <div className="text-xs text-slate-500 font-medium leading-tight mt-0.5">{m.label}</div>
                           </div>
                         ))}
                       </div>
@@ -3852,7 +3825,7 @@ const OutreachCenter = () => {
                       {/* Checklist Features */}
                       {templateData.benefitsList && templateData.benefitsList.length > 0 && (
                         <div className="p-3 bg-slate-50 border border-slate-200 rounded-md space-y-1.5">
-                          <span className="text-[10px] font-delight font-bold uppercase tracking-wider text-slate-500 block mb-1">
+                          <span className="text-xs font-delight font-bold uppercase tracking-wider text-slate-500 block mb-1">
                             Included in Package:
                           </span>
                           {templateData.benefitsList.map((b: string, idx: number) => (
@@ -3875,7 +3848,7 @@ const OutreachCenter = () => {
                         >
                           {templateData.ctaText || 'Claim Growth Tier →'}
                         </a>
-                        <p className="text-[11px] text-slate-400 font-sans mt-2">
+                        <p className="text-xs text-slate-400 font-sans mt-2">
                           Instant deployment &bull; 30-day money-back satisfaction guarantee
                         </p>
                       </div>
@@ -3888,7 +3861,7 @@ const OutreachCenter = () => {
                       <div className="text-center space-y-1">
                         {templateData.preheader && (
                           <span 
-                            className="text-[10px] font-delight font-semibold uppercase tracking-wider text-slate-600 bg-slate-100 px-2 py-0.5 rounded-xs border border-slate-200 inline-block mb-1"
+                            className="text-xs font-delight font-semibold uppercase tracking-wider text-slate-600 bg-slate-100 px-2 py-0.5 rounded-xs border border-slate-200 inline-block mb-1"
                             dangerouslySetInnerHTML={{ __html: renderPreviewHtml(templateData.preheader) }}
                           />
                         )}
@@ -3909,12 +3882,12 @@ const OutreachCenter = () => {
                         </div>
                         <div className="space-y-1">
                           <h4 className="font-semibold text-xs text-slate-900 font-delight">{templateData.zig1Title}</h4>
-                          <p className="text-[11px] text-slate-600 leading-relaxed font-sans">{templateData.zig1Text}</p>
+                          <p className="text-xs text-slate-600 leading-relaxed font-sans">{templateData.zig1Text}</p>
                           <a 
                             href={templateData.zig1CtaUrl || '#'}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-slate-900 font-delight font-medium text-[11px] hover:underline pt-0.5 inline-block cursor-pointer"
+                            className="text-slate-900 font-delight font-medium text-xs hover:underline pt-0.5 inline-block cursor-pointer"
                           >
                             {templateData.zig1Cta || 'Learn More →'}
                           </a>
@@ -3925,12 +3898,12 @@ const OutreachCenter = () => {
                       <div className={`p-3.5 bg-slate-50 border border-slate-200 rounded-md flex items-center gap-3.5 ${previewViewport === 'mobile' ? 'flex-col-reverse' : ''}`}>
                         <div className="space-y-1 flex-1">
                           <h4 className="font-semibold text-xs text-slate-900 font-delight">{templateData.zig2Title}</h4>
-                          <p className="text-[11px] text-slate-600 leading-relaxed font-sans">{templateData.zig2Text}</p>
+                          <p className="text-xs text-slate-600 leading-relaxed font-sans">{templateData.zig2Text}</p>
                           <a 
                             href={templateData.zig2CtaUrl || '#'}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-slate-900 font-delight font-medium text-[11px] hover:underline pt-0.5 inline-block cursor-pointer"
+                            className="text-slate-900 font-delight font-medium text-xs hover:underline pt-0.5 inline-block cursor-pointer"
                           >
                             {templateData.zig2Cta || 'Learn More →'}
                           </a>
@@ -3950,7 +3923,7 @@ const OutreachCenter = () => {
                       {/* Top Bar of F */}
                       <div className="border-b border-slate-200 pb-2.5">
                         <span 
-                          className="text-[10px] font-delight font-semibold uppercase tracking-wider text-slate-400"
+                          className="text-xs font-delight font-semibold uppercase tracking-wider text-slate-400"
                           dangerouslySetInnerHTML={{ __html: renderPreviewHtml(templateData.preheader || 'Executive Briefing') }}
                         />
                         <h2 
@@ -4010,7 +3983,7 @@ const OutreachCenter = () => {
                     <div className="p-6 sm:p-8 space-y-4 text-center">
                       <div>
                         <span 
-                          className="text-[10px] font-delight font-semibold uppercase tracking-wider text-slate-700 bg-slate-100 px-2 py-0.5 rounded-xs border border-slate-200 inline-block"
+                          className="text-xs font-delight font-semibold uppercase tracking-wider text-slate-700 bg-slate-100 px-2 py-0.5 rounded-xs border border-slate-200 inline-block"
                           dangerouslySetInnerHTML={{ __html: renderPreviewHtml(templateData.preheader || 'Dynamic Service Feed') }}
                         />
                         <h2 
@@ -4048,23 +4021,23 @@ const OutreachCenter = () => {
                                   />
                                 </div>
                               ) : (
-                                <div className="w-full h-14 bg-slate-100 rounded-sm flex items-center justify-center text-[10px] font-delight font-medium text-slate-700 mb-2 border border-slate-200">
+                                <div className="w-full h-14 bg-slate-100 rounded-sm flex items-center justify-center text-xs font-delight font-medium text-slate-700 mb-2 border border-slate-200">
                                   {prod.category || 'Catalog Item'}
                                 </div>
                               )}
 
                               <div className="space-y-1 mb-2">
                                 {prod.badge && (
-                                  <span className="text-[9px] font-delight font-semibold uppercase text-slate-700 bg-slate-100 px-1.5 py-0.2 rounded-xs border border-slate-200 inline-block">
+                                  <span className="text-xs font-delight font-semibold uppercase text-slate-700 bg-slate-100 px-1.5 py-0.2 rounded-xs border border-slate-200 inline-block">
                                     {prod.badge}
                                   </span>
                                 )}
                                 <h4 className="font-semibold text-xs text-slate-900 tracking-tight leading-snug">{prod.name}</h4>
                                 {prod.category && (
-                                  <p className="text-[10px] font-delight font-semibold uppercase text-slate-400">{prod.category}</p>
+                                  <p className="text-xs font-delight font-semibold uppercase text-slate-400">{prod.category}</p>
                                 )}
                                 {prod.description && (
-                                  <p className="text-[11px] text-slate-500 leading-tight pt-0.5 font-sans">{prod.description}</p>
+                                  <p className="text-xs text-slate-500 leading-tight pt-0.5 font-sans">{prod.description}</p>
                                 )}
                               </div>
                             </div>
@@ -4075,7 +4048,7 @@ const OutreachCenter = () => {
                                 href={prod.ctaUrl || '#'} 
                                 target="_blank" 
                                 rel="noopener noreferrer"
-                                className="w-full py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-md text-[10px] font-delight font-medium text-center block transition-colors cursor-pointer shadow-xs border border-slate-900"
+                                className="w-full py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-md text-xs font-delight font-medium text-center block transition-colors cursor-pointer shadow-xs border border-slate-900"
                               >
                                 {prod.ctaText || 'Select Plan'}
                               </a>
@@ -4110,7 +4083,7 @@ const OutreachCenter = () => {
                           <Paperclip className="w-3.5 h-3.5 text-indigo-600" />
                           <span>Attached Documents ({emailAttachments.filter(a => a.enabled).length})</span>
                         </div>
-                        <span className="text-[10px] font-delight font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60 flex items-center gap-1">
+                        <span className="text-xs font-delight font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60 flex items-center gap-1">
                           <Check className="w-2.5 h-2.5" />
                           <span>Verified Collateral</span>
                         </span>
@@ -4129,14 +4102,14 @@ const OutreachCenter = () => {
                           return (
                             <div key={att.id} className="flex items-center justify-between p-2.5 bg-white border border-slate-200 rounded-lg shadow-2xs hover:border-slate-300 transition-colors">
                               <div className="flex items-center gap-2.5 min-w-0">
-                                <div className={`w-8 h-8 rounded-md flex items-center justify-center font-bold text-[10px] border shrink-0 ${badgeColor}`}>
+                                <div className={`w-8 h-8 rounded-md flex items-center justify-center font-bold text-xs border shrink-0 ${badgeColor}`}>
                                   {att.fileType.toUpperCase()}
                                 </div>
                                 <div className="min-w-0">
                                   <div className="text-xs font-semibold text-slate-900 truncate">
                                     {resolvedName}
                                   </div>
-                                  <div className="text-[10px] text-slate-500 font-sans">
+                                  <div className="text-xs text-slate-500 font-sans">
                                     {att.fileSize} • Attached with outreach
                                   </div>
                                 </div>
@@ -4145,7 +4118,7 @@ const OutreachCenter = () => {
                                 href={att.url || '#'} 
                                 target="_blank" 
                                 rel="noreferrer"
-                                className="px-3 py-1 bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-semibold rounded-md flex items-center gap-1 shrink-0 ml-2 shadow-xs transition-colors"
+                                className="px-3 py-1 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-md flex items-center gap-1 shrink-0 ml-2 shadow-xs transition-colors"
                               >
                                 <Download className="w-3 h-3" />
                                 <span>View</span>
@@ -4162,13 +4135,13 @@ const OutreachCenter = () => {
                   {/* ==================================================== */}
                   {templateStyling.showComplianceFooter && (
                     <div className="bg-slate-50 p-4 border-t border-slate-200 text-center text-xs text-slate-500 space-y-1 font-delight font-normal">
-                      <div className="font-medium text-slate-700 text-[11px]">
+                      <div className="font-medium text-slate-700 text-xs">
                         Strovr Platform • BKC Financial Hub, Mumbai, India • www.strovr.space
                       </div>
-                      <p className="text-[10px] text-slate-400 leading-snug font-sans">
+                      <p className="text-xs text-slate-400 leading-snug font-sans">
                         You received this communication because <strong>{previewLead.businessName}</strong> is listed in public directories for {previewLead.fieldOfWork} in {previewLead.location}.
                       </p>
-                      <div className="text-[10px] text-slate-400 pt-0.5 font-delight font-normal">
+                      <div className="text-xs text-slate-400 pt-0.5 font-delight font-normal">
                         <a href="#unsubscribe" className="text-slate-700 underline font-semibold">Unsubscribe instantly</a> • <a href="#privacy" className="text-slate-500 underline">Compliance Policy</a>
                       </div>
                     </div>
@@ -4179,148 +4152,147 @@ const OutreachCenter = () => {
 
               {/* WHATSAPP PHONE MOCKUP PREVIEW */}
               {activeChannel === 'whatsapp' && (
-                <div className="w-[360px] sm:w-[380px] bg-slate-900 rounded-[38px] p-2.5 shadow-xl border-2 border-slate-700/60 flex flex-col font-sans shrink-0 my-auto">
+                <div className="w-[350px] sm:w-[380px] bg-slate-900 rounded-[38px] p-3 shadow-2xl border-4 border-slate-700/80 flex flex-col font-sans shrink-0 my-auto">
                   <div className="h-3.5 w-full flex items-center justify-center mb-1">
-                    <div className="w-14 h-1 rounded-full bg-slate-700" />
+                    <div className="w-16 h-1 rounded-full bg-slate-700" />
                   </div>
-                  <div className="w-full rounded-[30px] overflow-hidden flex flex-col bg-[#ECE5DD] border border-slate-800/20">
-                  {/* WhatsApp Top Chat Header */}
-                  <div className="bg-[#1E6B52] text-white p-3.5 flex items-center justify-between shrink-0 shadow-xs">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center font-bold text-xs backdrop-blur-xs text-white shrink-0">
-                        {previewLead?.businessName?.charAt(0) || 'L'}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="font-bold text-xs truncate max-w-[170px] text-white">
-                          {previewLead?.businessName || 'Target Business'}
+                  <div className="w-full rounded-[28px] overflow-hidden flex flex-col bg-[#ECE5DD] border border-slate-800/20">
+                    {/* WhatsApp Top Chat Header */}
+                    <div className="bg-[#1E6B52] text-white p-3.5 flex items-center justify-between shrink-0 shadow-xs">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center font-bold text-xs backdrop-blur-xs text-white shrink-0">
+                          {previewLead?.businessName?.charAt(0) || 'P'}
                         </div>
-                        <div className="text-[10px] text-emerald-100 font-delight font-medium flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"></span>
-                          <span>Official Business Account</span>
+                        <div className="min-w-0">
+                          <div className="font-bold text-xs truncate max-w-[170px] text-white">
+                            {previewLead?.businessName || 'Target Business'}
+                          </div>
+                          <div className="text-xs text-emerald-100 font-delight font-medium flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"></span>
+                            <span>WhatsApp Business Account</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2 text-white/80">
-                      <Phone className="w-3.5 h-3.5" />
-                    </div>
-                  </div>
-
-                  {/* Chat Message Scroll Window */}
-                  <div className="flex-1 bg-[#ECE5DD] p-3 overflow-y-auto flex flex-col gap-2 min-h-[380px] max-h-[500px]">
-                    
-                    {/* Date Divider Pill */}
-                    <div className="self-center my-1 bg-white/80 backdrop-blur-xs px-2.5 py-0.5 rounded-full text-[9px] font-delight font-bold text-slate-500 shadow-2xs">
-                      Today
+                      <div className="flex items-center gap-2 text-white/90">
+                        <Phone className="w-4 h-4" />
+                      </div>
                     </div>
 
-                    {/* Chat Bubble Group */}
-                    <div className="self-end max-w-[92%] flex flex-col gap-1.5">
+                    {/* Chat Message Scroll Window */}
+                    <div className="flex-1 bg-[#ECE5DD] p-3 overflow-y-auto flex flex-col gap-2.5 min-h-[380px] max-h-[480px] custom-scrollbar">
                       
-                      {/* 1. PDF Document Bubble Card (if enabled) */}
-                      {whatsAppPdf.enabled && (
-                        <div className="bg-[#E7FFDB] border border-emerald-200/70 rounded-2xl rounded-tr-xs p-2.5 shadow-2xs">
-                          <div className="bg-white rounded-xl p-2.5 border border-emerald-100 flex items-center gap-2.5 shadow-2xs">
-                            {/* Red PDF Icon Box */}
-                            <div className="w-9 h-10 rounded-lg bg-rose-500 flex flex-col items-center justify-center text-white shrink-0 shadow-2xs relative">
-                              <FileText className="w-4 h-4" />
-                              <span className="text-[7px] font-black uppercase tracking-tighter leading-none mt-0.5">PDF</span>
+                      {/* Date Divider Pill */}
+                      <div className="self-center my-1 bg-white/90 px-3 py-0.5 rounded-full text-xs font-delight font-medium text-slate-500 shadow-2xs">
+                        Today
+                      </div>
+
+                      {/* Chat Bubble Group */}
+                      <div className="self-end max-w-[92%] flex flex-col gap-2">
+                        
+                        {/* 1. PDF Document Bubble Card (if enabled) */}
+                        {whatsAppPdf.enabled && (
+                          <div className="bg-[#DCF8C6] border border-emerald-200/80 rounded-2xl rounded-tr-xs p-2.5 shadow-2xs">
+                            <div className="bg-white rounded-xl p-2.5 border border-emerald-100 flex items-center gap-2.5 shadow-2xs">
+                              {/* Red PDF Icon Box */}
+                              <div className="w-10 h-11 rounded-lg bg-rose-600 flex flex-col items-center justify-center text-white shrink-0 shadow-2xs">
+                                <FileText className="w-4 h-4" />
+                                <span className="text-[8px] font-black uppercase tracking-tighter leading-none mt-0.5">PDF</span>
+                              </div>
+
+                              {/* File Metadata */}
+                              <div className="min-w-0 flex-1">
+                                <div className="text-xs font-bold text-slate-900 truncate leading-snug">
+                                  {String(whatsAppPdf?.fileName || 'Document_Attachment.pdf').replace(/{{business_name}}/g, previewLead?.businessName || 'Prospect')}
+                                </div>
+                                <div className="text-xs text-slate-500 font-medium flex items-center gap-1 mt-0.5">
+                                  <span>{whatsAppPdf.pageCount || '6 pages'}</span>
+                                  <span>•</span>
+                                  <span>{whatsAppPdf.fileSize || '2.4 MB'}</span>
+                                </div>
+                              </div>
+
+                              {/* Circular Download Action */}
+                              <div className="w-7 h-7 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 shrink-0">
+                                <Download className="w-3.5 h-3.5" />
+                              </div>
                             </div>
 
-                            {/* File Metadata */}
-                            <div className="min-w-0 flex-1">
-                              <div className="text-[11px] font-bold text-slate-900 truncate leading-snug">
-                                {String(whatsAppPdf?.fileName || 'Document_Attachment.pdf').replace(/{{business_name}}/g, previewLead?.businessName || 'Prospect')}
-                              </div>
-                              <div className="text-[9px] text-slate-500 font-medium flex items-center gap-1 mt-0.5">
-                                <span>{whatsAppPdf.pageCount || '6 pages'}</span>
-                                <span>•</span>
-                                <span>{whatsAppPdf.fileSize || '2.4 MB'}</span>
-                                <span>•</span>
-                                <span className="text-rose-600 font-bold">PDF</span>
-                              </div>
-                            </div>
-
-                            {/* Circular Download Action */}
-                            <div className="w-6 h-6 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 shrink-0">
-                              <Download className="w-3 h-3" />
+                            <div className="text-xs text-slate-500 text-right mt-1.5 mr-1 flex items-center justify-end gap-1 font-delight">
+                              <span>10:41 AM</span>
+                              <CheckCircle2 className="w-3 h-3 text-[#1E6B52]" />
                             </div>
                           </div>
+                        )}
 
-                          <div className="text-[9px] text-slate-400 text-right mt-1 mr-1 flex items-center justify-end gap-1 font-delight">
-                            <span>10:41 AM</span>
-                            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                          </div>
-                        </div>
-                      )}
+                        {/* 2. Picture Attachment + Accompanying Text Bubble */}
+                        {whatsAppImage.enabled ? (
+                          <div className="bg-[#DCF8C6] border border-emerald-200/80 rounded-2xl rounded-tr-xs overflow-hidden shadow-2xs">
+                            {/* Image Thumbnail Frame */}
+                            <div className="relative w-full max-h-48 bg-slate-900/10 overflow-hidden flex items-center justify-center">
+                              {whatsAppImage.url ? (
+                                <img 
+                                  src={whatsAppImage.url} 
+                                  alt="WhatsApp Attachment" 
+                                  className="w-full h-auto max-h-48 object-cover"
+                                  onError={(e) => {
+                                    (e.target as any).src = 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&auto=format&fit=crop&q=80';
+                                  }}
+                                />
+                              ) : (
+                                <div className="p-6 flex flex-col items-center justify-center text-slate-400">
+                                  <Image className="w-6 h-6 mb-1 opacity-60" />
+                                  <span className="text-xs">No visual URL</span>
+                                </div>
+                              )}
 
-                      {/* 2. Picture Attachment + Accompanying Text Bubble */}
-                      {whatsAppImage.enabled ? (
-                        <div className="bg-[#E7FFDB] border border-emerald-200/70 rounded-2xl rounded-tr-xs overflow-hidden shadow-2xs">
-                          {/* Image Thumbnail Frame */}
-                          <div className="relative w-full max-h-48 bg-slate-900/10 overflow-hidden flex items-center justify-center">
-                            {whatsAppImage.url ? (
-                              <img 
-                                src={whatsAppImage.url} 
-                                alt="WhatsApp Attachment" 
-                                className="w-full h-auto max-h-48 object-cover"
-                                onError={(e) => {
-                                  (e.target as any).src = 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&auto=format&fit=crop&q=80';
-                                }}
+                              {whatsAppImage.caption && (
+                                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-2 text-xs text-white font-medium truncate">
+                                  {whatsAppImage.caption}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Text Message Content */}
+                            <div className="p-3.5">
+                              <div 
+                                className="text-xs text-slate-900 whitespace-pre-wrap leading-relaxed break-words"
+                                dangerouslySetInnerHTML={{ __html: renderPreviewHtml(whatsAppMessage) }}
                               />
-                            ) : (
-                              <div className="p-6 flex flex-col items-center justify-center text-slate-400">
-                                <Image className="w-6 h-6 mb-1 opacity-60" />
-                                <span className="text-[9px]">No visual URL</span>
+                              <div className="text-xs text-slate-500 flex items-center justify-end gap-1 mt-1.5 font-delight font-medium">
+                                <span>10:42 AM</span>
+                                <CheckCheck className="w-3.5 h-3.5 text-[#53bdeb]" />
                               </div>
-                            )}
-
-                            {whatsAppImage.caption && (
-                              <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-2 text-[9px] text-white font-medium truncate">
-                                {whatsAppImage.caption}
-                              </div>
-                            )}
+                            </div>
                           </div>
-
-                          {/* Text Message Content */}
-                          <div className="p-3">
+                        ) : (
+                          /* Text-Only Bubble */
+                          <div className="bg-[#DCF8C6] border border-emerald-200/70 p-3.5 rounded-2xl rounded-tr-xs shadow-2xs">
                             <div 
-                              className="text-xs text-slate-900 whitespace-pre-wrap leading-relaxed"
+                              className="text-xs text-slate-900 whitespace-pre-wrap leading-relaxed break-words"
                               dangerouslySetInnerHTML={{ __html: renderPreviewHtml(whatsAppMessage) }}
                             />
-                            <div className="text-[9px] text-slate-500 flex items-center justify-end gap-1 mt-1 font-delight font-medium">
+                            <div className="text-xs text-slate-500 flex items-center justify-end gap-1 mt-1.5 font-delight font-medium">
                               <span>10:42 AM</span>
-                              <CheckCheck className="w-3.5 h-3.5 text-emerald-600" />
+                              <CheckCheck className="w-3.5 h-3.5 text-[#53bdeb]" />
                             </div>
                           </div>
-                        </div>
-                      ) : (
-                        /* Text-Only Bubble */
-                        <div className="bg-[#E7FFDB] border border-emerald-200/60 p-3 rounded-2xl rounded-tr-xs shadow-2xs">
-                          <div 
-                            className="text-xs text-slate-900 whitespace-pre-wrap leading-relaxed"
-                            dangerouslySetInnerHTML={{ __html: renderPreviewHtml(whatsAppMessage) }}
-                          />
-                          <div className="text-[9px] text-slate-500 flex items-center justify-end gap-1 mt-1 font-delight font-medium">
-                            <span>10:42 AM</span>
-                            <CheckCheck className="w-3.5 h-3.5 text-emerald-600" />
-                          </div>
-                        </div>
-                      )}
+                        )}
+
+                      </div>
 
                     </div>
 
-                  </div>
-
-                  {/* Phone Mockup Footer Strip */}
-                  <div className="bg-slate-50 border-t border-slate-200 px-3 py-2 flex items-center justify-between text-[10px] text-slate-500">
-                    <span className="flex items-center gap-1 font-delight">
-                      <Paperclip className="w-3 h-3 text-slate-400" />
-                      <span>{whatsAppImage.enabled && whatsAppPdf.enabled ? '2 Media Files Attached' : whatsAppImage.enabled ? '1 Picture Attached' : whatsAppPdf.enabled ? '1 PDF Attached' : 'Standard Text Message'}</span>
-                    </span>
-                    <span className="text-[#1E6B52] font-bold font-delight">Verified Layout</span>
+                    {/* Authentic WhatsApp Input Bar Mockup */}
+                    <div className="bg-[#F0F2F5] border-t border-slate-200/80 px-3 py-2 flex items-center gap-2">
+                      <div className="flex-1 bg-white rounded-full px-3.5 py-1.5 text-xs text-slate-400 border border-slate-200/80">
+                        Type a message...
+                      </div>
+                      <div className="w-7 h-7 rounded-full bg-[#1E6B52] text-white flex items-center justify-center shrink-0 shadow-2xs">
+                        <Send className="w-3.5 h-3.5" />
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
               )}
 
               {/* SMS PHONE MOCKUP PREVIEW */}
@@ -4331,14 +4303,14 @@ const OutreachCenter = () => {
                       <Phone className="w-4 h-4" />
                     </div>
                     <div className="text-xs font-bold text-slate-900">{previewLead.phone}</div>
-                    <div className="text-[10px] text-slate-400 font-delight">Direct Carrier Gateway</div>
+                    <div className="text-xs text-slate-400 font-delight">Direct Carrier Gateway</div>
                   </div>
                   <div className="flex-1 bg-white p-3.5 overflow-y-auto flex flex-col min-h-[300px]">
                     <div 
                       className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white p-3 rounded-2xl rounded-br-xs self-end max-w-[88%] text-xs shadow-2xs whitespace-pre-wrap mb-1 font-sans leading-relaxed"
                       dangerouslySetInnerHTML={{ __html: renderPreviewHtml(templateData.body) }}
                     />
-                    <div className="text-[9px] text-slate-400 self-end mr-1 font-delight font-medium">Delivered</div>
+                    <div className="text-xs text-slate-400 self-end mr-1 font-delight font-medium">Delivered</div>
                   </div>
                 </div>
               )}
@@ -4407,6 +4379,21 @@ const OutreachCenter = () => {
         isOpen={isHistoryModalOpen}
         onClose={() => setIsHistoryModalOpen(false)}
         user={user}
+      />
+
+      {/* ============================================================ */}
+      {/* WHATSAPP BATCH OUTREACH QUEUE MODAL (30-CONTACT RELAY)       */}
+      {/* ============================================================ */}
+      <WhatsAppBatchQueueModal
+        isOpen={isWhatsAppQueueOpen}
+        onClose={() => setIsWhatsAppQueueOpen(false)}
+        leads={leadsList}
+        whatsAppMessage={whatsAppMessage}
+        whatsAppImage={whatsAppImage}
+        whatsAppPdf={whatsAppPdf}
+        resolvedBookingUrl={resolvedBookingUrl}
+        user={user}
+        onLeadsUpdated={fetchUserLeads}
       />
     </div>
   );
