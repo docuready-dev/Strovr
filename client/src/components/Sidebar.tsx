@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Users, BarChart3, Settings, 
   FolderKanban, HelpCircle, Search, Send, Users2, 
   Webhook, Waypoints, LogOut, Zap, ArrowUpRight,
-  Calendar, ShieldCheck, Lock
+  Calendar, ShieldCheck, Lock, Package
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { alertDialog } from './AppConfirmModal';
@@ -41,6 +41,7 @@ const toolsNav: NavItem[] = [
   { name: 'Analytics', icon: BarChart3, path: '/analytics' },
   { name: 'Integrations', icon: Webhook, path: '/integrations' },
   { name: 'Team', icon: Users, path: '/team' },
+  { name: 'Services Catalog', icon: Package, path: '/services' },
   { name: 'Settings', icon: Settings, path: '/settings' },
 ];
 

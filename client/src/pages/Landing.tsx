@@ -10,6 +10,7 @@ import { useStore } from '../store/useStore';
 import docuReadyBlackLogo from '../assets/DocuReady-black.png';
 import docuReadyWhiteLogo from '../assets/DocuReady-white.png';
 import strovrLogo from '../assets/strovr-logo.png';
+import { ServicesCatalogSection } from '../components/ServicesCatalogSection';
 
 const companies = [
   { name: 'Acme Corp', icon: Database },
@@ -295,6 +296,7 @@ const Landing = ({ onLogin }: { onLogin: () => void }) => {
           <div className="hidden md:flex items-center gap-7 text-[11px] font-delight font-bold tracking-widest uppercase text-[#57524B]">
             <a href="#product" className="hover:text-[#C85A32] transition-colors">Platform</a>
             <a href="#features" className="hover:text-[#C85A32] transition-colors">Capabilities</a>
+            <a href="#services" className="hover:text-[#C85A32] transition-colors">Services &amp; Catalog</a>
             <a href="#docuready" className="hover:text-[#C85A32] transition-colors">Why DocuReady</a>
             <a href="#pricing" className="hover:text-[#C85A32] transition-colors">Pricing</a>
           </div>
@@ -1068,6 +1070,9 @@ const Landing = ({ onLogin }: { onLogin: () => void }) => {
         </div>
       </section>
 
+      {/* ================= 6.5 SERVICES & ENGINEERING CATALOG (id="services") ================= */}
+      <ServicesCatalogSection id="services" />
+
       {/* ================= 7. DETAILED PRICING & BIFURCATION SECTION (id="pricing") ================= */}
       <section id="pricing" className="py-20 px-6 md:px-12 max-w-7xl mx-auto w-full relative z-10 scroll-mt-20 border-t border-[#E5E0D5]">
         <motion.div
@@ -1578,6 +1583,12 @@ const Landing = ({ onLogin }: { onLogin: () => void }) => {
 
             {/* Mandatory Regulatory & Legal Navigation Menu */}
             <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs font-delight font-semibold text-[#57524B]">
+              <Link 
+                to="/services" 
+                className="hover:text-[#C85A32] transition-colors cursor-pointer"
+              >
+                Services &amp; Catalog
+              </Link>
               <Link 
                 to="/terms" 
                 onClick={(e) => { if (!e.ctrlKey && !e.metaKey) { e.preventDefault(); setIsTermsOpen(true); } }} 
