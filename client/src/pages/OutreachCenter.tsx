@@ -592,7 +592,7 @@ const OutreachCenter = () => {
     }
   };
 
-  // Highlighting Renderer for text preview with merge tag styling
+  // Highlighting Renderer for text preview with natural styling
   const renderPreviewHtml = (text?: string) => {
     if (!text) return '';
     let rendered = text;
@@ -617,20 +617,20 @@ const OutreachCenter = () => {
     const senderEmail = user?.email || 'outreach@strovr.space';
     const senderCompany = user?.company_name || 'Strovr';
 
-    rendered = rendered.replace(/{{business_name}}/g, `<span class="bg-amber-100 text-amber-900 font-bold px-1 rounded">${bName}</span>`);
-    rendered = rendered.replace(/{{location}}/g, `<span class="bg-gray-100 text-accent font-bold px-1 rounded">${loc}</span>`);
-    rendered = rendered.replace(/{{field_of_work}}/g, `<span class="bg-purple-100 text-accent font-bold px-1 rounded">${fow}</span>`);
-    rendered = rendered.replace(/{{tag}}/g, `<span class="bg-purple-100 text-accent font-bold px-1 rounded">${tag}</span>`);
-    rendered = rendered.replace(/{{first_name}}/g, `<span class="bg-gray-100 text-accent font-bold px-1 rounded">${fName}</span>`);
-    rendered = rendered.replace(/{{phone}}/g, `<span class="bg-gray-200 text-gray-900 font-bold px-1 rounded">${phone}</span>`);
-    rendered = rendered.replace(/{{rating}}/g, `<span class="bg-amber-100 text-amber-900 font-bold px-1 rounded">${rating}</span>`);
-    rendered = rendered.replace(/{{(booking_link|calendly_link|appointment_link)}}/g, `<a href="${resolvedBookingUrl}" target="_blank" rel="noreferrer" class="bg-indigo-50 text-indigo-700 hover:text-indigo-900 border border-indigo-200 font-delight font-bold px-2 py-0.5 rounded underline inline-flex items-center gap-1 shadow-2xs"><span>Book an Appointment </span>↗</a>`);
-    rendered = rendered.replace(/\[Link\]/g, `<a href="${resolvedBookingUrl}" target="_blank" rel="noreferrer" class="bg-indigo-50 text-indigo-700 hover:text-indigo-900 border border-indigo-200 font-delight font-bold px-2 py-0.5 rounded underline inline-flex items-center gap-1 shadow-2xs"><span>[Select 15-Min Slot]</span>↗</a>`);
-    rendered = rendered.replace(/{{sender_name}}/g, `<span class="bg-blue-100 text-blue-900 font-bold px-1 rounded">${senderName}</span>`);
-    rendered = rendered.replace(/{{user_name}}/g, `<span class="bg-blue-100 text-blue-900 font-bold px-1 rounded">${senderName}</span>`);
-    rendered = rendered.replace(/{{sender_email}}/g, `<span class="bg-blue-100 text-blue-900 font-bold px-1 rounded">${senderEmail}</span>`);
-    rendered = rendered.replace(/{{user_email}}/g, `<span class="bg-blue-100 text-blue-900 font-bold px-1 rounded">${senderEmail}</span>`);
-    rendered = rendered.replace(/{{company_name}}/g, `<span class="bg-blue-100 text-blue-900 font-bold px-1 rounded">${senderCompany}</span>`);
+    rendered = rendered.replace(/{{business_name}}/g, bName);
+    rendered = rendered.replace(/{{location}}/g, loc);
+    rendered = rendered.replace(/{{field_of_work}}/g, fow);
+    rendered = rendered.replace(/{{tag}}/g, tag);
+    rendered = rendered.replace(/{{first_name}}/g, fName);
+    rendered = rendered.replace(/{{phone}}/g, phone);
+    rendered = rendered.replace(/{{rating}}/g, rating);
+    rendered = rendered.replace(/{{(booking_link|calendly_link|appointment_link)}}/g, `<a href="${resolvedBookingUrl}" target="_blank" rel="noreferrer" class="text-indigo-600 underline font-medium">Book Appointment ↗</a>`);
+    rendered = rendered.replace(/\[Link\]/g, `<a href="${resolvedBookingUrl}" target="_blank" rel="noreferrer" class="text-indigo-600 underline font-medium">[Select 15-Min Slot] ↗</a>`);
+    rendered = rendered.replace(/{{sender_name}}/g, senderName);
+    rendered = rendered.replace(/{{user_name}}/g, senderName);
+    rendered = rendered.replace(/{{sender_email}}/g, senderEmail);
+    rendered = rendered.replace(/{{user_email}}/g, senderEmail);
+    rendered = rendered.replace(/{{company_name}}/g, senderCompany);
     return rendered;
   };
 
@@ -1039,78 +1039,22 @@ const OutreachCenter = () => {
             </div>
           )}
 
-          {/* Architectural Transport & Scheduling Bar */}
-          <div className="shrink-0 bg-white border-b border-[#E5E0D5] px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 shadow-2xs">
-            <div className="flex flex-wrap items-center gap-4 text-xs font-delight">
-              <div className="flex items-center gap-2 text-slate-700">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Outbox:</span>
-                {connectedMailbox ? (
-                  <button
-                    type="button"
-                    onClick={() => setIsProviderModalOpen(true)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition-colors cursor-pointer"
-                    title="Click to view SendGrid outbox settings"
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    <span>{connectedMailbox.fromEmail || connectedMailbox.user}</span>
-                    <span className="text-xs text-emerald-700 font-bold">(SendGrid Active)</span>
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setIsProviderModalOpen(true)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 transition-colors cursor-pointer"
-                    title="No SendGrid outbox connected. Click to configure."
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                    <span>Outbox: Disconnected (SendGrid Setup Required)</span>
-                    <span className="underline font-bold ml-1">+ Connect</span>
-                  </button>
-                )}
-              </div>
-
-              <div className="h-4 w-px bg-slate-200 hidden sm:block" />
-
-              <div className="flex items-center gap-2 text-slate-700">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">WhatsApp:</span>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  <span>Direct Web Bridge · 100% Account Safe</span>
-                </span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setIsHistoryModalOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-delight font-semibold bg-white border border-[#E5E0D5] hover:bg-slate-50 text-slate-700 transition-colors cursor-pointer shadow-2xs"
-              >
-                <History className="w-3.5 h-3.5 text-slate-500" />
-                <span>Sent History</span>
-                <span className="text-xs font-bold text-slate-900 bg-slate-100 px-1.5 py-0.2 rounded">
-                  {user?.emails_sent || 0}/{user?.emails_limit || 50}
-                </span>
-              </button>
-            </div>
-          </div>
-
           <div className="flex-1 min-h-0 flex flex-col xl:flex-row overflow-hidden p-4 sm:p-5 gap-5">
           
           {/* ======================================================== */}
-          {/* LEFT: ARCHITECTURAL STUDIO COMPOSER                      */}
-          {/* ======================================================== */}
+          {/* LEFT: COMPOSER STUDIO */}
           <div className="w-full xl:w-1/2 flex flex-col h-full bg-white border border-[#E5E0D5] rounded-2xl overflow-hidden shadow-xs">
             
-            {/* Channel Tabs & A/B Testing */}
-            <div className="shrink-0 flex items-center justify-between border-b border-[#E5E0D5] bg-[#FAF8F5] px-4 py-2.5 gap-2">
-              <div className="flex gap-1.5 bg-white p-1 rounded-xl border border-slate-200/80 shadow-2xs">
+            {/* Clean Segmented Channel Header Bar */}
+            <div className="shrink-0 flex items-center justify-between border-b border-[#E5E0D5] bg-[#FAF8F5] px-4 py-2.5 gap-3">
+              {/* Channel Tabs */}
+              <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-[#E5E0D5] shadow-2xs">
                 <button 
                   onClick={() => setActiveChannel('email')}
-                  className={`px-3.5 py-1.5 text-xs font-delight flex items-center gap-2 rounded-lg transition-all cursor-pointer ${
+                  className={`px-3 py-1.5 text-xs font-delight font-medium flex items-center gap-2 rounded-lg transition-all cursor-pointer ${
                     activeChannel === 'email' 
-                      ? 'bg-[#191716] text-white font-semibold shadow-xs' 
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium'
+                      ? 'bg-[#191716] text-white shadow-xs' 
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
                   <Mail className="w-3.5 h-3.5" /> 
@@ -1118,654 +1062,283 @@ const OutreachCenter = () => {
                 </button>
                 <button 
                   onClick={() => setActiveChannel('whatsapp')}
-                  className={`px-3.5 py-1.5 text-xs font-delight flex items-center gap-2 rounded-lg transition-all cursor-pointer ${
+                  className={`px-3 py-1.5 text-xs font-delight font-medium flex items-center gap-2 rounded-lg transition-all cursor-pointer ${
                     activeChannel === 'whatsapp' 
-                      ? 'bg-[#1E6B52] text-white font-semibold shadow-xs' 
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium'
+                      ? 'bg-[#1E6B52] text-white shadow-xs' 
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
                   <MessageCircle className="w-3.5 h-3.5" /> 
-                  <span>WhatsApp API</span>
+                  <span>WhatsApp Outreach</span>
                 </button>
                 <button 
                   onClick={() => setActiveChannel('sms')}
-                  className={`px-3.5 py-1.5 text-xs font-delight flex items-center gap-2 rounded-lg transition-all cursor-pointer ${
+                  className={`px-3 py-1.5 text-xs font-delight font-medium flex items-center gap-2 rounded-lg transition-all cursor-pointer ${
                     activeChannel === 'sms' 
-                      ? 'bg-slate-700 text-white font-semibold shadow-xs' 
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium'
+                      ? 'bg-slate-700 text-white shadow-xs' 
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
                   <MessageSquare className="w-3.5 h-3.5" /> 
-                  <span>SMS Pathways</span>
+                  <span>SMS Gateway</span>
                 </button>
               </div>
               
-              <div className="flex items-center gap-2">
-                {(() => {
-                  const plan = (user?.plan || 'free').toLowerCase();
-                  const isSuperAdmin = (user?.role || '').toUpperCase() === 'SUPER_ADMIN' || user?.email?.toLowerCase().trim() === 'ashleyghose64@gmail.com';
-                  const isAbTestingLocked = plan === 'free' && !isSuperAdmin;
-
-                  return (
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        if (isAbTestingLocked) {
-                          await alertDialog({
-                            title: 'A/B Split Testing Locked on Free Tier',
-                            message: '50/50 A/B Split Testing is available on Basic (₹999/mo) and Pro (₹1,999/mo) tiers. Upgrade to test subject lines, layouts, and copy variants side-by-side.',
-                            variant: 'info'
-                          });
-                          setUpgradeTab('plans');
-                          setUpgradeModalOpen(true);
-                          return;
-                        }
-                        const next = !isAbTesting;
-                        setIsAbTesting(next);
-                        if (next) {
-                          setActiveVariant('A');
-                        }
-                      }}
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border transition-all cursor-pointer font-delight text-xs ${
-                        isAbTestingLocked
-                          ? 'bg-slate-100 border-slate-200 text-slate-400 opacity-60 hover:opacity-85'
-                          : isAbTesting 
-                            ? 'bg-indigo-50 border-indigo-300 text-indigo-700 font-semibold shadow-2xs' 
-                            : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:text-slate-900'
-                      }`}
-                      title={isAbTestingLocked ? 'A/B Split Testing (Requires Basic or Pro tier)' : 'Enable A/B split testing to compare Variant A and Variant B'}
-                    >
-                      {isAbTestingLocked ? (
-                        <Lock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                      ) : (
-                        <div className={`w-7 h-4 rounded-full relative transition-colors ${isAbTesting ? 'bg-indigo-600' : 'bg-slate-200'}`}>
-                          <div className={`w-3 h-3 rounded-full bg-white absolute top-0.5 transition-all ${isAbTesting ? 'left-3.5' : 'left-0.5'}`} />
-                        </div>
-                      )}
-                      <span className="text-xs font-semibold">A/B Split</span>
-                      {isAbTestingLocked && (
-                        <span className="text-xs font-bold px-1.5 py-0.2 rounded-sm bg-blue-100 text-blue-700 border border-blue-200 uppercase tracking-wider">
-                          BASIC
-                        </span>
-                      )}
-                    </button>
-                  );
-                })()}
-              </div>
-            </div>
-
-            {/* A/B Testing Variant Ribbon */}
-            {isAbTesting && (
-              <div className="px-4 py-2 bg-gradient-to-r from-indigo-900 via-slate-900 to-indigo-950 text-white border-b border-indigo-800/50 flex flex-wrap items-center justify-between gap-2.5">
+              {/* Header Right Actions */}
+              {activeChannel === 'whatsapp' ? (
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-delight uppercase tracking-wider text-indigo-200 font-bold">Variant:</span>
-                  <div className="flex items-center gap-1 bg-white/10 p-0.5 rounded-lg border border-white/15">
-                    <button
-                      type="button"
-                      onClick={() => setActiveVariant('A')}
-                      className={`px-3 py-1 rounded-md text-xs font-delight transition-all cursor-pointer flex items-center gap-1.5 ${
-                        activeVariant === 'A' 
-                          ? 'bg-white text-indigo-950 font-bold shadow-xs' 
-                          : 'text-indigo-200 hover:text-white'
-                      }`}
-                    >
-                      <span>Variant A (50%)</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setActiveVariant('B')}
-                      className={`px-3 py-1 rounded-md text-xs font-delight transition-all cursor-pointer flex items-center gap-1.5 ${
-                        activeVariant === 'B' 
-                          ? 'bg-white text-indigo-950 font-bold shadow-xs' 
-                          : 'text-indigo-200 hover:text-white'
-                      }`}
-                    >
-                      <span>Variant B (50%)</span>
-                    </button>
-                  </div>
+                  <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-delight font-medium bg-emerald-50 text-emerald-800 border border-emerald-200">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span>Direct Web Bridge</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setIsWhatsAppQueueOpen(true)}
+                    className="bg-[#1E6B52] hover:bg-[#165440] text-white px-3 py-1.5 rounded-lg text-xs font-delight font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    title="Launch 30-Contact WhatsApp Batch Queue"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    <span>Batch Queue (30)</span>
+                  </button>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (activeChannel === 'email') {
-                      setTemplateDataB({
-                        ...templateDataA,
-                        subject: `Alternative: ${templateDataA.subject || 'Growth inquiry for {{business_name}}'}`,
-                        preheader: `Exclusive proposal for {{business_name}}`,
-                        ctaText: 'Claim Priority Offer &rarr;'
-                      });
-                    } else {
-                      setWhatsAppMessageB(whatsAppMessageA + "\n\nPS: Also wanted to share this alternative proposal.");
-                    }
-                    setActiveVariant('B');
-                  }}
-                  className="text-xs font-delight bg-white/15 hover:bg-white/25 text-white border border-white/20 px-3 py-1 rounded-md transition-colors cursor-pointer flex items-center gap-1.5 font-semibold"
-                >
-                  <Copy className="w-3 h-3 text-slate-300" />
-                  <span>Clone A &rarr; B</span>
-                </button>
-              </div>
-            )}
-
-            {/* Email Template Selector Bar */}
-            {activeChannel === 'email' && (
-              <div className="px-4 py-2.5 border-b border-slate-100 bg-white flex flex-wrap items-center justify-between gap-2.5">
+              ) : activeChannel === 'email' ? (
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setIsGalleryOpen(true)}
-                    className="bg-gradient-to-r from-indigo-50/60 to-purple-50/40 hover:from-indigo-100/80 hover:to-purple-100/60 border border-indigo-200/80 text-indigo-950 px-3 py-1.5 rounded-lg text-xs font-delight font-bold transition-all flex items-center gap-2 cursor-pointer shadow-2xs group"
+                    className="bg-white hover:bg-slate-50 border border-[#E5E0D5] text-slate-800 px-2.5 py-1.5 rounded-lg text-xs font-delight font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                    title="Change Email Template Layout"
                   >
-                    <Layout className="w-3.5 h-3.5 text-indigo-600 group-hover:scale-105 transition-transform" />
-                    <span>{activeTemplateConfig.name}</span>
-                    <span className="text-xs font-delight font-medium text-indigo-500 bg-white px-1.5 py-0.2 rounded-md border border-indigo-200/60">Change (8)</span>
+                    <Layout className="w-3.5 h-3.5 text-slate-500" />
+                    <span className="max-w-[120px] truncate">{activeTemplateConfig.name}</span>
+                    <ChevronDown className="w-3 h-3 text-slate-400" />
                   </button>
 
                   <button
                     onClick={() => setIsProviderModalOpen(true)}
-                    className={`border px-2.5 py-1.5 rounded-lg text-xs font-delight font-semibold transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs ${
+                    className={`border px-2.5 py-1.5 rounded-lg text-xs font-delight font-medium transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs ${
                       connectedMailbox 
-                        ? 'bg-emerald-50/70 border-emerald-200 text-emerald-800 hover:bg-emerald-100/70' 
-                        : 'bg-amber-50/80 border-amber-200 text-amber-900 hover:bg-amber-100/80'
+                        ? 'bg-emerald-50 border-emerald-200 text-emerald-800' 
+                        : 'bg-amber-50 border-amber-200 text-amber-900'
                     }`}
-                    title={connectedMailbox ? `Outbox: ${connectedMailbox.fromEmail || connectedMailbox.user} (SendGrid Web API)` : "No SendGrid Outbox Connected - Click to configure"}
+                    title={connectedMailbox ? `Outbox: ${connectedMailbox.fromEmail || connectedMailbox.user} (SendGrid Active)` : "No SendGrid Outbox Connected - Click to configure"}
                   >
                     <span className={`w-1.5 h-1.5 rounded-full ${connectedMailbox ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
-                    <span>Outbox: {connectedMailbox ? `${connectedMailbox.fromEmail || connectedMailbox.user}` : 'Disconnected (SendGrid Setup Required)'}</span>
+                    <span className="hidden sm:inline">{connectedMailbox ? 'SendGrid Active' : 'Setup Outbox'}</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setIsHistoryModalOpen(true)}
-                    className="border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 hover:text-indigo-700 hover:border-indigo-200 px-3 py-1.5 rounded-lg text-xs font-delight font-semibold transition-colors flex items-center gap-2 cursor-pointer shadow-2xs"
-                    title="View dispatch history and read sent emails"
+                    className="border border-[#E5E0D5] bg-white hover:bg-slate-50 text-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-delight font-medium transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                    title="View dispatch history"
                   >
-                    <History className="w-3.5 h-3.5 text-indigo-600" />
-                    <span>Sent History</span>
-                    <span className="text-xs font-bold text-indigo-900 bg-indigo-50 border border-indigo-200/80 px-1.5 py-0.5 rounded-md">
-                      {user?.emails_sent || 0}/{user?.emails_limit || 50}
-                    </span>
+                    <History className="w-3.5 h-3.5 text-slate-500" />
+                    <span>{user?.emails_sent || 0}/{user?.emails_limit || 50}</span>
                   </button>
                 </div>
-
-                <div className="flex items-center gap-2">
-                  {/* Click-to-Use Copywriting Studio Trigger Button */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditorLayer('content');
-                      setIsCopilotOpen(prev => !prev);
-                    }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-delight font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
-                      isCopilotOpen
-                        ? 'bg-[#191716] text-white border-[#191716] shadow-xs'
-                        : 'bg-[#FAF8F5] hover:bg-[#F5F3EF] text-slate-800 border-[#E5E0D5] shadow-2xs'
-                    }`}
-                  >
-                    <Edit3 className="w-3.5 h-3.5 text-slate-700" />
-                    <span>Copywriting Studio</span>
-                  </button>
-
-                  {/* Two-Layer Architecture Switcher */}
-                  <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200/80 text-xs font-delight">
-                    <button
-                      onClick={() => setEditorLayer('content')}
-                      className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 cursor-pointer ${
-                        editorLayer === 'content' ? 'bg-white text-indigo-900 font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900 font-medium'
-                      }`}
-                    >
-                      <Edit3 className="w-3 h-3" />
-                      <span>Copy</span>
-                    </button>
-                    <button
-                      onClick={() => setEditorLayer('template')}
-                      className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 cursor-pointer ${
-                        editorLayer === 'template' ? 'bg-white text-indigo-900 font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900 font-medium'
-                      }`}
-                    >
-                      <Sliders className="w-3 h-3" />
-                      <span>Style</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* WhatsApp Top Toolbar */}
-            {activeChannel === 'whatsapp' && (
-              <div className="px-4 py-2.5 border-b border-[#E5E0D5] bg-[#FAF8F5] flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-xs font-delight">
-                  <span className="text-slate-500 font-medium">Selected Angle:</span>
-                  <span className="font-bold text-slate-900 bg-white text-emerald-900 px-3 py-1 rounded-lg border border-[#E5E0D5] shadow-2xs">
-                    {WHATSAPP_TEMPLATES.find(t => t.id === selectedWhatsAppId)?.name || 'The Local Compliment Hook'}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsWhatsAppQueueOpen(true)}
-                    className="bg-[#1E6B52] hover:bg-[#165440] text-white px-3.5 py-1.5 rounded-lg text-xs font-delight font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
-                    title="Launch 30-contact click-to-send WhatsApp queue"
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                    <span>Launch 30-Contact Queue</span>
-                  </button>
-
-                  <button
-                    onClick={handleCopyWhatsApp}
-                    className="bg-white border border-[#E5E0D5] hover:border-slate-300 hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-delight font-semibold transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                  >
-                    {copiedWhatsApp ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
-                    <span>{copiedWhatsApp ? 'Copied' : 'Copy'}</span>
-                  </button>
-
-                  <button
-                    onClick={() => handleOpenWhatsAppWeb(previewLead)}
-                    className="bg-white hover:bg-slate-50 border border-[#E5E0D5] text-slate-800 px-3 py-1.5 rounded-lg text-xs font-delight font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
-                    <span>Single Send</span>
-                  </button>
-                </div>
-              </div>
-            )}
+              ) : null}
+            </div>
 
             {/* Editor Body */}
             <div className="p-5 flex-1 min-h-0 overflow-y-auto custom-scrollbar flex flex-col space-y-4 bg-white">
               
               {/* WHATSAPP TAB VIEW */}
               {activeChannel === 'whatsapp' && (
-                <div className="space-y-4">
-                  {/* 10 Structured WhatsApp Hook Selector Pills */}
-                  <div className="border border-[#E5E0D5] rounded-xl p-4 bg-[#FAF8F5] shadow-2xs">
-                    <div className="flex items-center justify-between mb-3">
-                      <div>
-                        <label className="text-xs font-delight font-bold text-slate-900 flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-[#1E6B52]" />
-                          <span>01. Conversational Hooks</span>
-                        </label>
-                        <p className="text-xs text-slate-500 mt-0.5">
-                          Select a proven high-reply angle tailored for B2B prospects.
-                        </p>
-                      </div>
-                      <span className="text-xs font-delight font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                        {WHATSAPP_TEMPLATES.length} Angles
-                      </span>
+                <div className="space-y-4 font-delight font-medium">
+                  
+                  {/* SECTION 1: CONVERSATIONAL ANGLE SELECTOR (Compact 1-Row, Zero Truncation) */}
+                  <div className="p-3 rounded-xl border border-[#E5E0D5] bg-[#FAF8F5] shadow-2xs space-y-1.5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <label className="text-xs font-delight font-medium text-slate-700 flex items-center gap-2 shrink-0">
+                        <span className="w-2 h-2 rounded-full bg-[#1E6B52]" />
+                        <span className="font-semibold text-slate-900">01. Conversational Angle:</span>
+                      </label>
+                      <select
+                        value={selectedWhatsAppId}
+                        onChange={(e) => {
+                          const tpl = WHATSAPP_TEMPLATES.find(t => t.id === e.target.value);
+                          if (tpl) handleSelectWhatsAppTemplate(tpl);
+                        }}
+                        className="bg-white border border-[#E5E0D5] focus:border-[#1E6B52] rounded-lg px-3 py-1.5 text-xs font-delight font-medium text-slate-900 outline-none cursor-pointer flex-1 sm:max-w-md shadow-2xs"
+                      >
+                        {WHATSAPP_TEMPLATES.map((tpl) => (
+                          <option key={tpl.id} value={tpl.id}>
+                            {tpl.name} — {tpl.hookType} ({tpl.badge})
+                          </option>
+                        ))}
+                      </select>
                     </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-56 overflow-y-auto pr-1 custom-scrollbar">
-                      {WHATSAPP_TEMPLATES.map((tpl) => {
-                        const isSelected = selectedWhatsAppId === tpl.id;
-                        return (
-                          <button
-                            key={tpl.id}
-                            type="button"
-                            onClick={() => handleSelectWhatsAppTemplate(tpl)}
-                            className={`text-left p-3 rounded-xl border text-xs transition-all flex flex-col justify-between cursor-pointer ${
-                              isSelected 
-                                ? 'bg-[#1E6B52] text-white border-[#1E6B52] shadow-xs ring-1 ring-[#1E6B52]' 
-                                : 'bg-white border-[#E5E0D5] hover:border-slate-400 text-slate-800 shadow-2xs'
-                            }`}
-                          >
-                            <div className="flex items-center justify-between w-full mb-1">
-                              <span className="font-delight font-bold truncate text-xs">{tpl.name}</span>
-                              <span className={`text-xs font-delight font-medium px-2 py-0.5 rounded-md shrink-0 ml-1.5 ${
-                                isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'
-                              }`}>
-                                {tpl.badge}
-                              </span>
-                            </div>
-                            <span className={`text-xs font-medium line-clamp-1 ${isSelected ? 'text-emerald-100' : 'text-slate-500'}`}>
-                              {tpl.hookType}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
+                    <p className="text-xs text-slate-500 font-normal pl-4 truncate">
+                      {WHATSAPP_TEMPLATES.find(t => t.id === selectedWhatsAppId)?.description.replace(/{{location}}/g, previewLead.location)}
+                    </p>
                   </div>
 
-                  {/* Merge Tags & Message Body */}
-                  <div className="border border-[#E5E0D5] rounded-xl overflow-hidden shadow-2xs bg-white">
-                    <div className="px-4 py-3 bg-[#FAF8F5] border-b border-[#E5E0D5] flex items-center justify-between flex-wrap gap-2">
-                      <div>
-                        <label className="text-xs font-delight font-bold text-slate-900 flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-[#1E6B52]" />
-                          <span>02. Message Text</span>
-                        </label>
-                        <p className="text-xs text-slate-500 mt-0.5">
-                          Personalize your message with prospect merge tags.
-                        </p>
+                  {/* SECTION 2: MESSAGE TEXT & MERGE TAGS (Prominent, High-Visibility Textarea) */}
+                  <div className="rounded-xl border border-[#E5E0D5] overflow-hidden bg-white shadow-2xs flex flex-col">
+                    {/* Header Strip with Tags */}
+                    <div className="px-4 py-2.5 bg-[#FAF8F5] border-b border-[#E5E0D5] flex items-center justify-between flex-wrap gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-delight font-semibold text-slate-900">02. Message Text</span>
+                        <span className="text-xs text-slate-400 font-normal">
+                          ({whatsAppMessage.length} chars · ~{whatsAppMessage.trim().split(/\s+/).filter(Boolean).length} words)
+                        </span>
                       </div>
-                      <div className="text-xs text-slate-500 font-delight">
-                        {whatsAppMessage.length} characters · ~{whatsAppMessage.trim().split(/\s+/).filter(Boolean).length} words
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-xs font-medium text-slate-400">Insert:</span>
+                        {[
+                          { tag: '{{business_name}}', label: 'Business Name' },
+                          { tag: '{{first_name}}', label: 'First Name' },
+                          { tag: '{{location}}', label: 'Location' },
+                          { tag: '{{booking_link}}', label: 'Booking Link' }
+                        ].map(({ tag, label }) => (
+                          <button
+                            key={tag}
+                            type="button"
+                            onClick={() => insertTag(tag)}
+                            className="text-xs font-medium px-2.5 py-1 rounded-md bg-white hover:bg-slate-100 text-slate-700 border border-[#E5E0D5] transition-colors cursor-pointer shadow-2xs"
+                          >
+                            + {label}
+                          </button>
+                        ))}
                       </div>
                     </div>
 
-                    {/* Clean Merge Tags Bar */}
-                    <div className="px-4 py-2 bg-white border-b border-slate-100 flex items-center gap-1.5 flex-wrap">
-                      <span className="text-xs font-delight font-semibold text-slate-400 mr-1">Insert:</span>
-                      {[
-                        { tag: '{{business_name}}', label: 'Business Name' },
-                        { tag: '{{first_name}}', label: 'First Name' },
-                        { tag: '{{location}}', label: 'Location' },
-                        { tag: '{{field_of_work}}', label: 'Industry' },
-                        { tag: '{{phone}}', label: 'Phone' },
-                        { tag: '{{booking_link}}', label: 'Booking Link' }
-                      ].map(({ tag, label }) => (
-                        <button
-                          key={tag}
-                          type="button"
-                          onClick={() => insertTag(tag)}
-                          className="text-xs font-delight font-medium px-2.5 py-1 rounded-lg bg-[#FAF8F5] hover:bg-slate-100 text-slate-700 border border-[#E5E0D5] transition-colors cursor-pointer"
-                        >
-                          + {label}
-                        </button>
-                      ))}
-                    </div>
-
+                    {/* Generous Textarea */}
                     <textarea 
-                      rows={7}
+                      rows={8}
                       value={whatsAppMessage}
                       onChange={(e) => setWhatsAppMessage(e.target.value)}
-                      placeholder="Compose your personalized WhatsApp outreach..."
-                      className="w-full p-4 text-xs sm:text-sm font-sans outline-none leading-relaxed bg-white border-0 text-slate-800 placeholder:text-slate-400 resize-y min-h-[140px]"
+                      placeholder="Type your WhatsApp outreach message..."
+                      className="w-full p-4 text-xs sm:text-sm font-sans outline-none leading-relaxed text-slate-800 placeholder:text-slate-400 border-0 resize-y min-h-[170px]"
                     />
                   </div>
 
-                  {/* Deliverables & Media Collateral (Picture + PDF) */}
-                  <div className="border border-[#E5E0D5] rounded-xl p-4 bg-[#FAF8F5] shadow-2xs space-y-4">
-                    {/* Header Strip */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-slate-200">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-md bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700">
-                            <Paperclip className="w-3.5 h-3.5" />
-                          </div>
-                          <label className="text-xs font-delight font-bold text-slate-900">
-                            03. Deliverables &amp; Media Collateral
-                          </label>
-                          <span className="text-xs font-delight font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
-                            Picture + PDF
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-500 mt-1">
-                          Attach promotional visuals and PDF pitch decks or brochures sent alongside your message.
-                        </p>
+                  {/* SECTION 3: DELIVERABLES & MEDIA COLLATERAL (Side-by-Side Cards) */}
+                  <div className="p-4 rounded-xl border border-[#E5E0D5] bg-[#FAF8F5] space-y-3 shadow-2xs">
+                    <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+                      <div className="flex items-center gap-2">
+                        <Paperclip className="w-3.5 h-3.5 text-slate-600" />
+                        <span className="text-xs font-semibold text-slate-900">03. Attached Deliverables (PDF & Picture)</span>
                       </div>
-
-                      <div className="flex items-center gap-2 flex-wrap">
+                      <div className="flex items-center gap-2">
                         <button
                           type="button"
                           onClick={() => handleApplyMediaPreset(WHATSAPP_MEDIA_PRESETS[0])}
-                          className="text-xs font-delight font-semibold px-3 py-1.5 rounded-lg bg-slate-900 text-white hover:bg-slate-800 transition-colors cursor-pointer shadow-xs flex items-center gap-1.5"
-                          title="Load Executive Presentation & Analytics Deck"
+                          className="text-xs font-medium px-2.5 py-1 rounded-md bg-white border border-[#E5E0D5] text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer"
                         >
-                          <Paperclip className="w-3 h-3 text-slate-300" />
-                          <span>Load Executive Pack</span>
+                          Load Standard Deck
                         </button>
-
                         {(whatsAppImage.enabled || whatsAppPdf.enabled) && (
                           <button
                             type="button"
                             onClick={handleCopyMediaLinks}
-                            className="text-xs font-delight font-semibold px-3 py-1.5 rounded-lg bg-white border border-[#E5E0D5] text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer flex items-center gap-1.5"
-                            title="Copy file links to clipboard"
+                            className="text-xs font-medium px-2.5 py-1 rounded-md bg-white border border-[#E5E0D5] text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer"
                           >
-                            {copiedMediaLinks ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3 text-slate-400" />}
-                            <span>{copiedMediaLinks ? 'Links Copied' : 'Copy File Links'}</span>
+                            {copiedMediaLinks ? 'Links Copied' : 'Copy File Links'}
                           </button>
                         )}
                       </div>
                     </div>
 
-                    {/* Presets Quick-Select Chips */}
-                    <div className="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar">
-                      <span className="text-xs font-delight font-bold text-slate-400 shrink-0">
-                        Presets:
-                      </span>
-                      {WHATSAPP_MEDIA_PRESETS.map((preset) => {
-                        const isCurrent = activeMediaPresetId === preset.id && whatsAppImage.enabled && whatsAppPdf.enabled;
-                        return (
-                          <button
-                            key={preset.id}
-                            type="button"
-                            onClick={() => handleApplyMediaPreset(preset)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-delight font-semibold border transition-all cursor-pointer shrink-0 flex items-center gap-1.5 ${
-                              isCurrent
-                                ? 'bg-emerald-50 text-emerald-900 border-emerald-300 shadow-xs'
-                                : 'bg-white text-slate-700 border-[#E5E0D5] hover:bg-slate-50'
-                            }`}
-                          >
-                            <span>{preset.title}</span>
-                            <span className="text-xs text-slate-500 px-1.5 py-0.2 rounded bg-slate-100">
-                              {preset.badge}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    {/* Two Column Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      
-                      {/* CARD 1: PICTURE / IMAGE ATTACHMENT */}
-                      <div className={`p-4 rounded-xl border transition-all ${
-                        whatsAppImage.enabled ? 'bg-white border-[#1E6B52]/40 shadow-xs' : 'bg-slate-50 border-[#E5E0D5] opacity-80'
-                      }`}>
-                        <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-[#1E6B52] border border-emerald-200 flex items-center justify-center">
-                              <Image className="w-4 h-4" />
-                            </div>
-                            <div>
-                              <div className="text-xs font-delight font-bold text-slate-900">Picture Attachment</div>
-                              <div className="text-xs text-slate-500">Visual banner in chat</div>
-                            </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                      {/* Visual Graphic Card */}
+                      <div className={`p-3.5 rounded-xl border transition-all ${whatsAppImage.enabled ? 'bg-white border-emerald-300 shadow-2xs' : 'bg-slate-50 border-slate-200 opacity-70'}`}>
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <Image className="w-3.5 h-3.5 text-emerald-700" />
+                            <span className="font-semibold text-slate-800">Visual Attachment</span>
                           </div>
                           <button
                             type="button"
                             onClick={() => setWhatsAppImage(prev => ({ ...prev, enabled: !prev.enabled }))}
-                            className={`px-3 py-1 rounded-full text-xs font-delight font-bold transition-all cursor-pointer ${
-                              whatsAppImage.enabled ? 'bg-[#1E6B52] text-white' : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
-                            }`}
+                            className={`px-2.5 py-0.5 rounded-full text-xs font-medium cursor-pointer transition-all ${whatsAppImage.enabled ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-700'}`}
                           >
                             {whatsAppImage.enabled ? 'Attached' : '+ Attach'}
                           </button>
                         </div>
-
-                        {whatsAppImage.enabled ? (
-                          <div className="space-y-3 text-xs">
-                            <div className="rounded-lg overflow-hidden border border-slate-200 bg-slate-50 flex items-center gap-3 p-2.5">
-                              <div className="w-14 h-14 rounded-md overflow-hidden bg-slate-200 shrink-0 border border-slate-300">
-                                <img 
-                                  src={whatsAppImage.url} 
-                                  alt="Preview" 
-                                  className="w-full h-full object-cover"
-                                  onError={(e) => {
-                                    (e.target as any).src = 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&auto=format&fit=crop&q=80';
-                                  }}
-                                />
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <div className="font-delight font-bold text-slate-900 truncate">
-                                  {whatsAppImage.fileName || 'Visual_Preview.jpg'}
-                                </div>
-                                <div className="text-xs text-slate-500 truncate mt-0.5">
-                                  {whatsAppImage.caption || 'Analytics Overview'}
-                                </div>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => setWhatsAppImage(prev => ({ ...prev, enabled: false }))}
-                                className="p-1 rounded text-slate-400 hover:text-rose-600 transition-colors"
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
-                            </div>
-
-                            <div>
-                              <label className="block text-xs font-delight font-semibold text-slate-700 mb-1">
-                                Image URL / Source
-                              </label>
-                              <div className="flex items-center gap-2">
-                                <input 
-                                  type="url"
-                                  value={whatsAppImage.url}
-                                  onChange={(e) => setWhatsAppImage({ ...whatsAppImage, url: e.target.value })}
-                                  placeholder="https://example.com/image.jpg"
-                                  className="flex-1 bg-white border border-[#E5E0D5] rounded-lg px-3 py-2 text-xs font-mono outline-none focus:border-[#1E6B52]"
-                                />
-                                <label className="px-3 py-2 bg-slate-100 hover:bg-slate-200 border border-[#E5E0D5] rounded-lg text-xs font-delight font-semibold text-slate-700 cursor-pointer transition-colors flex items-center gap-1.5 shrink-0">
-                                  <Upload className="w-3.5 h-3.5" />
-                                  <span>Upload</span>
-                                  <input 
-                                    type="file" 
-                                    accept="image/*" 
-                                    onChange={handleImageFileUpload}
-                                    className="hidden" 
-                                  />
-                                </label>
-                              </div>
-                            </div>
-
-                            <div>
-                              <label className="block text-xs font-delight font-semibold text-slate-700 mb-1">
-                                Caption / Title
-                              </label>
-                              <input 
-                                type="text"
-                                value={whatsAppImage.caption || ''}
-                                onChange={(e) => setWhatsAppImage({ ...whatsAppImage, caption: e.target.value })}
-                                placeholder="e.g. Growth Analytics & Deliverability Metrics"
-                                className="w-full bg-white border border-[#E5E0D5] rounded-lg px-3 py-2 text-xs font-delight outline-none focus:border-[#1E6B52]"
+                        {whatsAppImage.enabled && (
+                          <div className="space-y-2 mt-2">
+                            <div className="flex items-center gap-1.5">
+                              <input
+                                type="url"
+                                value={whatsAppImage.url}
+                                onChange={(e) => setWhatsAppImage({ ...whatsAppImage, url: e.target.value })}
+                                placeholder="Image URL..."
+                                className="flex-1 bg-white border border-[#E5E0D5] rounded-lg px-2.5 py-1.5 text-xs font-mono outline-none"
                               />
+                              <label className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 border border-[#E5E0D5] rounded-lg text-xs font-medium text-slate-700 cursor-pointer shrink-0">
+                                <Upload className="w-3 h-3 inline mr-1" />
+                                Upload
+                                <input type="file" accept="image/*" onChange={handleImageFileUpload} className="hidden" />
+                              </label>
                             </div>
-                          </div>
-                        ) : (
-                          <div className="py-4 text-center text-xs text-slate-400 font-delight">
-                            Image attachment inactive. Click "+ Attach" to include a visual asset.
+                            <input
+                              type="text"
+                              value={whatsAppImage.caption || ''}
+                              onChange={(e) => setWhatsAppImage({ ...whatsAppImage, caption: e.target.value })}
+                              placeholder="Caption / Description..."
+                              className="w-full bg-white border border-[#E5E0D5] rounded-lg px-2.5 py-1.5 text-xs outline-none"
+                            />
                           </div>
                         )}
                       </div>
 
-                      {/* CARD 2: PDF DOCUMENT ATTACHMENT */}
-                      <div className={`p-4 rounded-xl border transition-all ${
-                        whatsAppPdf.enabled ? 'bg-white border-[#1E6B52]/40 shadow-xs' : 'bg-slate-50 border-[#E5E0D5] opacity-80'
-                      }`}>
-                        <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 flex items-center justify-center">
-                              <FileText className="w-4 h-4" />
-                            </div>
-                            <div>
-                              <div className="text-xs font-delight font-bold text-slate-900">PDF Document</div>
-                              <div className="text-xs text-slate-500">Document card in chat</div>
-                            </div>
+                      {/* PDF Document Card */}
+                      <div className={`p-3.5 rounded-xl border transition-all ${whatsAppPdf.enabled ? 'bg-white border-rose-300 shadow-2xs' : 'bg-slate-50 border-slate-200 opacity-70'}`}>
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <FileText className="w-3.5 h-3.5 text-rose-700" />
+                            <span className="font-semibold text-slate-800">PDF Pitch Deck</span>
                           </div>
                           <button
                             type="button"
                             onClick={() => setWhatsAppPdf(prev => ({ ...prev, enabled: !prev.enabled }))}
-                            className={`px-3 py-1 rounded-full text-xs font-delight font-bold transition-all cursor-pointer ${
-                              whatsAppPdf.enabled ? 'bg-rose-700 text-white' : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
-                            }`}
+                            className={`px-2.5 py-0.5 rounded-full text-xs font-medium cursor-pointer transition-all ${whatsAppPdf.enabled ? 'bg-rose-600 text-white' : 'bg-slate-200 text-slate-700'}`}
                           >
                             {whatsAppPdf.enabled ? 'Attached' : '+ Attach'}
                           </button>
                         </div>
-
-                        {whatsAppPdf.enabled ? (
-                          <div className="space-y-3 text-xs">
-                            <div className="rounded-lg border border-rose-200 bg-rose-50/40 p-2.5 flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-lg bg-rose-600 text-white flex flex-col items-center justify-center shrink-0">
-                                <FileText className="w-5 h-5" />
-                                <span className="text-[8px] font-black uppercase leading-none mt-0.5">PDF</span>
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <div className="font-delight font-bold text-slate-900 truncate text-xs">
-                                  {whatsAppPdf.fileName.replace(/{{business_name}}/g, previewLead.businessName) || 'Document.pdf'}
-                                </div>
-                                <div className="text-xs text-slate-500 font-medium mt-0.5 flex items-center gap-1.5">
-                                  <span>{whatsAppPdf.pageCount || '6 pages'}</span>
-                                  <span>•</span>
-                                  <span>{whatsAppPdf.fileSize || '2.4 MB'}</span>
-                                </div>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => setWhatsAppPdf(prev => ({ ...prev, enabled: false }))}
-                                className="p-1 rounded text-slate-400 hover:text-rose-600 transition-colors"
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
-                            </div>
-
-                            <div>
-                              <label className="block text-xs font-delight font-semibold text-slate-700 mb-1">
-                                File Name (Supports &#123;&#123;business_name&#125;&#125;)
-                              </label>
-                              <input 
-                                type="text"
-                                value={whatsAppPdf.fileName}
-                                onChange={(e) => setWhatsAppPdf({ ...whatsAppPdf, fileName: e.target.value })}
-                                placeholder="e.g. {{business_name}}_Growth_Blueprint.pdf"
-                                className="w-full bg-white border border-[#E5E0D5] rounded-lg px-3 py-2 text-xs font-mono outline-none focus:border-rose-500"
+                        {whatsAppPdf.enabled && (
+                          <div className="space-y-2 mt-2">
+                            <div className="flex items-center gap-1.5">
+                              <input
+                                type="url"
+                                value={whatsAppPdf.url}
+                                onChange={(e) => setWhatsAppPdf({ ...whatsAppPdf, url: e.target.value })}
+                                placeholder="PDF Hosted URL..."
+                                className="flex-1 bg-white border border-[#E5E0D5] rounded-lg px-2.5 py-1.5 text-xs font-mono outline-none"
                               />
+                              <label className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 border border-[#E5E0D5] rounded-lg text-xs font-medium text-slate-700 cursor-pointer shrink-0">
+                                <Upload className="w-3 h-3 inline mr-1" />
+                                Upload
+                                <input type="file" accept=".pdf,application/pdf" onChange={handlePdfFileUpload} className="hidden" />
+                              </label>
                             </div>
-
-                            <div className="flex items-center gap-2">
-                              <div className="flex-1 min-w-0">
-                                <label className="block text-xs font-delight font-semibold text-slate-700 mb-1">
-                                  Document Hosted URL
-                                </label>
-                                <input 
-                                  type="url"
-                                  value={whatsAppPdf.url}
-                                  onChange={(e) => setWhatsAppPdf({ ...whatsAppPdf, url: e.target.value })}
-                                  placeholder="https://www.strovr.space/deck.pdf"
-                                  className="w-full bg-white border border-[#E5E0D5] rounded-lg px-3 py-2 text-xs font-mono outline-none focus:border-rose-500"
-                                />
-                              </div>
-                              <div className="shrink-0 flex flex-col justify-end">
-                                <label className="px-3 py-2 bg-slate-100 hover:bg-slate-200 border border-[#E5E0D5] rounded-lg text-xs font-delight font-semibold text-slate-700 cursor-pointer transition-colors flex items-center gap-1.5 mt-5">
-                                  <Upload className="w-3.5 h-3.5" />
-                                  <span>Upload PDF</span>
-                                  <input 
-                                    type="file" 
-                                    accept=".pdf,application/pdf" 
-                                    onChange={handlePdfFileUpload}
-                                    className="hidden" 
-                                  />
-                                </label>
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="py-4 text-center text-xs text-slate-400 font-delight">
-                            PDF attachment inactive. Click "+ Attach" to include a presentation or brochure.
+                            <input
+                              type="text"
+                              value={whatsAppPdf.fileName}
+                              onChange={(e) => setWhatsAppPdf({ ...whatsAppPdf, fileName: e.target.value })}
+                              placeholder="e.g. {{business_name}}_Growth_Blueprint.pdf"
+                              className="w-full bg-white border border-[#E5E0D5] rounded-lg px-2.5 py-1.5 text-xs outline-none"
+                            />
                           </div>
                         )}
                       </div>
-
                     </div>
-
                   </div>
 
-                  {/* Organic Email-Capture Bridge Feature */}
-                  <div className="border border-[#E5E0D5] rounded-xl p-4 bg-white flex items-center justify-between gap-3 shadow-2xs">
+                  {/* SECTION 4: EMAIL CAPTURE BRIDGE */}
+                  <div className="p-3.5 rounded-xl border border-[#E5E0D5] bg-white flex items-center justify-between gap-3 text-xs shadow-2xs">
                     <div className="min-w-0">
-                      <div className="text-xs font-delight font-bold text-slate-900 flex items-center gap-1.5">
-                        <MessageSquare className="w-3.5 h-3.5 text-[#1E6B52]" />
-                        <span>04. Follow-Up Script: Email Capture Bridge</span>
-                      </div>
-                      <p className="text-xs text-slate-600 truncate mt-0.5 font-medium">
+                      <span className="font-semibold text-slate-900 block">04. Follow-up Bridge:</span>
+                      <p className="text-slate-500 truncate font-normal mt-0.5">
                         "{EMAIL_CAPTURE_BRIDGE_SCRIPT}"
                       </p>
                     </div>
                     <button
                       type="button"
                       onClick={handleInsertBridgeScript}
-                      className="bg-white hover:bg-emerald-50 text-emerald-800 border border-[#E5E0D5] text-xs font-delight font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer shrink-0 shadow-2xs"
+                      className="px-3 py-1.5 bg-[#FAF8F5] hover:bg-slate-100 border border-[#E5E0D5] text-slate-800 rounded-lg font-medium shrink-0 cursor-pointer shadow-2xs"
                     >
                       + Append Bridge
                     </button>
@@ -1804,210 +1377,35 @@ const OutreachCenter = () => {
                   {editorLayer === 'content' && (
                     <div className="space-y-4">
                       
-                      {/* CLICK-TO-USE COPYWRITING STUDIO (Collapsed Trigger vs. Dedicated Card View) */}
-                      {!isCopilotOpen ? (
-                        <div
-                          onClick={() => setIsCopilotOpen(true)}
-                          className="group border border-[#E5E0D5] hover:border-slate-400 bg-[#FAF8F5] hover:bg-[#F5F3EF] rounded-2xl px-4 py-3.5 flex items-center justify-between gap-3 cursor-pointer transition-all shadow-xs"
-                        >
-                          <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-9 h-9 rounded-xl bg-[#191716] flex items-center justify-center text-white shadow-2xs shrink-0">
-                              <Edit3 className="w-4 h-4" />
-                            </div>
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs font-delight font-bold text-slate-900 group-hover:text-[#C85A32] transition-colors">
-                                  Dynamic Copywriting Studio
-                                </span>
-                                <span className="text-xs font-delight font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">
-                                  Template Frameworks
-                                </span>
-                                <span className="text-xs font-delight font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                                  {user?.ai_pitches_limit === -1 ? 'Unlimited Drafts' : `${Math.max(0, (user?.ai_pitches_limit ?? 5) - (user?.ai_pitches_used || 0))} Drafts Left`}
-                                </span>
-                                {aiSuccessMessage && (
-                                  <span className="text-xs font-delight font-semibold text-emerald-600 flex items-center gap-1">
-                                    <Check className="w-3 h-3" /> Populated
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-xs font-delight text-slate-500 truncate mt-0.5">
-                                Generate customized pitch and positioning frameworks for <span className="font-semibold text-slate-700">{previewLead.businessName}</span>
-                              </p>
-                            </div>
+                      {/* Copywriting Presets Bar */}
+                      <div className="p-3 bg-[#FAF8F5] border border-[#E5E0D5] rounded-xl flex items-center justify-between gap-2 shadow-2xs text-xs font-delight font-medium">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-slate-500 shrink-0 font-semibold">1-Click Presets:</span>
+                          <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-0.5">
+                            {[
+                              { label: 'Cold B2B Intro', prompt: 'Introduce our agency services to local business owners with a free consultation.' },
+                              { label: '15-Min Discovery', prompt: 'Book a 15-minute introductory growth call with decision makers.' },
+                              { label: '20% Partner Offer', prompt: 'Offer an exclusive 20% discount on packages reserved this week.' },
+                              { label: 'Free Local Audit', prompt: 'Offer a complimentary local visibility audit and competitor gap analysis.' }
+                            ].map((preset, pIdx) => (
+                              <button
+                                key={pIdx}
+                                type="button"
+                                onClick={() => handleAiGenerate(preset.prompt)}
+                                disabled={isAiGenerating}
+                                className="px-2.5 py-1 bg-white hover:bg-slate-100 border border-[#E5E0D5] text-slate-700 rounded-md shrink-0 transition-colors cursor-pointer shadow-2xs"
+                              >
+                                {preset.label}
+                              </button>
+                            ))}
                           </div>
-
-                          <span className="px-3.5 py-1.5 rounded-xl bg-white group-hover:bg-[#191716] text-slate-800 group-hover:text-white border border-[#E5E0D5] group-hover:border-[#191716] text-xs font-delight font-semibold transition-all shrink-0 shadow-2xs">
-                            Open Studio &rarr;
+                        </div>
+                        {aiSuccessMessage && (
+                          <span className="text-emerald-700 text-xs shrink-0 font-medium">
+                            ✓ Applied
                           </span>
-                        </div>
-                      ) : (
-                        /* DEDICATED COPYWRITING STUDIO CARD VIEW (Subtle Dark Charcoal & Warm Stone) */
-                        <div className="border border-[#E5E0D5] rounded-2xl bg-white shadow-sm overflow-hidden animate-in fade-in duration-150 font-delight">
-                          {/* Card View Top Header */}
-                          <div className="bg-[#191716] text-white px-5 py-3.5 flex items-center justify-between gap-3 shadow-2xs">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white shrink-0">
-                                <Edit3 className="w-4 h-4" />
-                              </div>
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <h4 className="text-xs font-bold text-white font-delight tracking-tight">
-                                    Dynamic Copywriting Studio
-                                  </h4>
-                                  <span className="text-xs font-delight uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/10 text-white font-semibold">
-                                    Direct Blueprint Engine
-                                  </span>
-                                  <span className="text-xs font-delight uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">
-                                    {user?.ai_pitches_limit === -1 ? 'Unlimited Drafts' : `${Math.max(0, (user?.ai_pitches_limit ?? 5) - (user?.ai_pitches_used || 0))} Drafts Left`}
-                                  </span>
-                                </div>
-                                <p className="text-xs text-slate-300 font-delight mt-0.5">
-                                  Generating custom layout for <span className="text-white font-semibold">{previewLead.businessName}</span>
-                                </p>
-                              </div>
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={() => setIsCopilotOpen(false)}
-                              className="px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-xs font-delight font-semibold text-white transition-colors cursor-pointer"
-                            >
-                              Close &times;
-                            </button>
-                          </div>
-
-                          {/* Card View Body - Architectural 3-Stage Matrix */}
-                          <div className="p-4 space-y-4 bg-white">
-                            {/* Stage 1: Voice & Tone Matrix (4 Selectable Cards) */}
-                            <div>
-                              <div className="flex items-center justify-between mb-2">
-                                <span className="text-xs font-delight font-bold uppercase tracking-wider text-slate-400">
-                                  01. Voice Profile &amp; Tone Profile
-                                </span>
-                                <span className="text-xs font-delight text-slate-500">
-                                  Active: <strong className="text-indigo-600 capitalize font-bold">{aiTone}</strong>
-                                </span>
-                              </div>
-                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                {[
-                                  { id: 'persuasive', title: 'High-Converting', desc: 'ROI & value hook' },
-                                  { id: 'direct', title: 'Direct & Concise', desc: 'Zero-fluff 3-line ask' },
-                                  { id: 'executive', title: 'Executive B2B', desc: 'Boardroom authority' },
-                                  { id: 'urgent', title: 'Time-Sensitive', desc: 'Priority slot offer' }
-                                ].map((toneItem) => {
-                                  const active = aiTone === toneItem.id;
-                                  return (
-                                    <button
-                                      key={toneItem.id}
-                                      type="button"
-                                      onClick={() => setAiTone(toneItem.id as any)}
-                                      className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer font-delight ${
-                                        active
-                                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
-                                          : 'bg-slate-50/70 hover:bg-indigo-50/40 text-slate-800 border-slate-200 hover:border-indigo-200'
-                                      }`}
-                                    >
-                                      <div className="text-xs font-bold font-delight truncate">{toneItem.title}</div>
-                                      <div className={`text-xs font-delight mt-0.5 truncate ${active ? 'text-indigo-100' : 'text-slate-500'}`}>
-                                        {toneItem.desc}
-                                      </div>
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            </div>
-
-                            {/* Stage 2: 1-Click Scenario Blueprints (Bento Tiles) */}
-                            <div>
-                              <span className="block text-xs font-delight font-bold uppercase tracking-wider text-slate-400 mb-2">
-                                02. Campaign Presets
-                              </span>
-                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                                {[
-                                  { label: 'Cold B2B Intro', sub: 'Agency intro + free consult', prompt: 'Introduce our agency services to local business owners with a free consultation.' },
-                                  { label: '15-Min Discovery', sub: 'Quick calendar booking ask', prompt: 'Book a 15-minute introductory growth call with decision makers.' },
-                                  { label: '20% Partner Offer', sub: 'Limited weekly incentive', prompt: 'Offer an exclusive 20% discount on packages reserved this week.' },
-                                  { label: 'Free Local Audit', sub: 'Competitor gap breakdown', prompt: 'Offer a complimentary local visibility audit and competitor gap analysis.' },
-                                  { label: 'Service Catalog', sub: 'Tiered package showcase', prompt: 'Showcase our dynamic tiered service packages and pricing options.' }
-                                ].map((chip, cIdx) => (
-                                  <button
-                                    key={cIdx}
-                                    type="button"
-                                    onClick={() => {
-                                      setAiPrompt(chip.prompt);
-                                      handleAiGenerate(chip.prompt);
-                                    }}
-                                    className="p-2.5 rounded-xl border border-slate-200 hover:border-indigo-300 bg-white hover:bg-indigo-50/20 text-left transition-all cursor-pointer group font-delight flex flex-col justify-between shadow-2xs"
-                                  >
-                                    <div className="flex items-center justify-between w-full">
-                                      <span className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 transition-colors font-delight">{chip.label}</span>
-                                      <span className="text-xs text-slate-400 group-hover:text-indigo-600 font-delight">&rarr;</span>
-                                    </div>
-                                    <span className="text-xs text-slate-500 font-delight mt-0.5 truncate">{chip.sub}</span>
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-
-                            {/* Stage 3: Custom Directive Prompt & Action */}
-                            <div className="pt-2 border-t border-slate-100 space-y-2.5">
-                              <span className="block text-xs font-delight font-bold uppercase tracking-wider text-slate-400">
-                                03. Custom Objective
-                              </span>
-                              <div className="flex flex-col sm:flex-row gap-2">
-                                <input
-                                  type="text"
-                                  value={aiPrompt}
-                                  onChange={(e) => setAiPrompt(e.target.value)}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                      e.preventDefault();
-                                      handleAiGenerate();
-                                    }
-                                  }}
-                                  placeholder="Describe your offer or pitch angle in plain English..."
-                                  className="flex-1 bg-slate-50 focus:bg-white border border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 rounded-xl px-3.5 py-2 text-xs text-slate-900 placeholder-slate-400 outline-none font-delight transition-all"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => handleAiGenerate()}
-                                  disabled={isAiGenerating || !aiPrompt.trim()}
-                                  className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-50 text-white text-xs font-delight font-bold px-4 py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 shrink-0 cursor-pointer shadow-xs"
-                                >
-                                  {isAiGenerating ? (
-                                    <>
-                                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                      <span>Generating Copy...</span>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Edit3 className="w-3.5 h-3.5" />
-                                      <span>Populate Template</span>
-                                    </>
-                                  )}
-                                </button>
-                              </div>
-
-                              <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-                                <div className="flex flex-wrap items-center gap-1.5 text-xs font-delight text-slate-400">
-                                  <span>Target Blocks:</span>
-                                  {['Subject', 'Preheader', 'Headline', 'Body Copy', 'Primary CTA'].map(b => (
-                                    <span key={b} className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-md font-delight font-medium">
-                                      {b}
-                                    </span>
-                                  ))}
-                                </div>
-                                {aiSuccessMessage && (
-                                  <span className="text-xs font-delight font-semibold text-emerald-600 flex items-center gap-1">
-                                    <Check className="w-3.5 h-3.5" /> {aiSuccessMessage}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                        )}
+                      </div>
 
                       {/* UNIFIED ARCHITECTURAL ENVELOPE SHEET (Subject, Preheader, Headline, Subheadline) */}
                       <div className="bg-white border border-slate-200/90 rounded-2xl divide-y divide-slate-100 overflow-hidden shadow-2xs">
@@ -3042,45 +2440,39 @@ const OutreachCenter = () => {
               )}
             </div>
 
-            {/* Bottom Actions */}
-            <div className="px-5 py-3.5 border-t border-[#E5E0D5] bg-white flex flex-col sm:flex-row items-center justify-between gap-3 rounded-b-2xl">
-              <div className="flex items-center gap-2.5 w-full sm:w-auto shrink-0 flex-wrap">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span className="text-xs font-delight font-medium text-slate-600">
+            {/* Bottom Action Bar */}
+            <div className="px-5 py-3 border-t border-[#E5E0D5] bg-[#FAF8F5] flex flex-col sm:flex-row items-center justify-between gap-3 rounded-b-2xl font-delight font-medium">
+              <div className="flex items-center gap-2 text-xs text-slate-600">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>
                   {activeChannel === 'whatsapp' ? 'WhatsApp wa.me Bridge Active · Free & Account Safe' : 'SendGrid Web API Transport Ready'}
                 </span>
-                {activeChannel === 'email' && emailAttachments.some(a => a.enabled) && (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-delight font-bold">
-                    <Paperclip className="w-3 h-3 text-indigo-600" />
-                    <span>{emailAttachments.filter(a => a.enabled).length} Deck{emailAttachments.filter(a => a.enabled).length > 1 ? 's' : ''} Attached</span>
-                  </span>
-                )}
               </div>
-              
+
               {activeChannel === 'whatsapp' ? (
                 <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end flex-wrap">
                   <button 
                     type="button"
                     onClick={handleCopyWhatsApp}
-                    className="bg-white border border-[#E5E0D5] hover:bg-slate-50 px-3.5 py-2 rounded-xl text-xs font-delight font-semibold text-slate-700 shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
+                    className="bg-white border border-[#E5E0D5] hover:bg-slate-50 px-3.5 py-2 rounded-xl text-xs text-slate-700 shadow-2xs transition-colors cursor-pointer flex items-center gap-1.5"
                   >
                     {copiedWhatsApp ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
-                    <span>{copiedWhatsApp ? 'Copied' : 'Copy Message'}</span>
+                    <span>{copiedWhatsApp ? 'Copied' : 'Copy Text'}</span>
                   </button>
 
                   <button 
                     type="button"
                     onClick={() => handleOpenWhatsAppWeb(previewLead)}
-                    className="bg-white border border-[#E5E0D5] hover:bg-slate-50 px-3.5 py-2 rounded-xl text-xs font-delight font-semibold text-slate-700 shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
+                    className="bg-white border border-[#E5E0D5] hover:bg-slate-50 px-3.5 py-2 rounded-xl text-xs text-slate-700 shadow-2xs transition-colors cursor-pointer flex items-center gap-1.5"
                   >
                     <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
-                    <span>Single in WhatsApp</span>
+                    <span>Open wa.me</span>
                   </button>
 
                   <button 
                     type="button"
                     onClick={() => setIsWhatsAppQueueOpen(true)}
-                    className="bg-[#1E6B52] hover:bg-[#165440] text-white px-5 py-2 rounded-xl text-xs font-delight font-bold shadow-xs transition-all flex items-center gap-2 cursor-pointer"
+                    className="bg-[#1E6B52] hover:bg-[#165440] text-white px-5 py-2 rounded-xl text-xs font-semibold shadow-xs transition-colors cursor-pointer flex items-center gap-2"
                   >
                     <Send className="w-3.5 h-3.5" />
                     <span>Launch 30-Contact Queue</span>
@@ -3091,8 +2483,8 @@ const OutreachCenter = () => {
                   <button 
                     type="button"
                     onClick={() => handleOpenWebmail(previewLead)}
-                    className="bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 px-3.5 py-2 rounded-xl text-xs font-delight font-bold text-slate-700 shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
-                    title={`Open prefilled outreach email for ${previewLead.businessName} directly in Gmail / Webmail`}
+                    className="bg-white border border-[#E5E0D5] hover:bg-slate-50 px-3.5 py-2 rounded-xl text-xs text-slate-700 shadow-2xs transition-colors cursor-pointer flex items-center gap-1.5"
+                    title="Open prefilled email in Gmail"
                   >
                     <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
                     <span>Open Webmail</span>
@@ -3101,13 +2493,12 @@ const OutreachCenter = () => {
                     type="button"
                     onClick={handleSendSingleTest}
                     disabled={isSendingSingle}
-                    className="bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 disabled:opacity-50 px-3.5 py-2 rounded-xl text-xs font-delight font-bold text-slate-700 shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
-                    title={`Dispatches an individualized test email directly to ${previewLead.businessName}`}
+                    className="bg-white border border-[#E5E0D5] hover:bg-slate-50 disabled:opacity-50 px-3.5 py-2 rounded-xl text-xs text-slate-700 shadow-2xs transition-colors cursor-pointer flex items-center gap-1.5"
                   >
                     {isSendingSingle ? (
                       <>
                         <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-500" />
-                        <span>Dispatching...</span>
+                        <span>Sending...</span>
                       </>
                     ) : (
                       <>
@@ -3118,14 +2509,11 @@ const OutreachCenter = () => {
                   </button>
                   <button 
                     type="button"
-                    onClick={() => {
-                      setIsDispatchModalOpen(true);
-                    }}
-                    className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white px-5 py-2 rounded-xl text-xs font-delight font-bold shadow-sm shadow-indigo-200 hover:shadow-md transition-all flex items-center gap-2 cursor-pointer shrink-0"
-                    title="Launch batch email dispatch sequence across selected audience leads"
+                    onClick={() => setIsDispatchModalOpen(true)}
+                    className="bg-[#191716] hover:bg-slate-800 text-white px-5 py-2 rounded-xl text-xs font-semibold shadow-xs transition-colors cursor-pointer flex items-center gap-2"
                   >
                     <Send className="w-3.5 h-3.5" />
-                    <span>Launch Batch</span>
+                    <span>Launch Email Batch</span>
                   </button>
                 </div>
               )}
@@ -3134,150 +2522,83 @@ const OutreachCenter = () => {
           </div>
 
           {/* ======================================================== */}
-          {/* RIGHT: LIVE VIEWPORT PREVIEW (DESKTOP / MOBILE)          */}
-          {/* ======================================================== */}
+          {/* RIGHT: LIVE PREVIEW PANE */}
           <div 
             ref={previewCardRef}
-            className="w-full xl:w-1/2 flex flex-col h-full bg-[#FAF8F5] border border-[#E5E0D5] rounded-2xl overflow-hidden shadow-xs"
+            className="w-full xl:w-1/2 flex flex-col h-full bg-[#FAF8F5] border border-[#E5E0D5] rounded-2xl overflow-hidden shadow-xs font-delight font-medium"
           >
-            
-            {/* Viewport & Lead Controls */}
-            <div className="shrink-0 px-5 py-2.5 border-b border-[#E5E0D5] bg-white flex flex-wrap items-center justify-between gap-3 relative z-30">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-delight font-bold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  <span>Live Render</span>
+            {/* Right Pane Header */}
+            <div className="shrink-0 px-5 py-2.5 border-b border-[#E5E0D5] bg-white flex items-center justify-between gap-3 relative z-30">
+              <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 text-xs font-medium border border-emerald-200">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>Live Preview</span>
                 </div>
-
-                {/* Viewport Switcher */}
-                <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs font-delight">
-                  <button 
-                    onClick={() => setPreviewViewport('desktop')}
-                    className={`px-3 py-1 rounded-md font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
-                      previewViewport === 'desktop' ? 'bg-white text-slate-900 font-bold shadow-2xs' : 'text-slate-500 hover:text-slate-800'
-                    }`}
-                  >
-                    <Monitor className="w-3.5 h-3.5" />
-                    <span>Desktop</span>
-                  </button>
-                  <button 
-                    onClick={() => setPreviewViewport('mobile')}
-                    className={`px-3 py-1 rounded-md font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
-                      previewViewport === 'mobile' ? 'bg-white text-slate-900 font-bold shadow-2xs' : 'text-slate-500 hover:text-slate-800'
-                    }`}
-                  >
-                    <Smartphone className="w-3.5 h-3.5" />
-                    <span>Mobile</span>
-                  </button>
-                </div>
-
-                {/* A/B Variant Preview Indicator */}
-                {isAbTesting && (
-                  <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs font-delight">
+                {activeChannel === 'email' && (
+                  <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs">
                     <button 
-                      type="button"
-                      onClick={() => setActiveVariant('A')}
-                      className={`px-2.5 py-1 rounded-md font-medium transition-all cursor-pointer flex items-center gap-1 ${
-                        activeVariant === 'A' ? 'bg-[#191716] text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                      onClick={() => setPreviewViewport('desktop')}
+                      className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                        previewViewport === 'desktop' ? 'bg-white text-slate-900 font-semibold shadow-2xs' : 'text-slate-500'
                       }`}
                     >
-                      <span>Variant A</span>
+                      Desktop
                     </button>
                     <button 
-                      type="button"
-                      onClick={() => setActiveVariant('B')}
-                      className={`px-2.5 py-1 rounded-md font-medium transition-all cursor-pointer flex items-center gap-1 ${
-                        activeVariant === 'B' ? 'bg-[#191716] text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                      onClick={() => setPreviewViewport('mobile')}
+                      className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                        previewViewport === 'mobile' ? 'bg-white text-slate-900 font-semibold shadow-2xs' : 'text-slate-500'
                       }`}
                     >
-                      <span>Variant B</span>
+                      Mobile
                     </button>
                   </div>
                 )}
               </div>
 
-              {/* Lead Hydration Switcher */}
+              {/* Prospect Dropdown Switcher */}
               <div className="relative" ref={leadDropdownRef}>
                 <button
                   type="button"
                   onClick={handleToggleLeadDropdown}
-                  className="flex items-center gap-2 bg-white hover:bg-slate-50 px-3 py-1.5 rounded-xl border border-[#E5E0D5] text-xs font-delight text-slate-700 shadow-2xs transition-all cursor-pointer hover:border-slate-400"
-                  title="Click to select target lead for live hydration"
+                  className="flex items-center gap-2 bg-white hover:bg-slate-50 px-3 py-1.5 rounded-xl border border-[#E5E0D5] text-xs text-slate-700 shadow-2xs cursor-pointer"
                 >
-                  <span className="text-slate-400">Preview as:</span>
-                  <span className="font-bold text-slate-900 max-w-[160px] truncate">{previewLead.businessName}</span>
+                  <span className="text-slate-400">Prospect:</span>
+                  <span className="font-semibold text-slate-900 max-w-[160px] truncate">{previewLead.businessName}</span>
                   <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isLeadDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
 
-                {/* Dropdown Menu */}
                 {isLeadDropdownOpen && (
-                  <div className={`absolute ${dropdownAlign === 'left' ? 'left-0' : 'right-0'} mt-1.5 w-[280px] sm:w-80 max-w-[calc(100vw-32px)] bg-white border border-[#E5E0D5] rounded-2xl shadow-xl overflow-hidden z-50 animate-in fade-in duration-150 font-delight font-medium`}>
-                    <div className="p-3 border-b border-slate-100 bg-[#FAF8F5]">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Select Target Prospect</span>
-                        <span className="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">
-                          {availableLeads.length} Leads
-                        </span>
-                      </div>
-                      <div className="relative">
-                        <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                        <input
-                          type="text"
-                          value={leadSearchQuery}
-                          onChange={(e) => setLeadSearchQuery(e.target.value)}
-                          placeholder="Search workspace leads..."
-                          className="w-full bg-white border border-[#E5E0D5] focus:border-slate-500 rounded-xl pl-8 pr-3 py-1.5 text-xs outline-none font-delight font-medium transition-all"
-                          autoFocus
-                        />
-                      </div>
+                  <div className={`absolute ${dropdownAlign === 'left' ? 'left-0' : 'right-0'} mt-1.5 w-72 bg-white border border-[#E5E0D5] rounded-xl shadow-xl overflow-hidden z-50`}>
+                    <div className="p-2.5 border-b border-slate-100 bg-[#FAF8F5]">
+                      <input
+                        type="text"
+                        value={leadSearchQuery}
+                        onChange={(e) => setLeadSearchQuery(e.target.value)}
+                        placeholder="Search prospects..."
+                        className="w-full bg-white border border-[#E5E0D5] rounded-lg px-2.5 py-1.5 text-xs outline-none"
+                        autoFocus
+                      />
                     </div>
-
-                    <div className="max-h-64 overflow-y-auto custom-scrollbar p-1.5 divide-y divide-slate-50">
-                      {filteredAvailableLeads.map((lead) => {
-                        const isSelected = previewLead.businessName === lead.businessName;
-                        return (
-                          <button
-                            key={lead._id || lead.businessName}
-                            type="button"
-                            onClick={() => {
-                              setPreviewLead(lead);
-                              setIsLeadDropdownOpen(false);
-                            }}
-                            className={`w-full text-left p-2.5 rounded-xl transition-colors flex items-center justify-between group cursor-pointer ${
-                              isSelected ? 'bg-emerald-50 text-emerald-950 font-bold' : 'hover:bg-slate-50 text-slate-700'
-                            }`}
-                          >
-                            <div className="min-w-0 pr-2">
-                              <div className="text-xs font-semibold text-slate-900 line-clamp-2 break-words">
-                                {lead.businessName}
-                              </div>
-                              <div className="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5">
-                                <span>{lead.category || lead.fieldOfWork}</span>
-                                <span>•</span>
-                                <span>{lead.location}</span>
-                              </div>
-                            </div>
-                            {isSelected && (
-                              <Check className="w-4 h-4 text-[#1E6B52] shrink-0" />
-                            )}
-                          </button>
-                        );
-                      })}
-
-                      {availableLeads.length === 0 ? (
-                        <div className="p-4 text-center space-y-1.5">
-                          <div className="text-xs font-bold text-slate-800">
-                            No harvested leads in workspace yet
+                    <div className="max-h-60 overflow-y-auto custom-scrollbar p-1 divide-y divide-slate-50">
+                      {filteredAvailableLeads.map((lead) => (
+                        <button
+                          key={lead._id || lead.businessName}
+                          onClick={() => {
+                            setPreviewLead(lead);
+                            setIsLeadDropdownOpen(false);
+                          }}
+                          className={`w-full text-left p-2 rounded-lg text-xs transition-colors flex items-center justify-between cursor-pointer ${
+                            previewLead.businessName === lead.businessName ? 'bg-emerald-50 text-emerald-950 font-semibold' : 'hover:bg-slate-50 text-slate-700'
+                          }`}
+                        >
+                          <div className="min-w-0 pr-2">
+                            <div className="truncate font-semibold">{lead.businessName}</div>
+                            <div className="text-slate-400 text-xs truncate">{lead.location} · {lead.category}</div>
                           </div>
-                          <p className="text-xs text-slate-500 font-normal leading-relaxed">
-                            Previewing with workspace profile ({workspaceProfileLead.businessName}). Harvest prospects in Lead Finder to preview real leads here.
-                          </p>
-                        </div>
-                      ) : filteredAvailableLeads.length === 0 ? (
-                        <div className="p-3 text-center text-xs text-slate-400 font-delight font-normal">
-                          No matching leads found
-                        </div>
-                      ) : null}
+                          {previewLead.businessName === lead.businessName && <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />}
+                        </button>
+                      ))}
                     </div>
                   </div>
                 )}
@@ -3285,7 +2606,7 @@ const OutreachCenter = () => {
             </div>
 
             {/* Viewport Canvas */}
-            <div className="flex-1 min-h-0 p-6 overflow-y-auto custom-scrollbar flex items-start justify-center">
+            <div className="flex-1 min-h-0 p-5 overflow-y-auto custom-scrollbar flex items-start justify-center">
               
               {/* ======================================================== */}
               {/* EMAIL CLIENT CONTAINER                                   */}
@@ -4152,139 +3473,120 @@ const OutreachCenter = () => {
 
               {/* WHATSAPP PHONE MOCKUP PREVIEW */}
               {activeChannel === 'whatsapp' && (
-                <div className="w-[350px] sm:w-[380px] bg-slate-900 rounded-[38px] p-3 shadow-2xl border-4 border-slate-700/80 flex flex-col font-sans shrink-0 my-auto">
-                  <div className="h-3.5 w-full flex items-center justify-center mb-1">
-                    <div className="w-16 h-1 rounded-full bg-slate-700" />
+                <div className="w-[340px] sm:w-[360px] bg-slate-900 rounded-[36px] p-2.5 shadow-2xl border-4 border-slate-700/80 flex flex-col font-sans shrink-0 my-auto">
+                  {/* Speaker Notch */}
+                  <div className="h-3 w-full flex items-center justify-center mb-1">
+                    <div className="w-14 h-1 rounded-full bg-slate-700" />
                   </div>
-                  <div className="w-full rounded-[28px] overflow-hidden flex flex-col bg-[#ECE5DD] border border-slate-800/20">
-                    {/* WhatsApp Top Chat Header */}
-                    <div className="bg-[#1E6B52] text-white p-3.5 flex items-center justify-between shrink-0 shadow-xs">
+
+                  <div className="w-full rounded-[26px] overflow-hidden flex flex-col bg-[#ECE5DD] border border-slate-800/20">
+                    {/* WhatsApp Green Top Chat Header */}
+                    <div className="bg-[#1E6B52] text-white p-3 flex items-center justify-between shrink-0 shadow-xs">
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center font-bold text-xs backdrop-blur-xs text-white shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center font-bold text-xs text-white shrink-0">
                           {previewLead?.businessName?.charAt(0) || 'P'}
                         </div>
                         <div className="min-w-0">
-                          <div className="font-bold text-xs truncate max-w-[170px] text-white">
+                          <div className="font-bold text-xs truncate max-w-[180px] text-white">
                             {previewLead?.businessName || 'Target Business'}
                           </div>
-                          <div className="text-xs text-emerald-100 font-delight font-medium flex items-center gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"></span>
+                          <div className="text-[11px] text-emerald-100 font-delight font-normal flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse" />
                             <span>WhatsApp Business Account</span>
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 text-white/90">
-                        <Phone className="w-4 h-4" />
-                      </div>
+                      <Phone className="w-4 h-4 text-white/90" />
                     </div>
 
-                    {/* Chat Message Scroll Window */}
-                    <div className="flex-1 bg-[#ECE5DD] p-3 overflow-y-auto flex flex-col gap-2.5 min-h-[380px] max-h-[480px] custom-scrollbar">
-                      
-                      {/* Date Divider Pill */}
-                      <div className="self-center my-1 bg-white/90 px-3 py-0.5 rounded-full text-xs font-delight font-medium text-slate-500 shadow-2xs">
+                    {/* Chat Message Window */}
+                    <div className="p-3 overflow-y-auto flex flex-col gap-2 min-h-[350px] max-h-[460px] custom-scrollbar bg-[#ECE5DD]">
+                      {/* Date Badge */}
+                      <div className="self-center my-0.5 bg-white/90 px-3 py-0.5 rounded-full text-[11px] font-delight font-medium text-slate-500 shadow-2xs">
                         Today
                       </div>
 
-                      {/* Chat Bubble Group */}
-                      <div className="self-end max-w-[92%] flex flex-col gap-2">
-                        
-                        {/* 1. PDF Document Bubble Card (if enabled) */}
+                      <div className="self-end max-w-[95%] flex flex-col gap-1.5">
+                        {/* Attached PDF Card */}
                         {whatsAppPdf.enabled && (
-                          <div className="bg-[#DCF8C6] border border-emerald-200/80 rounded-2xl rounded-tr-xs p-2.5 shadow-2xs">
-                            <div className="bg-white rounded-xl p-2.5 border border-emerald-100 flex items-center gap-2.5 shadow-2xs">
-                              {/* Red PDF Icon Box */}
-                              <div className="w-10 h-11 rounded-lg bg-rose-600 flex flex-col items-center justify-center text-white shrink-0 shadow-2xs">
+                          <div className="bg-[#DCF8C6] border border-emerald-200/80 rounded-2xl rounded-tr-xs p-2 shadow-2xs">
+                            <div className="bg-white rounded-xl p-2 border border-emerald-100 flex items-center gap-2 shadow-2xs">
+                              <div className="w-8 h-9 rounded-lg bg-rose-600 text-white flex flex-col items-center justify-center shrink-0">
                                 <FileText className="w-4 h-4" />
-                                <span className="text-[8px] font-black uppercase tracking-tighter leading-none mt-0.5">PDF</span>
+                                <span className="text-[7px] font-black uppercase mt-0.5">PDF</span>
                               </div>
-
-                              {/* File Metadata */}
                               <div className="min-w-0 flex-1">
-                                <div className="text-xs font-bold text-slate-900 truncate leading-snug">
-                                  {String(whatsAppPdf?.fileName || 'Document_Attachment.pdf').replace(/{{business_name}}/g, previewLead?.businessName || 'Prospect')}
+                                <div className="text-xs font-semibold text-slate-900 truncate">
+                                  {String(whatsAppPdf?.fileName || 'Document.pdf').replace(/{{business_name}}/g, previewLead?.businessName || 'Prospect')}
                                 </div>
-                                <div className="text-xs text-slate-500 font-medium flex items-center gap-1 mt-0.5">
+                                <div className="text-[11px] text-slate-500 font-normal mt-0.5 flex items-center gap-1">
                                   <span>{whatsAppPdf.pageCount || '6 pages'}</span>
                                   <span>•</span>
                                   <span>{whatsAppPdf.fileSize || '2.4 MB'}</span>
                                 </div>
                               </div>
-
-                              {/* Circular Download Action */}
-                              <div className="w-7 h-7 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 shrink-0">
-                                <Download className="w-3.5 h-3.5" />
+                              <div className="w-6 h-6 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 shrink-0">
+                                <Download className="w-3 h-3" />
                               </div>
                             </div>
-
-                            <div className="text-xs text-slate-500 text-right mt-1.5 mr-1 flex items-center justify-end gap-1 font-delight">
+                            <div className="text-[10px] text-slate-500 text-right mt-1 mr-1 flex items-center justify-end gap-1 font-delight">
                               <span>10:41 AM</span>
                               <CheckCircle2 className="w-3 h-3 text-[#1E6B52]" />
                             </div>
                           </div>
                         )}
 
-                        {/* 2. Picture Attachment + Accompanying Text Bubble */}
+                        {/* Attached Picture + Text Bubble */}
                         {whatsAppImage.enabled ? (
                           <div className="bg-[#DCF8C6] border border-emerald-200/80 rounded-2xl rounded-tr-xs overflow-hidden shadow-2xs">
-                            {/* Image Thumbnail Frame */}
-                            <div className="relative w-full max-h-48 bg-slate-900/10 overflow-hidden flex items-center justify-center">
+                            <div className="relative w-full h-32 bg-slate-900/10 overflow-hidden flex items-center justify-center">
                               {whatsAppImage.url ? (
-                                <img 
-                                  src={whatsAppImage.url} 
-                                  alt="WhatsApp Attachment" 
-                                  className="w-full h-auto max-h-48 object-cover"
+                                <img
+                                  src={whatsAppImage.url}
+                                  alt="WhatsApp Attachment"
+                                  className="w-full h-full object-cover"
                                   onError={(e) => {
                                     (e.target as any).src = 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&auto=format&fit=crop&q=80';
                                   }}
                                 />
                               ) : (
-                                <div className="p-6 flex flex-col items-center justify-center text-slate-400">
-                                  <Image className="w-6 h-6 mb-1 opacity-60" />
-                                  <span className="text-xs">No visual URL</span>
-                                </div>
+                                <div className="p-4 text-center text-xs text-slate-400">No visual URL</div>
                               )}
-
                               {whatsAppImage.caption && (
-                                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-2 text-xs text-white font-medium truncate">
+                                <div className="absolute bottom-0 inset-x-0 bg-black/60 p-1.5 text-xs text-white font-medium truncate">
                                   {whatsAppImage.caption}
                                 </div>
                               )}
                             </div>
-
-                            {/* Text Message Content */}
-                            <div className="p-3.5">
-                              <div 
+                            <div className="p-3">
+                              <div
                                 className="text-xs text-slate-900 whitespace-pre-wrap leading-relaxed break-words"
                                 dangerouslySetInnerHTML={{ __html: renderPreviewHtml(whatsAppMessage) }}
                               />
-                              <div className="text-xs text-slate-500 flex items-center justify-end gap-1 mt-1.5 font-delight font-medium">
+                              <div className="text-[10px] text-slate-500 flex items-center justify-end gap-1 mt-1 font-delight font-medium">
                                 <span>10:42 AM</span>
                                 <CheckCheck className="w-3.5 h-3.5 text-[#53bdeb]" />
                               </div>
                             </div>
                           </div>
                         ) : (
-                          /* Text-Only Bubble */
-                          <div className="bg-[#DCF8C6] border border-emerald-200/70 p-3.5 rounded-2xl rounded-tr-xs shadow-2xs">
-                            <div 
+                          <div className="bg-[#DCF8C6] border border-emerald-200/80 p-3 rounded-2xl rounded-tr-xs shadow-2xs">
+                            <div
                               className="text-xs text-slate-900 whitespace-pre-wrap leading-relaxed break-words"
                               dangerouslySetInnerHTML={{ __html: renderPreviewHtml(whatsAppMessage) }}
                             />
-                            <div className="text-xs text-slate-500 flex items-center justify-end gap-1 mt-1.5 font-delight font-medium">
+                            <div className="text-[10px] text-slate-500 flex items-center justify-end gap-1 mt-1 font-delight font-medium">
                               <span>10:42 AM</span>
                               <CheckCheck className="w-3.5 h-3.5 text-[#53bdeb]" />
                             </div>
                           </div>
                         )}
-
                       </div>
-
                     </div>
 
-                    {/* Authentic WhatsApp Input Bar Mockup */}
+                    {/* Bottom Chat Bar Mockup */}
                     <div className="bg-[#F0F2F5] border-t border-slate-200/80 px-3 py-2 flex items-center gap-2">
-                      <div className="flex-1 bg-white rounded-full px-3.5 py-1.5 text-xs text-slate-400 border border-slate-200/80">
+                      <div className="flex-1 bg-white rounded-full px-3.5 py-1.5 text-xs text-slate-400 border border-slate-200">
                         Type a message...
                       </div>
                       <div className="w-7 h-7 rounded-full bg-[#1E6B52] text-white flex items-center justify-center shrink-0 shadow-2xs">
