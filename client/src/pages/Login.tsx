@@ -30,16 +30,6 @@ type ViewMode = 'signin' | 'signup' | 'forgot' | 'reset_otp';
 const Login = ({ onBack }: LoginProps) => {
   const { token, setToken, setUser } = useStore();
   const navigate = useNavigate();
-  const isDesktop = (() => {
-    if (typeof window === 'undefined') return false;
-    if (/Electron|StrovrDesktop/i.test(navigator.userAgent)) return true;
-    if (window.location.search.includes('desktop=true')) {
-      try { sessionStorage.setItem('strovr_desktop_mode', 'true'); } catch (_) {}
-      return true;
-    }
-    if (sessionStorage.getItem('strovr_desktop_mode') === 'true') return true;
-    return false;
-  })();
   
   // View mode
   const [viewMode, setViewMode] = useState<ViewMode>('signin');
@@ -97,10 +87,6 @@ const Login = ({ onBack }: LoginProps) => {
 
   // Reset errors and transients when switching view modes
   const switchViewMode = (mode: ViewMode) => {
-    if (isDesktop && mode === 'signup') {
-      window.open('https://strovr.space/', '_blank');
-      return;
-    }
     setViewMode(mode);
     setError('');
     setSuccess('');
@@ -245,27 +231,6 @@ const Login = ({ onBack }: LoginProps) => {
         <div className="p-8 flex flex-col justify-center">
           <div className="max-w-sm w-full mx-auto">
             
-            {/* Desktop Mode Local DB Notice */}
-            {isDesktop && (
-              <div className="mb-5 p-3 rounded-md bg-[#FDF9F5] border border-[#E8DCCF] text-[#4A433E] text-xs font-delight leading-relaxed shadow-2xs text-left">
-                <div className="flex items-center gap-1.5 font-bold uppercase text-[10px] tracking-wider text-[#C85A32] mb-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#C85A32] animate-pulse" />
-                  Local DB Setup Only
-                </div>
-                <p className="text-[11.5px] text-[#5C534C] leading-normal">
-                  This version is only for <strong className="text-[#191716]">local db setup</strong> (saved to <code className="bg-[#EBE5D8] text-[#191716] px-1 py-0.5 rounded text-[10px] font-mono">Documents\Strovr</code>). For cloud db, please visit{' '}
-                  <a 
-                    href="https://strovr.space/" 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="font-bold text-[#C85A32] hover:text-[#B04B25] underline underline-offset-2"
-                  >
-                    strovr.space
-                  </a>.
-                </p>
-              </div>
-            )}
-
             {/* Strovr Brand Header */}
             <div className="text-center mb-6">
               <div className="inline-flex flex-col items-center mb-3 select-none">
@@ -273,25 +238,14 @@ const Login = ({ onBack }: LoginProps) => {
                   <a 
                     href="/" 
                     className="inline-flex items-center gap-2 group cursor-pointer hover:opacity-85 transition-all select-none"
-                    title={isDesktop ? "Strovr Desktop" : "Return to Landing Page"}
+                    title="Return to Landing Page"
                   >
                     <img src={strovrLogo} alt="Strovr Logo" className="h-12 md:h-14 w-auto object-contain" />
                   </a>
-                  {isDesktop ? (
-                    <span className="text-[10px] font-delight font-extrabold uppercase bg-[#C85A32]/10 text-[#C85A32] border border-[#C85A32]/30 px-2 py-0.5 rounded tracking-wider">
-                      Desktop
-                    </span>
-                  ) : (
-                    <span className="text-[9px] font-delight font-bold uppercase bg-slate-100 text-[#C85A32] border border-slate-200 px-1.5 py-0.5 rounded tracking-wider">
-                      v1.0
-                    </span>
-                  )}
-                </div>
-                {isDesktop && (
-                  <span className="text-[10px] font-delight font-extrabold text-[#78716A] uppercase tracking-widest mt-1">
-                    Desktop
+                  <span className="text-[9px] font-delight font-bold uppercase bg-slate-100 text-[#C85A32] border border-slate-200 px-1.5 py-0.5 rounded tracking-wider">
+                    v1.0
                   </span>
-                )}
+                </div>
               </div>
 
               {/* View Mode Badge */}
@@ -660,16 +614,10 @@ const Login = ({ onBack }: LoginProps) => {
                   {viewMode === 'signup' ? 'Already have an account?' : 'Need a workspace?'}{' '}
                   <button 
                     type="button"
-                    onClick={() => {
-                      if (isDesktop && viewMode !== 'signup') {
-                        window.open('https://strovr.space/', '_blank');
-                        return;
-                      }
-                      switchViewMode(viewMode === 'signup' ? 'signin' : 'signup');
-                    }}
+                    onClick={() => switchViewMode(viewMode === 'signup' ? 'signin' : 'signup')}
                     className="text-blue-600 font-medium hover:underline ml-1 cursor-pointer"
                   >
-                    {isDesktop ? 'Sign Up at strovr.space' : (viewMode === 'signup' ? 'Sign In' : 'Sign Up')}
+                    {viewMode === 'signup' ? 'Sign In' : 'Sign Up'}
                   </button>
                 </p>
               </>

@@ -51,7 +51,6 @@ import automationRoutes from './routes/automations';
 import integrationRoutes from './routes/integrations';
 import teamRoutes from './routes/team';
 import bookingRoutes from './routes/booking';
-import desktopUpdateRoutes from './routes/desktopUpdates';
 import { automationWorker } from './services/automationWorker';
 import { userStore } from './services/userStore';
 import jwt from 'jsonwebtoken';
@@ -97,32 +96,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// Platform & Device Telemetry Middleware (Tracks Web vs PC / Desktop users)
-app.use((req, _res, next) => {
-  try {
-    const authHeader = req.headers.authorization;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.split(' ')[1];
-      const decoded: any = jwt.decode(token);
-      if (decoded && (decoded.id || decoded._id || decoded.email)) {
-        const userId = decoded.id || decoded._id || (decoded.email ? userStore.getUserByEmail(decoded.email)?._id : null);
-        if (userId) {
-          const platformHeader = (req.headers['x-client-platform'] as string) || '';
-          const isDesktop = platformHeader.includes('desktop');
-          userStore.recordDevicePing(userId, isDesktop ? 'desktop' : 'web', {
-            machine_id: req.headers['x-machine-id'],
-            installed_version: req.headers['x-app-version'],
-            os: req.headers['x-client-os'] || (isDesktop ? 'Windows' : undefined),
-            ip: req.ip || req.socket.remoteAddress,
-            userAgent: req.headers['user-agent']
-          });
-        }
-      }
-    }
-  } catch (_) {}
-  next();
-});
-
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/leads', leadRoutes);
@@ -134,7 +107,6 @@ app.use('/api/automations', automationRoutes);
 app.use('/api/integrations', integrationRoutes);
 app.use('/api/team', teamRoutes);
 app.use('/api/booking', bookingRoutes);
-app.use('/api/desktop', desktopUpdateRoutes);
 
 // Health Check Endpoint for Load Balancers & Uptime Monitors
 app.get('/health', (_req, res) => {
@@ -143,26 +115,6 @@ app.get('/health', (_req, res) => {
     environment: process.env.NODE_ENV || 'development',
     database: 'Firebase Firestore',
     timestamp: new Date().toISOString(),
-  });
-});
-
-// Desktop Portable ZIP Download Endpoint
-app.get(['/downloads/Strovr-Desktop-Portable.zip', '/api/download/desktop'], (_req, res) => {
-  const candidatePaths = [
-    path.resolve(__dirname, '../../client/public/downloads/Strovr-Desktop-Portable.zip'),
-    path.resolve(__dirname, '../../client/dist/downloads/Strovr-Desktop-Portable.zip'),
-    path.resolve(__dirname, '../../desktop-app/Strovr-Desktop-Portable.zip')
-  ];
-  for (const zipPath of candidatePaths) {
-    if (fs.existsSync(zipPath)) {
-      res.setHeader('Content-Disposition', 'attachment; filename="Strovr-Desktop-Portable.zip"');
-      res.setHeader('Content-Type', 'application/zip');
-      return res.sendFile(zipPath);
-    }
-  }
-  res.status(404).json({ 
-    error: 'Desktop portable build not found on this instance',
-    message: 'Please build or download the desktop portable package locally or visit https://strovr.space/'
   });
 });
 

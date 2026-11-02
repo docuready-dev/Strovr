@@ -1,8 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { ExternalLink, Sparkles, Download } from 'lucide-react';
-import axios from 'axios';
-import API_URL from './config/api';
 import { useStore } from './store/useStore';
 import Login from './pages/Login';
 import ResetPassword from './pages/ResetPassword';
@@ -26,8 +23,6 @@ import AdminPanel from './pages/AdminPanel';
 import MeshBackground from './components/MeshBackground';
 import ErrorBoundary from './components/ErrorBoundary';
 import AppConfirmModal from './components/AppConfirmModal';
-import { ZoomController } from './components/ZoomController';
-import zoomManager from './utils/zoomManager';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { token } = useStore();
@@ -61,18 +56,8 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
 const App = () => {
   const { user, token, refreshUserProfile, setUpgradeModalOpen, setUpgradeTab } = useStore();
   const [showLogin, setShowLogin] = useState(false);
-  const isDesktop = (() => {
-    if (typeof window === 'undefined') return false;
-    if (/Electron|StrovrDesktop/i.test(navigator.userAgent)) return true;
-    if (window.location.search.includes('desktop=true')) {
-      try { sessionStorage.setItem('strovr_desktop_mode', 'true'); } catch (_) {}
-      return true;
-    }
-    if (sessionStorage.getItem('strovr_desktop_mode') === 'true') return true;
-    return false;
-  })();
 
-  // Handle external checkout funneling (e.g. from desktop EXE or marketing campaigns)
+  // Handle external checkout funneling (e.g. from marketing campaigns)
   useEffect(() => {
     try {
       const urlParams = new URLSearchParams(window.location.search);
@@ -101,36 +86,6 @@ const App = () => {
     } catch (_) {}
   }, [token, setUpgradeTab, setUpgradeModalOpen]);
 
-  const [desktopUpdate, setDesktopUpdate] = useState<{
-    hasUpdate: boolean;
-    latestVersion: string;
-    releaseTitle?: string;
-    isMandatory?: boolean;
-  } | null>(null);
-
-  useEffect(() => {
-    zoomManager.init();
-
-    // Check for desktop software updates when running in desktop app
-    if (isDesktop) {
-      axios.post(`${API_URL}/api/desktop/heartbeat`, {
-        currentVersion: '3.0.0',
-        userId: user?._id,
-        userEmail: user?.email,
-        os: 'Windows'
-      }).then((res) => {
-        if (res.data?.hasUpdate) {
-          setDesktopUpdate({
-            hasUpdate: true,
-            latestVersion: res.data.latestVersion,
-            releaseTitle: res.data.releaseTitle,
-            isMandatory: res.data.isMandatory
-          });
-        }
-      }).catch((_) => {});
-    }
-  }, [user?._id, user?.email]);
-
   useEffect(() => {
     if (token) {
       refreshUserProfile();
@@ -146,50 +101,6 @@ const App = () => {
 
   return (
     <BrowserRouter>
-      {isDesktop && (
-        <aside 
-          role="banner" 
-          className="w-full bg-[#191716] text-[#FAF8F5] border-b border-[#3A3531] px-4 py-1.5 text-xs font-delight flex items-center justify-between z-50 select-none shadow-sm shrink-0"
-        >
-          <div className="flex items-center gap-2.5">
-            <span className="w-2 h-2 rounded-full bg-[#C85A32] shrink-0 animate-pulse" />
-            <p className="text-[#E7E2DA] leading-normal text-xs font-medium">
-              This version is only for <strong className="text-white font-medium">local db setup</strong>. For cloud db, please visit{' '}
-              <a 
-                href="https://strovr.space/" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="text-[#E07A5F] hover:text-[#FFA07A] font-medium underline underline-offset-2 transition-colors ml-0.5"
-              >
-                strovr.space
-              </a>.
-            </p>
-          </div>
-          <div className="flex items-center gap-2.5">
-            {desktopUpdate?.hasUpdate && (
-              <a 
-                href="/settings" 
-                className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-400/40 rounded text-[11px] font-medium transition-all animate-pulse"
-                title={`New Strovr Desktop v${desktopUpdate.latestVersion} available - click to install update`}
-              >
-                <Sparkles className="w-3 h-3 text-amber-400" />
-                <span>Update v{desktopUpdate.latestVersion} Available</span>
-              </a>
-            )}
-            <ZoomController variant="banner" />
-            <a 
-              href="https://strovr.space/" 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#C85A32] hover:bg-[#B04B25] text-white text-[11px] font-medium rounded transition-colors uppercase tracking-wider shrink-0 cursor-pointer"
-              title="Open Cloud DB at strovr.space"
-            >
-              <span>strovr.space</span>
-              <ExternalLink className="w-3 h-3" />
-            </a>
-          </div>
-        </aside>
-      )}
       <div className="saas-platform">
         <AppConfirmModal />
       </div>
@@ -213,18 +124,11 @@ const App = () => {
         
         <ErrorBoundary>
           <Routes>
-            {/* Landing is root on web; on Desktop, pull up Login or Dashboard directly */}
             <Route path="/" element={
-              isDesktop ? (
-                <Navigate to={token ? "/dashboard" : "/login"} replace />
+              token ? (
+                <Navigate to="/dashboard" replace />
               ) : (
-                <Landing onLogin={() => {
-                  if (token) {
-                    window.location.href = '/dashboard';
-                  } else {
-                    setShowLogin(true);
-                  }
-                }} />
+                <Landing onLogin={() => setShowLogin(true)} />
               )
             } />
             
@@ -244,8 +148,8 @@ const App = () => {
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             <Route path="/admin" element={<AdminRoute><AdminPanel /></AdminRoute>} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/login" element={<Login onBack={isDesktop ? undefined : () => window.location.href = '/'} />} />
-            <Route path="*" element={<Navigate to={isDesktop ? (token ? "/dashboard" : "/login") : "/"} replace />} />
+            <Route path="/login" element={<Login onBack={() => window.location.href = '/'} />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </ErrorBoundary>
       </div>

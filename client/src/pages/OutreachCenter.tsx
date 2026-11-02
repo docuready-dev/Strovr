@@ -3,11 +3,11 @@ import { Link } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import { 
-  Mail, MessageCircle, MessageSquare, Send, CheckCircle2, 
+  Mail, MessageCircle, MessageSquare, Send, CheckCircle2, CheckCheck,
   ChevronDown, Phone, Layout, Monitor, 
-  Smartphone, Sparkles, Sliders, Edit3, ArrowRight,
+  Smartphone, Sliders, Edit3, ArrowRight,
   ShieldCheck, Tag, Search, Check, Loader2, ExternalLink, Key,
-  Plus, Trash2, Upload, Wand2, Calendar,
+  Plus, Trash2, Upload, Calendar, Layers,
   Image, FileText, Paperclip, Download, X, File, Eye, Copy, Lock, History
 } from 'lucide-react';
 import TemplateGalleryModal from '../components/TemplateGalleryModal';
@@ -389,8 +389,8 @@ const OutreachCenter = () => {
     const aiUsed = user?.ai_pitches_used || 0;
     if (aiLimit !== -1 && aiUsed >= aiLimit) {
       await alertDialog({
-        title: 'Monthly AI Pitch Limit Reached',
-        message: `You have used all ${aiLimit} AI pitch generations for your ${plan.toUpperCase()} tier this month. Upgrade to Basic (250/mo) or Pro (Unlimited) to continue composing pitches.`,
+        title: 'Monthly Generation Quota Reached',
+        message: `You have used all ${aiLimit} copy generations for your ${plan.toUpperCase()} tier this month. Upgrade to Basic (250/mo) or Pro (Unlimited) to continue composing campaigns.`,
         variant: 'warning'
       });
       setUpgradeModalOpen(true);
@@ -428,8 +428,8 @@ const OutreachCenter = () => {
     } catch (err: any) {
       if (err?.response?.status === 403) {
         await alertDialog({
-          title: 'Monthly AI Pitch Limit Reached',
-          message: err.response.data?.error || `Monthly AI generation quota reached. Upgrade your plan to compose more pitches.`,
+          title: 'Monthly Generation Quota Reached',
+          message: err.response.data?.error || `Monthly generation quota reached. Upgrade your plan to compose more campaigns.`,
           variant: 'warning'
         });
         setUpgradeModalOpen(true);
@@ -993,16 +993,13 @@ const OutreachCenter = () => {
   };
 
   return (
-    <div className="flex w-full min-h-screen bg-[#FBFBFA] font-sans text-slate-900">
+    <div className="flex w-full h-screen overflow-hidden bg-[#FAF8F5] font-sans text-slate-900">
       <Sidebar />
 
-      <div className="flex-1 flex flex-col min-w-0 bg-[#FBFBFA] relative">
-        {/* Subtle ambient light gradient at the top */}
-        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-indigo-50/50 via-amber-50/20 to-transparent pointer-events-none" />
+      <div className="flex-1 flex flex-col h-screen min-w-0 bg-[#FAF8F5] relative overflow-hidden">
+        <Header title="Outreach Studio & Campaign Center" />
 
-        <Header title="Multi-Channel Outreach & Email Template Studio" />
-
-        <div className="p-6 sm:p-8 flex flex-col gap-6 min-h-0 relative z-10">
+        <div className="flex-1 min-h-0 flex flex-col overflow-hidden relative z-10">
           
           {/* Dispatch Live Notification Banner */}
           {dispatchNotification && (
@@ -1039,7 +1036,7 @@ const OutreachCenter = () => {
           )}
 
           {/* Architectural Transport & Scheduling Bar */}
-          <div className="bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl px-5 py-3 flex flex-wrap items-center justify-between gap-3 shadow-xs">
+          <div className="shrink-0 bg-white border-b border-[#E5E0D5] px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 shadow-2xs">
             <div className="flex flex-wrap items-center gap-4 text-xs font-delight">
               <div className="flex items-center gap-2 text-slate-700">
                 <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Outbox:</span>
@@ -1080,22 +1077,22 @@ const OutreachCenter = () => {
             </div>
           </div>
 
-          <div className="flex flex-col xl:flex-row gap-6 min-h-0">
+          <div className="flex-1 min-h-0 flex flex-col xl:flex-row overflow-hidden p-4 sm:p-5 gap-5">
           
           {/* ======================================================== */}
           {/* LEFT: ARCHITECTURAL STUDIO COMPOSER                      */}
           {/* ======================================================== */}
-          <div className="w-full xl:w-[50%] flex flex-col bg-white border border-slate-200/90 rounded-2xl overflow-hidden min-h-[750px] shadow-sm">
+          <div className="w-full xl:w-1/2 flex flex-col h-full bg-white border border-[#E5E0D5] rounded-2xl overflow-hidden shadow-xs">
             
             {/* Channel Tabs & A/B Testing */}
-            <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 px-4 py-3 gap-2">
+            <div className="shrink-0 flex items-center justify-between border-b border-[#E5E0D5] bg-[#FAF8F5] px-4 py-2.5 gap-2">
               <div className="flex gap-1.5 bg-white p-1 rounded-xl border border-slate-200/80 shadow-2xs">
                 <button 
                   onClick={() => setActiveChannel('email')}
                   className={`px-3.5 py-1.5 text-xs font-delight flex items-center gap-2 rounded-lg transition-all cursor-pointer ${
                     activeChannel === 'email' 
-                      ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white font-semibold shadow-xs shadow-indigo-200' 
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-medium'
+                      ? 'bg-[#191716] text-white font-semibold shadow-xs' 
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium'
                   }`}
                 >
                   <Mail className="w-3.5 h-3.5" /> 
@@ -1105,8 +1102,8 @@ const OutreachCenter = () => {
                   onClick={() => setActiveChannel('whatsapp')}
                   className={`px-3.5 py-1.5 text-xs font-delight flex items-center gap-2 rounded-lg transition-all cursor-pointer ${
                     activeChannel === 'whatsapp' 
-                      ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold shadow-xs shadow-emerald-200' 
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-medium'
+                      ? 'bg-[#1E6B52] text-white font-semibold shadow-xs' 
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium'
                   }`}
                 >
                   <MessageCircle className="w-3.5 h-3.5" /> 
@@ -1116,8 +1113,8 @@ const OutreachCenter = () => {
                   onClick={() => setActiveChannel('sms')}
                   className={`px-3.5 py-1.5 text-xs font-delight flex items-center gap-2 rounded-lg transition-all cursor-pointer ${
                     activeChannel === 'sms' 
-                      ? 'bg-gradient-to-r from-purple-600 to-violet-600 text-white font-semibold shadow-xs shadow-purple-200' 
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-medium'
+                      ? 'bg-slate-700 text-white font-semibold shadow-xs' 
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium'
                   }`}
                 >
                   <MessageSquare className="w-3.5 h-3.5" /> 
@@ -1227,7 +1224,7 @@ const OutreachCenter = () => {
                   }}
                   className="text-[11px] font-delight bg-white/15 hover:bg-white/25 text-white border border-white/20 px-3 py-1 rounded-md transition-colors cursor-pointer flex items-center gap-1.5 font-semibold"
                 >
-                  <Sparkles className="w-3 h-3 text-amber-300" />
+                  <Copy className="w-3 h-3 text-slate-300" />
                   <span>Clone A &rarr; B</span>
                 </button>
               </div>
@@ -1274,7 +1271,7 @@ const OutreachCenter = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {/* Click-to-Use AI Email Copilot Trigger Button */}
+                  {/* Click-to-Use Copywriting Studio Trigger Button */}
                   <button
                     type="button"
                     onClick={() => {
@@ -1283,12 +1280,12 @@ const OutreachCenter = () => {
                     }}
                     className={`px-3 py-1.5 rounded-lg text-xs font-delight font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
                       isCopilotOpen
-                        ? 'bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-white border-transparent shadow-xs'
-                        : 'bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 text-amber-900 border-amber-200/80 shadow-2xs'
+                        ? 'bg-[#191716] text-white border-[#191716] shadow-xs'
+                        : 'bg-[#FAF8F5] hover:bg-[#F5F3EF] text-slate-800 border-[#E5E0D5] shadow-2xs'
                     }`}
                   >
-                    <Wand2 className={`w-3.5 h-3.5 ${isCopilotOpen ? 'text-white' : 'text-amber-600'}`} />
-                    <span>AI Copilot</span>
+                    <Edit3 className="w-3.5 h-3.5 text-slate-700" />
+                    <span>Copywriting Studio</span>
                   </button>
 
                   {/* Two-Layer Architecture Switcher */}
@@ -1347,17 +1344,17 @@ const OutreachCenter = () => {
             )}
 
             {/* Editor Body */}
-            <div className="p-5 flex-1 overflow-y-auto custom-scrollbar flex flex-col space-y-4 bg-white">
+            <div className="p-5 flex-1 min-h-0 overflow-y-auto custom-scrollbar flex flex-col space-y-4 bg-white">
               
               {/* WHATSAPP TAB VIEW */}
               {activeChannel === 'whatsapp' && (
                 <div className="space-y-4">
                   {/* 10 Structured WhatsApp Hook Selector Pills */}
-                  <div className="border border-slate-200/90 rounded-xl p-4 bg-gradient-to-b from-slate-50/50 to-white shadow-2xs">
+                  <div className="border border-[#E5E0D5] rounded-xl p-4 bg-[#FAF8F5] shadow-2xs">
                     <div className="flex items-center justify-between mb-3">
                       <label className="text-xs font-delight font-bold text-slate-900 flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                        <span>Conversational Hook Frameworks</span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#1E6B52]" />
+                        <span>01. Conversational Hooks</span>
                       </label>
                       <span className="text-[10px] font-delight font-medium text-slate-400">
                         {WHATSAPP_TEMPLATES.length} Proven Angles
@@ -1373,8 +1370,8 @@ const OutreachCenter = () => {
                             onClick={() => handleSelectWhatsAppTemplate(tpl)}
                             className={`text-left p-3 rounded-xl border text-xs transition-all flex flex-col justify-between cursor-pointer ${
                               isSelected 
-                                ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white border-transparent shadow-xs shadow-emerald-200' 
-                                : 'bg-white border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/20 text-slate-800 shadow-2xs'
+                                ? 'bg-[#1E6B52] text-white border-[#1E6B52] shadow-xs' 
+                                : 'bg-white border-[#E5E0D5] hover:border-[#1E6B52] hover:bg-white text-slate-800 shadow-2xs'
                             }`}
                           >
                             <div className="flex items-center justify-between w-full mb-1">
@@ -1395,9 +1392,9 @@ const OutreachCenter = () => {
                   </div>
 
                   {/* Merge Tags & Message Body */}
-                  <div className="border border-slate-200/90 rounded-xl overflow-hidden shadow-2xs bg-white">
-                    <div className="px-4 py-2.5 bg-slate-50/70 border-b border-slate-100 flex items-center justify-between flex-wrap gap-2">
-                      <label className="text-xs font-delight font-bold text-slate-700">Message Script</label>
+                  <div className="border border-[#E5E0D5] rounded-xl overflow-hidden shadow-2xs bg-white">
+                    <div className="px-4 py-2.5 bg-[#FAF8F5] border-b border-[#E5E0D5] flex items-center justify-between flex-wrap gap-2">
+                      <label className="text-xs font-delight font-bold text-slate-800">02. Message Layout & Text</label>
                       <div className="flex items-center gap-1.5 flex-wrap">
                         {mergeTags.map((tag) => {
                           const isBooking = tag.includes('booking');
@@ -1432,7 +1429,7 @@ const OutreachCenter = () => {
                   </div>
 
                   {/* Rich Media & Document Attachments (Picture + PDF Files) */}
-                  <div className="border border-slate-200/90 rounded-xl p-4 bg-gradient-to-b from-slate-50/40 via-white to-slate-50/20 shadow-2xs space-y-4">
+                  <div className="border border-[#E5E0D5] rounded-xl p-4 bg-[#FAF8F5] shadow-2xs space-y-4">
                     
                     {/* Header Strip */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-slate-100">
@@ -1442,7 +1439,7 @@ const OutreachCenter = () => {
                             <Paperclip className="w-3.5 h-3.5" />
                           </div>
                           <label className="text-xs font-delight font-bold text-slate-900">
-                            Rich Media & Document Attachments
+                            03. Media & Attachments
                           </label>
                           <span className="text-[10px] font-delight font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
                             Picture + PDF
@@ -1461,7 +1458,7 @@ const OutreachCenter = () => {
                           className="text-[10px] font-delight font-bold px-2.5 py-1 rounded-md bg-slate-900 text-white hover:bg-slate-800 transition-colors cursor-pointer shadow-2xs flex items-center gap-1"
                           title="Load Executive Presentation & Analytics Deck"
                         >
-                          <Sparkles className="w-3 h-3 text-amber-400" />
+                          <Paperclip className="w-3 h-3 text-slate-300" />
                           <span>Load Pro Media Pack</span>
                         </button>
 
@@ -1768,11 +1765,11 @@ const OutreachCenter = () => {
                   </div>
 
                   {/* Organic Email-Capture Bridge Feature */}
-                  <div className="border border-emerald-200/80 rounded-xl p-4 bg-gradient-to-r from-emerald-50/40 via-teal-50/20 to-white flex items-center justify-between gap-3 shadow-2xs">
+                  <div className="border border-[#E5E0D5] rounded-xl p-4 bg-white flex items-center justify-between gap-3 shadow-2xs">
                     <div className="min-w-0">
-                      <div className="text-xs font-delight font-bold text-emerald-950 flex items-center gap-1.5">
-                        <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-                        <span>Organic Email-Capture Bridge</span>
+                      <div className="text-xs font-delight font-bold text-slate-900 flex items-center gap-1.5">
+                        <MessageSquare className="w-3.5 h-3.5 text-[#1E6B52]" />
+                        <span>04. Follow-Up Script · Email Capture Bridge</span>
                       </div>
                       <p className="text-[11px] text-emerald-800/80 truncate mt-0.5 font-medium">
                         "{EMAIL_CAPTURE_BRIDGE_SCRIPT}"
@@ -1820,26 +1817,26 @@ const OutreachCenter = () => {
                   {editorLayer === 'content' && (
                     <div className="space-y-4">
                       
-                      {/* CLICK-TO-USE AI EMAIL COPILOT (Collapsed Trigger vs. Dedicated Card View) */}
+                      {/* CLICK-TO-USE COPYWRITING STUDIO (Collapsed Trigger vs. Dedicated Card View) */}
                       {!isCopilotOpen ? (
                         <div
                           onClick={() => setIsCopilotOpen(true)}
-                          className="group border border-indigo-200/80 hover:border-indigo-400 bg-gradient-to-r from-indigo-50/50 via-purple-50/20 to-white hover:from-indigo-50/70 hover:to-white rounded-2xl px-4 py-3.5 flex items-center justify-between gap-3 cursor-pointer transition-all shadow-xs"
+                          className="group border border-[#E5E0D5] hover:border-slate-400 bg-[#FAF8F5] hover:bg-[#F5F3EF] rounded-2xl px-4 py-3.5 flex items-center justify-between gap-3 cursor-pointer transition-all shadow-xs"
                         >
                           <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-2xs shrink-0">
-                              <Sparkles className="w-4 h-4" />
+                            <div className="w-9 h-9 rounded-xl bg-[#191716] flex items-center justify-center text-white shadow-2xs shrink-0">
+                              <Edit3 className="w-4 h-4" />
                             </div>
                             <div className="min-w-0">
                               <div className="flex items-center gap-2">
-                                <span className="text-xs font-delight font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
-                                  AI Email Copilot
+                                <span className="text-xs font-delight font-bold text-slate-900 group-hover:text-[#C85A32] transition-colors">
+                                  Dynamic Copywriting Studio
                                 </span>
-                                <span className="text-[9px] font-delight font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
-                                  Auto-Fill Engine
+                                <span className="text-[9px] font-delight font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">
+                                  Template Frameworks
                                 </span>
                                 <span className="text-[9px] font-delight font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                                  {user?.ai_pitches_limit === -1 ? 'Unlimited' : `${Math.max(0, (user?.ai_pitches_limit ?? 5) - (user?.ai_pitches_used || 0))} Pitches Left`}
+                                  {user?.ai_pitches_limit === -1 ? 'Unlimited Drafts' : `${Math.max(0, (user?.ai_pitches_limit ?? 5) - (user?.ai_pitches_used || 0))} Drafts Left`}
                                 </span>
                                 {aiSuccessMessage && (
                                   <span className="text-[10px] font-delight font-semibold text-emerald-600 flex items-center gap-1">
@@ -1848,38 +1845,38 @@ const OutreachCenter = () => {
                                 )}
                               </div>
                               <p className="text-[11px] font-delight text-slate-500 truncate mt-0.5">
-                                Click to launch autonomous copy synthesis for <span className="font-semibold text-slate-700">{previewLead.businessName}</span>
+                                Generate customized pitch and positioning frameworks for <span className="font-semibold text-slate-700">{previewLead.businessName}</span>
                               </p>
                             </div>
                           </div>
 
-                          <span className="px-3.5 py-1.5 rounded-xl bg-white group-hover:bg-indigo-600 text-indigo-600 group-hover:text-white border border-indigo-200 group-hover:border-indigo-600 text-xs font-delight font-bold transition-all shrink-0 shadow-2xs">
+                          <span className="px-3.5 py-1.5 rounded-xl bg-white group-hover:bg-[#191716] text-slate-800 group-hover:text-white border border-[#E5E0D5] group-hover:border-[#191716] text-xs font-delight font-semibold transition-all shrink-0 shadow-2xs">
                             Open Studio &rarr;
                           </span>
                         </div>
                       ) : (
-                        /* DEDICATED AI EMAIL COPILOT CARD VIEW (Bright Luminous Gradient + Delight Font) */
-                        <div className="border border-indigo-200/90 rounded-2xl bg-white shadow-md overflow-hidden animate-in fade-in duration-150 font-delight">
+                        /* DEDICATED COPYWRITING STUDIO CARD VIEW (Subtle Dark Charcoal & Warm Stone) */
+                        <div className="border border-[#E5E0D5] rounded-2xl bg-white shadow-sm overflow-hidden animate-in fade-in duration-150 font-delight">
                           {/* Card View Top Header */}
-                          <div className="bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-600 text-white px-5 py-4 flex items-center justify-between gap-3 shadow-2xs">
+                          <div className="bg-[#191716] text-white px-5 py-3.5 flex items-center justify-between gap-3 shadow-2xs">
                             <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-lg bg-white/15 backdrop-blur-xs flex items-center justify-center text-white shrink-0">
-                                <Sparkles className="w-4 h-4" />
+                              <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white shrink-0">
+                                <Edit3 className="w-4 h-4" />
                               </div>
                               <div>
                                 <div className="flex items-center gap-2">
-                                  <h4 className="text-sm font-bold text-white font-delight tracking-tight">
-                                    AI Email Copilot
+                                  <h4 className="text-xs font-bold text-white font-delight tracking-tight">
+                                    Dynamic Copywriting Studio
                                   </h4>
-                                  <span className="text-[9px] font-delight uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/20 text-white font-semibold backdrop-blur-xs">
-                                    Auto-Fill Engine
+                                  <span className="text-[9px] font-delight uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/10 text-white font-semibold">
+                                    Direct Blueprint Engine
                                   </span>
-                                  <span className="text-[9px] font-delight uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-100 font-semibold border border-emerald-400/30">
-                                    {user?.ai_pitches_limit === -1 ? 'Unlimited Pitches' : `${Math.max(0, (user?.ai_pitches_limit ?? 5) - (user?.ai_pitches_used || 0))} / ${user?.ai_pitches_limit ?? 5} Left`}
+                                  <span className="text-[9px] font-delight uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">
+                                    {user?.ai_pitches_limit === -1 ? 'Unlimited Drafts' : `${Math.max(0, (user?.ai_pitches_limit ?? 5) - (user?.ai_pitches_used || 0))} Drafts Left`}
                                   </span>
                                 </div>
-                                <p className="text-[11px] text-indigo-100 font-delight mt-0.5">
-                                  Synthesizing multi-block layout for <span className="text-white font-semibold">{previewLead.businessName}</span>
+                                <p className="text-[11px] text-slate-300 font-delight mt-0.5">
+                                  Generating custom layout for <span className="text-white font-semibold">{previewLead.businessName}</span>
                                 </p>
                               </div>
                             </div>
@@ -1937,7 +1934,7 @@ const OutreachCenter = () => {
                             {/* Stage 2: 1-Click Scenario Blueprints (Bento Tiles) */}
                             <div>
                               <span className="block text-[10px] font-delight font-bold uppercase tracking-wider text-slate-400 mb-2">
-                                02 / Instant Campaign Blueprints (1-Click Auto-Fill)
+                                02. Campaign Presets
                               </span>
                               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                 {[
@@ -1969,7 +1966,7 @@ const OutreachCenter = () => {
                             {/* Stage 3: Custom Directive Prompt & Action */}
                             <div className="pt-2 border-t border-slate-100 space-y-2.5">
                               <span className="block text-[10px] font-delight font-bold uppercase tracking-wider text-slate-400">
-                                03 / Custom Campaign Objective
+                                03. Custom Objective
                               </span>
                               <div className="flex flex-col sm:flex-row gap-2">
                                 <input
@@ -1994,12 +1991,12 @@ const OutreachCenter = () => {
                                   {isAiGenerating ? (
                                     <>
                                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                      <span>Synthesizing...</span>
+                                      <span>Generating Copy...</span>
                                     </>
                                   ) : (
                                     <>
-                                      <Wand2 className="w-3.5 h-3.5" />
-                                      <span>Auto-Fill Template</span>
+                                      <Edit3 className="w-3.5 h-3.5" />
+                                      <span>Populate Template</span>
                                     </>
                                   )}
                                 </button>
@@ -3103,7 +3100,7 @@ const OutreachCenter = () => {
                   <button 
                     type="button"
                     onClick={() => handleOpenWhatsAppWeb(previewLead)}
-                    className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-4.5 py-2 rounded-xl text-xs font-delight font-bold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                    className="bg-[#1E6B52] hover:bg-[#165440] text-white px-4.5 py-2 rounded-xl text-xs font-delight font-semibold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
                   >
                     <Send className="w-3.5 h-3.5" />
                     <span>WhatsApp Web</span>
@@ -3161,11 +3158,11 @@ const OutreachCenter = () => {
           {/* ======================================================== */}
           <div 
             ref={previewCardRef}
-            className="w-full xl:flex-1 flex flex-col bg-slate-50/70 border border-slate-200/90 rounded-2xl min-h-[750px] xl:sticky xl:top-6 self-start z-10 overflow-hidden shadow-xs"
+            className="w-full xl:w-1/2 flex flex-col h-full bg-[#FAF8F5] border border-[#E5E0D5] rounded-2xl overflow-hidden shadow-xs"
           >
             
             {/* Viewport & Lead Controls */}
-            <div className="px-5 py-3 border-b border-slate-200/80 bg-white/95 backdrop-blur-md flex flex-wrap items-center justify-between gap-3 relative z-30">
+            <div className="shrink-0 px-5 py-2.5 border-b border-[#E5E0D5] bg-white flex flex-wrap items-center justify-between gap-3 relative z-30">
               <div className="flex items-center gap-3">
                 {/* Traffic-light chrome dots */}
                 <div className="flex items-center gap-1.5">
@@ -3315,7 +3312,7 @@ const OutreachCenter = () => {
             </div>
 
             {/* Viewport Canvas */}
-            <div className="flex-1 p-6 overflow-y-auto custom-scrollbar flex items-start justify-center rounded-b-2xl">
+            <div className="flex-1 min-h-0 p-6 overflow-y-auto custom-scrollbar flex items-start justify-center">
               
               {/* ======================================================== */}
               {/* EMAIL CLIENT CONTAINER                                   */}
@@ -4182,9 +4179,13 @@ const OutreachCenter = () => {
 
               {/* WHATSAPP PHONE MOCKUP PREVIEW */}
               {activeChannel === 'whatsapp' && (
-                <div className="w-[340px] bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden flex flex-col font-sans ring-4 ring-slate-100/80">
+                <div className="w-[360px] sm:w-[380px] bg-slate-900 rounded-[38px] p-2.5 shadow-xl border-2 border-slate-700/60 flex flex-col font-sans shrink-0 my-auto">
+                  <div className="h-3.5 w-full flex items-center justify-center mb-1">
+                    <div className="w-14 h-1 rounded-full bg-slate-700" />
+                  </div>
+                  <div className="w-full rounded-[30px] overflow-hidden flex flex-col bg-[#ECE5DD] border border-slate-800/20">
                   {/* WhatsApp Top Chat Header */}
-                  <div className="bg-gradient-to-r from-emerald-600 to-teal-700 text-white p-3.5 flex items-center justify-between shrink-0 shadow-xs">
+                  <div className="bg-[#1E6B52] text-white p-3.5 flex items-center justify-between shrink-0 shadow-xs">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center font-bold text-xs backdrop-blur-xs text-white shrink-0">
                         {previewLead?.businessName?.charAt(0) || 'L'}
@@ -4288,7 +4289,7 @@ const OutreachCenter = () => {
                             />
                             <div className="text-[9px] text-slate-500 flex items-center justify-end gap-1 mt-1 font-delight font-medium">
                               <span>10:42 AM</span>
-                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                              <CheckCheck className="w-3.5 h-3.5 text-emerald-600" />
                             </div>
                           </div>
                         </div>
@@ -4301,7 +4302,7 @@ const OutreachCenter = () => {
                           />
                           <div className="text-[9px] text-slate-500 flex items-center justify-end gap-1 mt-1 font-delight font-medium">
                             <span>10:42 AM</span>
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                            <CheckCheck className="w-3.5 h-3.5 text-emerald-600" />
                           </div>
                         </div>
                       )}
@@ -4316,9 +4317,10 @@ const OutreachCenter = () => {
                       <Paperclip className="w-3 h-3 text-slate-400" />
                       <span>{whatsAppImage.enabled && whatsAppPdf.enabled ? '2 Media Files Attached' : whatsAppImage.enabled ? '1 Picture Attached' : whatsAppPdf.enabled ? '1 PDF Attached' : 'Standard Text Message'}</span>
                     </span>
-                    <span className="text-emerald-700 font-bold font-delight">Verified Layout</span>
+                    <span className="text-[#1E6B52] font-bold font-delight">Verified Layout</span>
                   </div>
                 </div>
+              </div>
               )}
 
               {/* SMS PHONE MOCKUP PREVIEW */}

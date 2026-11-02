@@ -4,7 +4,7 @@ import { alertDialog } from './AppConfirmModal';
 import axios from 'axios';
 import API_URL from '../config/api';
 import { 
-  X, Check, Lock, Zap, Sparkles, 
+  X, Check, Lock, Zap, 
   ArrowRight, CreditCard, ChevronRight, CheckCircle2, ExternalLink
 } from 'lucide-react';
 
@@ -24,13 +24,6 @@ const TopUpModal = () => {
   const [phonePeStep, setPhonePeStep] = useState<'idle' | 'processing' | 'success'>('idle');
   const [successItemName, setSuccessItemName] = useState('');
   const [billingInterval, setBillingInterval] = useState<'monthly' | 'annual'>('monthly');
-
-  const isDesktop = (() => {
-    if (typeof window === 'undefined') return false;
-    if (/Electron|StrovrDesktop/i.test(navigator.userAgent)) return true;
-    if (sessionStorage.getItem('strovr_desktop_mode') === 'true') return true;
-    return false;
-  })();
 
   const isOpen = Boolean(isUpgradeModalOpen || isTopUpOpen);
 
@@ -72,20 +65,8 @@ const TopUpModal = () => {
 
   const currentPlan = user?.plan || 'free';
 
-  // Process PhonePe Payment or redirect to web if running in EXE
+  // Process PhonePe Payment
   const handleCheckoutClick = async (itemKey: 'micro' | 'mega' | 'basic' | 'pro' | 'basic_annual' | 'pro_annual', itemName: string) => {
-    if (isDesktop) {
-      const checkoutUrl = `https://strovr.space/?action=upgrade&plan=${itemKey}&billing=${billingInterval}`;
-      window.open(checkoutUrl, '_blank');
-      await alertDialog({
-        title: 'Opening Web Checkout',
-        message: 'Strovr Desktop runs locally on your PC. Payment transactions and cloud account upgrades are processed securely at https://strovr.space. Your browser has opened to complete checkout.',
-        variant: 'info'
-      });
-      handleClose();
-      return;
-    }
-
     if (!user?._id) return;
     setLoadingItem(itemKey);
     setPhonePeStep('processing');
@@ -393,11 +374,9 @@ const TopUpModal = () => {
                     <span>
                       {currentPlan === 'basic' 
                         ? 'Active' 
-                        : isDesktop
-                          ? `Get Basic (${billingInterval === 'annual' ? '₹8,999/yr' : '₹999/mo'})`
-                          : `Upgrade via PhonePe (${billingInterval === 'annual' ? '₹8,999' : '₹999'})`}
+                        : `Upgrade via PhonePe (${billingInterval === 'annual' ? '₹8,999' : '₹999'})`}
                     </span>
-                    {isDesktop ? <ExternalLink className="w-3.5 h-3.5" /> : <ArrowRight className="w-3.5 h-3.5" />}
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
@@ -405,7 +384,7 @@ const TopUpModal = () => {
               {/* 3. PRO TIER */}
               <div className={`p-5 rounded-md border transition-all flex flex-col justify-between relative ${currentPlan === 'pro' ? 'border-purple-600 bg-purple-50/20 ring-1 ring-purple-600' : 'border-slate-900 bg-white'}`}>
                 <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[9px] font-delight font-medium px-2 py-0.5 rounded-sm uppercase tracking-wider flex items-center gap-1">
-                  <Sparkles className="w-3 h-3 text-amber-400" />
+                  <Zap className="w-3 h-3 text-amber-400 fill-current" />
                   <span>{billingInterval === 'annual' ? 'Save 25% • High Performance' : 'High Performance'}</span>
                 </div>
 
@@ -476,11 +455,9 @@ const TopUpModal = () => {
                     <span>
                       {currentPlan === 'pro' 
                         ? 'Active' 
-                        : isDesktop
-                          ? `Get Pro (${billingInterval === 'annual' ? '₹17,999/yr' : '₹1,999/mo'})`
-                          : `Get Pro via PhonePe (${billingInterval === 'annual' ? '₹17,999' : '₹1,999'})`}
+                        : `Get Pro via PhonePe (${billingInterval === 'annual' ? '₹17,999' : '₹1,999'})`}
                     </span>
-                    {isDesktop ? <ExternalLink className="w-3.5 h-3.5" /> : <Sparkles className="w-3.5 h-3.5" />}
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
@@ -547,13 +524,13 @@ const TopUpModal = () => {
                       </td>
                       <td className="p-3 text-center">
                         <span className="inline-flex items-center gap-1 text-[10.5px] font-medium text-purple-700 bg-purple-50 border border-purple-200/60 px-2 py-0.5 rounded">
-                          <Sparkles className="w-3 h-3 text-purple-600" />
+                          <Check className="w-3 h-3 text-purple-600" />
                           <span>Multi-Variant A/B/C</span>
                         </span>
                       </td>
                     </tr>
                     <tr className="hover:bg-slate-50/70 transition-colors">
-                      <td className="p-3 pl-4 font-medium text-slate-800">AI Copilot Pitch Synthesis</td>
+                      <td className="p-3 pl-4 font-medium text-slate-800">Dynamic Copywriting Studio</td>
                       <td className="p-3 text-center font-normal text-slate-600">5 generations/month</td>
                       <td className="p-3 text-center font-medium text-slate-800 bg-[#C85A32]/5">250 generations/month</td>
                       <td className="p-3 text-center font-medium text-purple-900">Unlimited AI Generations</td>

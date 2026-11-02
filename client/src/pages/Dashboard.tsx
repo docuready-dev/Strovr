@@ -9,7 +9,7 @@ import API_URL from '../config/api';
 import {
   Layout, ArrowRight, TrendingUp, Users, Compass, Activity,
   Clock, Calendar as CalendarIcon, GripVertical, Check, Plus,
-  Trash2, RotateCcw, Eye, EyeOff, Play, Pause, Sparkles,
+  Trash2, RotateCcw, Eye, EyeOff, Play, Pause, ArrowUpRight,
   ChevronLeft, ChevronRight, CheckSquare, Square, Sliders,
   Maximize2, Zap, ShieldCheck, BookOpen, MessageSquare, Send, Mail,
   RefreshCw, ExternalLink
@@ -964,7 +964,7 @@ const Dashboard = () => {
                   isProTier ? 'bg-[#C85A32] hover:bg-[#B04B25]' : 'bg-[#191716] hover:bg-[#C85A32]'
                 }`}
               >
-                {isProTier ? <Plus className="w-3.5 h-3.5" /> : <Sparkles className="w-3.5 h-3.5 text-[#C85A32]" />}
+                {isProTier ? <Plus className="w-3.5 h-3.5" /> : <ArrowUpRight className="w-3.5 h-3.5 text-[#C85A32]" />}
                 <span>{isProTier ? 'Top-Up Instant Tokens' : currentPlan === 'basic' ? 'Upgrade to Pro' : 'Upgrade Plan'}</span>
               </button>
               {!isProTier && (

@@ -1,5 +1,5 @@
 import { 
-  BarChart3, Database, Sparkles, Users, Zap, ShieldCheck, X, Check, Download
+  BarChart3, Database, Users, Zap, ShieldCheck, X, Check, Download
 } from 'lucide-react';
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import { useRef, useState } from 'react';
@@ -15,7 +15,7 @@ const companies = [
   { name: 'Soylent', icon: Users },
   { name: 'Initech', icon: Zap },
   { name: 'Umbrella', icon: ShieldCheck },
-  { name: 'Massive Dynamic', icon: Sparkles },
+  { name: 'Massive Dynamic', icon: Layers },
 ];
 
 const benchmarkProfiles = {
@@ -297,15 +297,6 @@ const Landing = ({ onLogin }: { onLogin: () => void }) => {
           </div>
 
           <div className="flex items-center gap-3">
-            <a
-              href="/downloads/Strovr-Desktop-Portable.zip"
-              download="Strovr-Desktop-Portable.zip"
-              className="hidden lg:inline-flex items-center gap-1.5 h-8.5 px-3 bg-white text-[#191716] hover:bg-[#F5F2EB] border border-[#D6CFC2] rounded-[5px] font-delight font-semibold text-xs transition-colors shadow-2xs cursor-pointer"
-              title="Download Strovr for Windows Desktop (Portable ZIP)"
-            >
-              <Download className="w-3.5 h-3.5 text-[#C85A32]" />
-              <span>Download for Desktop</span>
-            </a>
             <button
               onClick={onLogin}
               className="text-xs font-delight font-semibold text-[#57524B] hover:text-[#191716] transition-colors px-2.5 py-1.5 cursor-pointer"
@@ -369,15 +360,6 @@ const Landing = ({ onLogin }: { onLogin: () => void }) => {
                 {token ? 'Go to Dashboard' : 'Launch Workspace'} &rarr;
               </button>
               <a
-                href="/downloads/Strovr-Desktop-Portable.zip"
-                download="Strovr-Desktop-Portable.zip"
-                className="w-full sm:w-auto h-11 px-5 bg-white border border-[#D6CFC2] text-[#191716] rounded-[6px] font-delight font-semibold text-[13px] hover:bg-[#FAF8F5] transition-colors flex items-center justify-center gap-2 shadow-2xs hover:border-[#C85A32]"
-                title="Download Strovr for Windows Desktop (Portable ZIP)"
-              >
-                <Download className="w-3.5 h-3.5 text-[#C85A32]" />
-                <span>Download for Desktop</span>
-              </a>
-              <a
                 href="#product"
                 className="w-full sm:w-auto h-11 px-4 bg-[#F5F2EB] border border-[#D6CFC2] text-[#57524B] rounded-[6px] font-delight font-semibold text-[13px] hover:bg-[#EFECE4] transition-colors flex items-center justify-center gap-1"
               >
@@ -421,7 +403,7 @@ const Landing = ({ onLogin }: { onLogin: () => void }) => {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                 </span>
-                <span>WORKSPACE // LIVE STREAM</span>
+                <span>WORKSPACE · LIVE STREAM</span>
               </div>
             </motion.div>
 
@@ -499,7 +481,7 @@ const Landing = ({ onLogin }: { onLogin: () => void }) => {
           className="text-left mb-12 max-w-2xl"
         >
           <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-[5px] border border-[#E5E0D5] bg-[#F5F2EB] text-[11px] font-delight font-bold text-[#57524B] mb-3.5">
-            <span>UNIFIED ARCHITECTURE // THREE ENGINES</span>
+            <span>UNIFIED ARCHITECTURE · THREE ENGINES</span>
           </div>
           <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-[#191716] mb-3.5">
             Three core engines. One integrated workspace.
@@ -597,7 +579,7 @@ const Landing = ({ onLogin }: { onLogin: () => void }) => {
       <section id="features" ref={targetRef} className="py-16 px-6 md:px-12 max-w-7xl mx-auto w-full relative z-10 scroll-mt-20">
         <motion.div style={{ opacity, y }} className="text-left mb-12 max-w-2xl">
           <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-[5px] border border-[#E5E0D5] bg-[#F5F2EB] text-[11px] font-delight font-bold text-[#57524B] mb-3.5">
-            <span>PRODUCTION TELEMETRY // BENTO SPECIFICATIONS</span>
+            <span>PRODUCTION TELEMETRY · BENTO SPECIFICATIONS</span>
           </div>
           <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-[#191716] mb-3.5">
             Engineered capabilities for predictable pipeline growth.
@@ -894,7 +876,7 @@ const Landing = ({ onLogin }: { onLogin: () => void }) => {
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <div className="inline-flex items-center gap-1.5 text-[10px] font-delight font-bold uppercase tracking-widest text-[#C85A32] mb-1">
-                      <span>REAL-WORLD COST BENCHMARKING // LIVE STACK AUDIT</span>
+                      <span>REAL-WORLD COST BENCHMARKING · LIVE STACK AUDIT</span>
                     </div>
                     <h3 className="text-lg sm:text-xl font-extrabold text-[#191716] tracking-tight">
                       Fragmented Market Stack vs. DocuReady&apos;s Strovr
@@ -1094,7 +1076,7 @@ const Landing = ({ onLogin }: { onLogin: () => void }) => {
         >
           <div className="max-w-2xl">
             <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-[5px] border border-[#E5E0D5] bg-[#F5F2EB] text-[11px] font-delight font-bold text-[#57524B] mb-3.5">
-              <span>TRANSPARENT PRICING // DETAILED COST BIFURCATION</span>
+              <span>TRANSPARENT PRICING · DETAILED COST BIFURCATION</span>
             </div>
             <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-[#191716] mb-3">
               Engineered to cost less than your daily coffee.
@@ -1360,7 +1342,7 @@ const Landing = ({ onLogin }: { onLogin: () => void }) => {
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             <div className="max-w-md">
               <span className="text-[10px] font-delight font-medium uppercase tracking-wider text-[#C85A32] block mb-1">
-                ON-DEMAND ELASTICITY // ZERO MONTHLY COMMITMENT
+                ON-DEMAND ELASTICITY · ZERO MONTHLY COMMITMENT
               </span>
               <h3 className="text-lg font-medium text-[#191716] tracking-tight">
                 Just need a quick batch of leads? Use Instant Top-Up Packs.
@@ -1482,14 +1464,14 @@ const Landing = ({ onLogin }: { onLogin: () => void }) => {
                   </td>
                   <td className="py-3 px-4 text-center">
                     <span className="inline-flex items-center gap-1 text-[10.5px] font-medium text-purple-700 bg-purple-50 border border-purple-200/60 px-2 py-0.5 rounded">
-                      <Sparkles className="w-3 h-3 text-purple-600" />
+                      <Check className="w-3 h-3 text-purple-600" />
                       <span>Multi-Variant A/B/C</span>
                     </span>
                   </td>
                   <td className="py-3 px-4 text-center text-slate-400 font-normal">Locked / Add-on</td>
                 </tr>
                 <tr className="hover:bg-[#FAF8F5]/80 transition-colors">
-                  <td className="py-3 px-5 font-medium text-[#191716]">AI Copilot Pitch Synthesis</td>
+                  <td className="py-3 px-5 font-medium text-[#191716]">Dynamic Copywriting Studio</td>
                   <td className="py-3 px-4 text-center text-[#57524B] font-normal">5 pitches / mo</td>
                   <td className="py-3 px-4 text-center font-medium text-[#C85A32] bg-[#C85A32]/5">250 pitches / mo</td>
                   <td className="py-3 px-4 text-center font-medium text-[#191716]">Unlimited AI Generations</td>
@@ -1593,15 +1575,6 @@ const Landing = ({ onLogin }: { onLogin: () => void }) => {
 
             {/* Interactive Footer Menu */}
             <div className="flex flex-wrap gap-6 text-xs font-delight font-semibold text-[#57524B]">
-              <a 
-                href="/downloads/Strovr-Desktop-Portable.zip" 
-                download="Strovr-Desktop-Portable.zip" 
-                className="hover:text-[#C85A32] transition-colors inline-flex items-center gap-1.5"
-                title="Download Windows Portable Desktop Package (.zip)"
-              >
-                <Download className="w-3.5 h-3.5 text-[#C85A32]" />
-                <span>Download for Desktop</span>
-              </a>
               <a href="#docuready" className="hover:text-[#C85A32] transition-colors">
                 Why DocuReady
               </a>

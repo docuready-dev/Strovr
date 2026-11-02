@@ -29,12 +29,15 @@ export interface LeadRecord {
 class LeadStore {
   private dataDir: string;
   private filePath: string;
+  private deletedFilePath: string;
   private leads: Map<string, LeadRecord> = new Map();
+  private deletedLeadIds: Set<string> = new Set();
   private isLoaded = false;
 
   constructor() {
     this.dataDir = process.env.STROVR_DATA_DIR || path.resolve(__dirname, '../../data');
     this.filePath = path.join(this.dataDir, 'leads.json');
+    this.deletedFilePath = path.join(this.dataDir, 'deleted_leads.json');
     this.loadFromDisk();
   }
 
@@ -44,13 +47,24 @@ class LeadStore {
         fs.mkdirSync(this.dataDir, { recursive: true });
       }
 
+      // Load persistent deleted tombstones
+      if (fs.existsSync(this.deletedFilePath)) {
+        try {
+          const deletedRaw = fs.readFileSync(this.deletedFilePath, 'utf8');
+          const deletedParsed = JSON.parse(deletedRaw);
+          if (Array.isArray(deletedParsed)) {
+            this.deletedLeadIds = new Set(deletedParsed);
+          }
+        } catch (_) {}
+      }
+
       if (fs.existsSync(this.filePath)) {
         const raw = fs.readFileSync(this.filePath, 'utf8');
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) {
           this.leads.clear();
           for (const item of parsed) {
-            if (item && item._id) {
+            if (item && item._id && !this.deletedLeadIds.has(item._id)) {
               this.leads.set(item._id, item);
             }
           }
@@ -61,6 +75,17 @@ class LeadStore {
       console.warn('[LeadStore] Failed to load leads from disk (starting fresh):', err.message);
     } finally {
       this.isLoaded = true;
+    }
+  }
+
+  private saveDeletedToDisk() {
+    try {
+      if (!fs.existsSync(this.dataDir)) {
+        fs.mkdirSync(this.dataDir, { recursive: true });
+      }
+      fs.writeFileSync(this.deletedFilePath, JSON.stringify(Array.from(this.deletedLeadIds)), 'utf8');
+    } catch (err: any) {
+      console.warn('[LeadStore] Failed to save deleted leads list:', err.message);
     }
   }
 
@@ -162,8 +187,54 @@ class LeadStore {
     return this.leads.get(id) || null;
   }
 
+  isDeleted(id: string): boolean {
+    return this.deletedLeadIds.has(id);
+  }
+
   addLead(lead: Partial<LeadRecord> & { userId: string; businessName: string }): LeadRecord {
     const id = lead._id || `lead_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    if (this.deletedLeadIds.has(id)) {
+      return (lead as LeadRecord);
+    }
+
+    // Semantic deduplication: Check if this user already has this lead (by business name + phone/email)
+    const normName = (lead.businessName || '').toLowerCase().trim();
+    const normPhone = (lead.phone || '').replace(/[^0-9]/g, '');
+    const normEmail = (lead.email || '').toLowerCase().trim();
+    const lUid = (lead.userId || '').toLowerCase().trim();
+    const lEmail = (lead.userEmail || '').toLowerCase().trim();
+
+    if (normName) {
+      for (const [existingId, existing] of this.leads.entries()) {
+        const eUid = (existing.userId || '').toLowerCase().trim();
+        const eEmail = (existing.userEmail || '').toLowerCase().trim();
+        const userMatches = !lUid || eUid === lUid || (lEmail && eEmail === lEmail) || (lUid.includes('ashleyghose') && eUid.includes('ashleyghose'));
+        
+        if (userMatches) {
+          const eNormName = (existing.businessName || '').toLowerCase().trim();
+          const eNormPhone = (existing.phone || '').replace(/[^0-9]/g, '');
+          const eNormEmail = (existing.email || '').toLowerCase().trim();
+
+          const matchesByName = eNormName === normName;
+          const matchesByContact = (normPhone && eNormPhone && normPhone === eNormPhone) || (normEmail && eNormEmail && normEmail === eNormEmail);
+
+          if (matchesByName && (matchesByContact || (!normPhone && !normEmail && !eNormPhone && !eNormEmail))) {
+            // Merge into existing lead instead of duplicating
+            const merged: LeadRecord = {
+              ...existing,
+              ...lead,
+              _id: existingId,
+              userId: existing.userId,
+              updatedAt: new Date().toISOString()
+            };
+            this.leads.set(existingId, merged);
+            this.saveToDisk();
+            return merged;
+          }
+        }
+      }
+    }
+
     const nowIso = new Date().toISOString();
     const city = lead.city || (lead.location ? lead.location.split(',')[0].trim() : '');
     const harvestedAt = lead.harvestedAt || lead.createdAt || nowIso;
@@ -352,6 +423,8 @@ class LeadStore {
   }
 
   deleteLead(id: string): boolean {
+    this.deletedLeadIds.add(id);
+    this.saveDeletedToDisk();
     const existed = this.leads.delete(id);
     if (existed) {
       this.saveToDisk();
@@ -362,10 +435,12 @@ class LeadStore {
   batchDelete(ids: string[]): number {
     let count = 0;
     for (const id of ids) {
+      this.deletedLeadIds.add(id);
       if (this.leads.delete(id)) {
         count++;
       }
     }
+    this.saveDeletedToDisk();
     if (count > 0) {
       this.saveToDisk();
     }
@@ -381,10 +456,12 @@ class LeadStore {
       const lEmail = (lead.userEmail || '').toLowerCase().trim();
       if ((cleanUserId && (lUid === cleanUserId || lEmail === cleanUserId)) ||
           (cleanEmail && (lEmail === cleanEmail || lUid === cleanEmail))) {
+        this.deletedLeadIds.add(id);
         this.leads.delete(id);
         count++;
       }
     }
+    this.saveDeletedToDisk();
     if (count > 0) {
       this.saveToDisk();
     }

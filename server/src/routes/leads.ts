@@ -54,25 +54,53 @@ router.get('/', async (req, res) => {
     console.warn('[Leads] Firestore unauthenticated or offline, serving from local store:', err.message);
   }
 
-  // Merge with local persistent store
-  const localLeads = leadStore.getLeads(userId, userEmail);
-  const seenIds = new Set(firestoreLeads.map(l => l._id));
-  const merged = [...firestoreLeads];
+  // Filter out any deleted leads from firestore results & clean up Firestore tombstones
+  firestoreLeads = firestoreLeads.filter(f => {
+    if (leadStore.isDeleted(f._id)) {
+      db.collection('leads').doc(f._id).delete().catch(() => {});
+      return false;
+    }
+    return true;
+  });
 
-  for (const lead of localLeads) {
-    if (!seenIds.has(lead._id)) {
-      seenIds.add(lead._id);
-      merged.push(lead);
+  // Merge with local persistent store with semantic deduplication
+  const localLeads = leadStore.getLeads(userId, userEmail).filter(l => !leadStore.isDeleted(l._id));
+  
+  // Semantic key helper: businessName + (phone or email)
+  const getSemanticKey = (l: any) => {
+    const name = (l.businessName || '').toLowerCase().trim();
+    const phone = (l.phone || '').replace(/[^0-9]/g, '');
+    const email = (l.email || '').toLowerCase().trim();
+    return `${name}__${phone || email || l._id}`;
+  };
+
+  const bySemanticKey = new Map<string, any>();
+  const byId = new Map<string, any>();
+
+  // Process Firestore leads
+  for (const fLead of firestoreLeads) {
+    const sKey = getSemanticKey(fLead);
+    bySemanticKey.set(sKey, fLead);
+    byId.set(fLead._id, fLead);
+  }
+
+  // Process Local leads
+  for (const lLead of localLeads) {
+    const sKey = getSemanticKey(lLead);
+    if (!byId.has(lLead._id) && !bySemanticKey.has(sKey)) {
+      bySemanticKey.set(sKey, lLead);
+      byId.set(lLead._id, lLead);
     }
   }
 
-  // Back-propagate any firestore leads to local leadStore
+  // Back-propagate valid, non-deleted Firestore leads to local leadStore
   for (const fLead of firestoreLeads) {
-    if (!leadStore.getLeadById(fLead._id)) {
+    if (!leadStore.getLeadById(fLead._id) && !leadStore.isDeleted(fLead._id)) {
       leadStore.addLead(fLead);
     }
   }
 
+  const merged = Array.from(byId.values());
   merged.sort((a: any, b: any) => {
     const timeB = new Date(b.harvestedAt || b.createdAt || 0).getTime();
     const timeA = new Date(a.harvestedAt || a.createdAt || 0).getTime();
@@ -153,16 +181,16 @@ router.post('/', async (req, res) => {
     updatedAt: nowIso
   };
 
-  let savedId = `lead_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  const savedId = req.body._id || `lead_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  const recordToSave = { ...newLead, _id: savedId };
+
   try {
-    const leadsRef = db.collection('leads');
-    const docRef = await leadsRef.add(newLead);
-    savedId = docRef.id;
+    await db.collection('leads').doc(savedId).set(recordToSave, { merge: true });
   } catch (err: any) {
     console.warn('[Leads] Firestore write failed, stored in local persistent store:', err.message);
   }
 
-  const savedLead = leadStore.addLead({ ...newLead, _id: savedId });
+  const savedLead = leadStore.addLead(recordToSave);
   res.json(savedLead);
 });
 
@@ -828,13 +856,31 @@ router.patch('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.headers.userid;
+    const userCtx = resolveUserContext(req);
+    const userId = userCtx?.userId || (req.headers.userid as string);
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
     
+    const leadToDelete = leadStore.getLeadById(id);
     leadStore.deleteLead(id);
 
     try {
       await db.collection('leads').doc(id).delete();
+
+      // Also clean up any lingering Firestore duplicate doc by businessName and user
+      if (leadToDelete && leadToDelete.businessName) {
+        const snap = await db.collection('leads')
+          .where('userId', '==', userId)
+          .where('businessName', '==', leadToDelete.businessName)
+          .get();
+        if (!snap.empty) {
+          const batch = db.batch();
+          snap.docs.forEach(d => {
+            leadStore.deleteLead(d.id);
+            batch.delete(d.ref);
+          });
+          await batch.commit();
+        }
+      }
     } catch (fsErr: any) {
       console.warn('[Leads] Firestore delete failed (deleted locally):', fsErr.message);
     }
