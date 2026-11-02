@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useStore } from '../store/useStore';
 import { alertDialog } from '../components/AppConfirmModal';
 import axios from 'axios';
@@ -1255,6 +1256,25 @@ const Settings = () => {
                             })()}
                           </tbody>
                         </table>
+                      </div>
+                    </div>
+
+                    {/* Legal & Regulatory Compliance Note (RBI / PhonePe) */}
+                    <div className="p-4 bg-slate-50 border border-slate-200 rounded-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-slate-600 font-delight">
+                      <div className="space-y-0.5">
+                        <span className="font-bold text-slate-900 block">Payment Aggregator &amp; Regulatory Compliance (RBI)</span>
+                        <p className="text-[11px] text-slate-500 font-sans">
+                          All payments processed in INR via PhonePe conforming to RBI Master Directions (MD-PAG 2020), DPDP Act 2023, and Consumer Protection Rules. Support: ashleyghose64@gmail.com | +91 90048 04043.
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2.5 shrink-0 text-xs font-semibold">
+                        <Link to="/terms" className="text-blue-600 hover:underline">Terms</Link>
+                        <span className="text-slate-300">•</span>
+                        <Link to="/privacy" className="text-blue-600 hover:underline">Privacy</Link>
+                        <span className="text-slate-300">•</span>
+                        <Link to="/refund-policy" className="text-blue-600 hover:underline">Refund Policy</Link>
+                        <span className="text-slate-300">•</span>
+                        <Link to="/contact" className="text-blue-600 hover:underline">Contact</Link>
                       </div>
                     </div>
                   </div>

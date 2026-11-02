@@ -1,8 +1,10 @@
 import { 
-  BarChart3, Database, Users, Zap, ShieldCheck, X, Check, Download
+  BarChart3, Database, Users, Zap, ShieldCheck, X, Check, Download,
+  Layers, Scale, RotateCcw, Mail, Phone, ExternalLink, Building, Lock
 } from 'lucide-react';
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import { useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import MeshBackground from '../components/MeshBackground';
 import { useStore } from '../store/useStore';
 import docuReadyBlackLogo from '../assets/DocuReady-black.png';
@@ -224,6 +226,7 @@ const Landing = ({ onLogin }: { onLogin: () => void }) => {
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
   const [isTermsOpen, setIsTermsOpen] = useState(false);
   const [isContactOpen, setIsContactOpen] = useState(false);
+  const [isRefundOpen, setIsRefundOpen] = useState(false);
   const [contactSubmitted, setContactSubmitted] = useState(false);
   const [benchmarkScale, setBenchmarkScale] = useState<'solo' | 'agency' | 'scale'>('agency');
   const [billingInterval, setBillingInterval] = useState<'monthly' | 'annual'>('monthly');
@@ -1548,7 +1551,7 @@ const Landing = ({ onLogin }: { onLogin: () => void }) => {
       {/* ================= 9. FOOTER (A DOCUREADY ENTITY) ================= */}
       <footer className="py-10 px-6 md:px-12 border-t border-[#E5E0D5] bg-[#F5F2EB] relative z-10">
         <div className="max-w-7xl mx-auto flex flex-col gap-6">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
             {/* Brand + DocuReady Entity Badge */}
             <div className="flex flex-wrap items-center gap-3">
               <a 
@@ -1573,29 +1576,63 @@ const Landing = ({ onLogin }: { onLogin: () => void }) => {
               </div>
             </div>
 
-            {/* Interactive Footer Menu */}
-            <div className="flex flex-wrap gap-6 text-xs font-delight font-semibold text-[#57524B]">
-              <a href="#docuready" className="hover:text-[#C85A32] transition-colors">
-                Why DocuReady
-              </a>
-              <a href="#pricing" className="hover:text-[#C85A32] transition-colors">
-                Pricing &amp; Bifurcation
-              </a>
-              <button onClick={() => setIsPrivacyOpen(true)} className="hover:text-[#C85A32] transition-colors cursor-pointer">
-                Privacy Policy
-              </button>
-              <button onClick={() => setIsTermsOpen(true)} className="hover:text-[#C85A32] transition-colors cursor-pointer">
+            {/* Mandatory Regulatory & Legal Navigation Menu */}
+            <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs font-delight font-semibold text-[#57524B]">
+              <Link 
+                to="/terms" 
+                onClick={(e) => { if (!e.ctrlKey && !e.metaKey) { e.preventDefault(); setIsTermsOpen(true); } }} 
+                className="hover:text-[#C85A32] transition-colors cursor-pointer"
+              >
                 Terms of Service
-              </button>
-              <button onClick={() => setIsContactOpen(true)} className="hover:text-[#C85A32] transition-colors cursor-pointer">
-                Contact &amp; Support
-              </button>
+              </Link>
+              <Link 
+                to="/privacy" 
+                onClick={(e) => { if (!e.ctrlKey && !e.metaKey) { e.preventDefault(); setIsPrivacyOpen(true); } }} 
+                className="hover:text-[#C85A32] transition-colors cursor-pointer"
+              >
+                Privacy Policy
+              </Link>
+              <Link 
+                to="/contact" 
+                onClick={(e) => { if (!e.ctrlKey && !e.metaKey) { e.preventDefault(); setIsContactOpen(true); } }} 
+                className="hover:text-[#C85A32] transition-colors cursor-pointer"
+              >
+                Contact Details
+              </Link>
+              <Link 
+                to="/refund-policy" 
+                onClick={(e) => { if (!e.ctrlKey && !e.metaKey) { e.preventDefault(); setIsRefundOpen(true); } }} 
+                className="hover:text-[#C85A32] transition-colors cursor-pointer"
+              >
+                Refund &amp; Cancellation Policy
+              </Link>
             </div>
           </div>
 
-          <div className="pt-5 border-t border-[#E5E0D5] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs font-delight text-[#78716A]">
+          {/* Statutory Real Contact Coordinates & Grievance Info */}
+          <div className="pt-4 border-t border-[#E5E0D5] flex flex-wrap items-center gap-x-6 gap-y-2 text-xs font-delight text-[#57524B]">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[#78716A]">Official Support:</span>
+              <a href="mailto:ashleyghose64@gmail.com" className="font-semibold text-[#191716] hover:text-[#C85A32] underline">
+                ashleyghose64@gmail.com
+              </a>
+            </div>
+            <span className="text-[#D6CFC2] hidden sm:inline">•</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[#78716A]">Helpline / Contact:</span>
+              <a href="tel:+919004804043" className="font-semibold text-[#191716] hover:text-[#C85A32]">
+                +91 90048 04043
+              </a>
+            </div>
+            <span className="text-[#D6CFC2] hidden sm:inline">•</span>
+            <span className="text-[#78716A]">
+              Bandra West / BKC Financial Hub, Mumbai, Maharashtra 400050, India · Hours: 09:30 - 18:30 IST (Mon-Fri)
+            </span>
+          </div>
+
+          <div className="pt-3 border-t border-[#E5E0D5] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs font-delight text-[#78716A]">
             <p>
-              Strovr is a <strong>DocuReady Entity</strong>. Engineered to deliver enterprise B2B discovery, AI outreach synthesis, and pipeline automation at a fraction of current market rates.
+              Strovr is a <strong>DocuReady Entity</strong>. Commercial transactions processed in INR via authorized RBI-licensed Payment Aggregators (PhonePe). Adhering strictly to RBI Master Directions (MD-PAG 2020), IT Act 2000, DPDP Act 2023, and Consumer Protection (E-Commerce) Rules, 2020.
             </p>
             <p className="shrink-0">
               &copy; {new Date().getFullYear()} DocuReady / Strovr. All rights reserved. www.strovr.space
@@ -1611,7 +1648,7 @@ const Landing = ({ onLogin }: { onLogin: () => void }) => {
             <div className="p-5 border-b border-[#E5E0D5] flex items-center justify-between bg-[#F5F2EB]">
               <div>
                 <h3 className="text-base font-extrabold tracking-tight text-[#191716]">Strovr Privacy Policy</h3>
-                <p className="text-[11px] font-delight text-[#78716A]">Effective Date: October 2026 • GDPR &amp; CCPA Compliant • www.strovr.space</p>
+                <p className="text-[11px] font-delight text-[#78716A]">Digital Personal Data Protection Act 2023 · IT Act 2000 Section 43A · RBI Directives</p>
               </div>
               <button onClick={() => setIsPrivacyOpen(false)} className="text-[#78716A] hover:text-[#191716] transition-colors cursor-pointer">
                 <X className="w-4 h-4" />
@@ -1622,33 +1659,48 @@ const Landing = ({ onLogin }: { onLogin: () => void }) => {
               <section className="space-y-1">
                 <h4 className="font-bold text-xs uppercase tracking-wider text-[#191716] font-delight">1. Information We Collect</h4>
                 <p>
-                  Strovr collects account credentials (name, email address), workspace profile configurations, and outreach preferences. In order to power your B2B prospect discovery, we access verified public professional records adhering strictly to data protection guidelines.
+                  Strovr collects user account details (full name, verified email address, phone number), billing records, and workspace configurations. Prospect directory data is sourced strictly from publicly available business registers for legitimate B2B communications. In accordance with RBI guidelines, <strong>raw credit/debit card numbers, CVVs, and banking passwords are never stored on Strovr servers</strong>; all card tokenization and payments are handled directly by RBI-authorized Payment Aggregators (PhonePe).
                 </p>
               </section>
 
               <section className="space-y-1">
-                <h4 className="font-bold text-xs uppercase tracking-wider text-[#191716] font-delight">2. How We Use and Protect Data</h4>
+                <h4 className="font-bold text-xs uppercase tracking-wider text-[#191716] font-delight">2. Strict Non-Sale Clause</h4>
                 <p>
-                  We use collected telemetry solely to provide, refine, and secure the Strovr service. All CRM contacts, email templates, and automated workflows are encrypted both in transit (TLS 1.3) and at rest via Google Cloud Firestore. We never sell or rent your private database to third parties.
+                  <strong>We do not sell, rent, monetize, or trade your personal or customer CRM data to third parties.</strong> Data is processed exclusively to provision your workspace, authenticate sessions, settle subscription invoices, and execute authorized outreach sequences.
                 </p>
               </section>
 
               <section className="space-y-1">
-                <h4 className="font-bold text-xs uppercase tracking-wider text-[#191716] font-delight">3. B2B Outreach &amp; Compliance Rights</h4>
+                <h4 className="font-bold text-xs uppercase tracking-wider text-[#191716] font-delight">3. Data Security &amp; Encryption</h4>
                 <p>
-                  Prospect data is processed on the basis of legitimate business interest for professional commercial communication. You maintain the right to delete, export, or modify any contact records at any time directly through your Audience Hub.
+                  All data in transit is protected using Transport Layer Security (TLS 1.3), and stored data is encrypted at rest using AES-256 via Google Cloud infrastructure, conforming strictly to Rule 8 of the Information Technology Rules, 2011.
                 </p>
               </section>
 
               <section className="space-y-1">
-                <h4 className="font-bold text-xs uppercase tracking-wider text-[#191716] font-delight">4. Data Inquiries &amp; Contact</h4>
+                <h4 className="font-bold text-xs uppercase tracking-wider text-[#191716] font-delight">4. User Rights Under DPDP Act 2023</h4>
                 <p>
-                  For any privacy questions or data deletion requests, contact our Data Protection Officer at <a href="mailto:privacy@strovr.space" className="text-[#C85A32] font-delight font-semibold underline">privacy@strovr.space</a>.
+                  Users maintain the statutory right to access their personal records, request corrections, or request account erasure (&ldquo;Right to be Forgotten&rdquo;) directly via Account Settings or through our Grievance Officer.
                 </p>
+              </section>
+
+              <section className="space-y-1 bg-[#FAF8F5] p-3 rounded-lg border border-[#E5E0D5]">
+                <h4 className="font-bold text-xs uppercase tracking-wider text-[#191716] font-delight">5. Statutory Grievance Redressal Officer</h4>
+                <div className="font-delight text-[11px] space-y-0.5 pt-0.5">
+                  <div><strong>Officer Name:</strong> Ashley Ghose (Founder &amp; Grievance Officer)</div>
+                  <div><strong>Email:</strong> <a href="mailto:ashleyghose64@gmail.com" className="text-[#C85A32] underline font-semibold">ashleyghose64@gmail.com</a></div>
+                  <div><strong>Phone:</strong> <a href="tel:+919004804043" className="text-[#C85A32] underline font-semibold">+91 90048 04043</a></div>
+                  <div><strong>Location:</strong> Mumbai, Maharashtra 400050, India</div>
+                  <div className="text-[10.5px] text-emerald-800 font-medium">SLA: Acknowledgment within 48 hours; resolution within 30 days.</div>
+                </div>
               </section>
             </div>
 
-            <div className="p-4 border-t border-[#E5E0D5] bg-[#F5F2EB] flex justify-end">
+            <div className="p-4 border-t border-[#E5E0D5] bg-[#F5F2EB] flex items-center justify-between">
+              <Link to="/privacy" className="text-xs font-delight font-semibold text-[#C85A32] hover:underline flex items-center gap-1">
+                <span>Open Full Privacy Policy Page</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </Link>
               <button onClick={() => setIsPrivacyOpen(false)} className="px-4 py-1.5 bg-[#191716] text-white rounded-[5px] font-delight font-semibold text-xs hover:bg-[#C85A32] transition-colors cursor-pointer">
                 Close
               </button>
@@ -1664,7 +1716,7 @@ const Landing = ({ onLogin }: { onLogin: () => void }) => {
             <div className="p-5 border-b border-[#E5E0D5] flex items-center justify-between bg-[#F5F2EB]">
               <div>
                 <h3 className="text-base font-extrabold tracking-tight text-[#191716]">Terms of Service</h3>
-                <p className="text-[11px] font-delight text-[#78716A]">Master Subscription Agreement • Strovr (www.strovr.space)</p>
+                <p className="text-[11px] font-delight text-[#78716A]">Master Subscription Agreement · RBI Payment Aggregator &amp; Indian Law Compliant</p>
               </div>
               <button onClick={() => setIsTermsOpen(false)} className="text-[#78716A] hover:text-[#191716] transition-colors cursor-pointer">
                 <X className="w-4 h-4" />
@@ -1673,37 +1725,108 @@ const Landing = ({ onLogin }: { onLogin: () => void }) => {
 
             <div className="p-6 overflow-y-auto space-y-4 text-xs text-[#57524B] leading-relaxed">
               <section className="space-y-1">
-                <h4 className="font-bold text-xs uppercase tracking-wider text-[#191716] font-delight">1. Acceptance of Terms</h4>
+                <h4 className="font-bold text-xs uppercase tracking-wider text-[#191716] font-delight">1. Acceptance &amp; Legal Entity</h4>
                 <p>
-                  By launching your workspace or accessing the Strovr platform, you agree to be bound by these Terms of Service. If you are entering into this agreement on behalf of a company, you represent that you have authority to bind that entity.
+                  Strovr (www.strovr.space) is a commercial software platform operated by DocuReady, founded by Ashley Ghose in Mumbai, Maharashtra, India. By accessing the service, you agree to these Terms under the Indian Contract Act, 1872.
                 </p>
               </section>
 
               <section className="space-y-1">
-                <h4 className="font-bold text-xs uppercase tracking-wider text-[#191716] font-delight">2. Acceptable Outreach &amp; CAN-SPAM Policy</h4>
+                <h4 className="font-bold text-xs uppercase tracking-wider text-[#191716] font-delight">2. Commercial Billing &amp; RBI Compliance</h4>
                 <p>
-                  You agree to use Strovr outreach tools (Email, WhatsApp, SMS) strictly for lawful, legitimate B2B communication. Sending unsolicited deceptive spam, phishing, harassment, or violating national anti-spam statutes (CAN-SPAM, CASL, PECR) will result in immediate workspace termination.
+                  All commercial subscriptions (Basic ₹999/mo or ₹8,999/yr; Pro ₹1,999/mo or ₹17,999/yr) are billed in INR via RBI-authorized Payment Aggregators (PhonePe). In conformity with RBI tokenization directives, sensitive payment credentials are never stored by Strovr.
                 </p>
               </section>
 
               <section className="space-y-1">
-                <h4 className="font-bold text-xs uppercase tracking-wider text-[#191716] font-delight">3. Lead Credits &amp; Subscription Quotas</h4>
+                <h4 className="font-bold text-xs uppercase tracking-wider text-[#191716] font-delight">3. Acceptable B2B Outreach</h4>
                 <p>
-                  Lead tokens and credits are consumed when harvesting or enriching verified contact records. Free tier plans receive 15 Lead Tokens / Credits with automated 4-day pool refreshes. Paid tiers provide expanded quotas, team seat allocation, and high-frequency scraper execution.
+                  Users must use Strovr strictly for legitimate commercial B2B inquiries complying with Information Technology (Intermediary Guidelines) Rules, 2021. Deceptive spam, harassment, or mass unsolicited consumer phishing will result in immediate workspace termination.
                 </p>
               </section>
 
               <section className="space-y-1">
-                <h4 className="font-bold text-xs uppercase tracking-wider text-[#191716] font-delight">4. Limitation of Liability</h4>
+                <h4 className="font-bold text-xs uppercase tracking-wider text-[#191716] font-delight">4. Governing Law &amp; Jurisdiction</h4>
                 <p>
-                  Strovr provides AI suggestions and contact intelligence on an &ldquo;as is&rdquo; and &ldquo;as available&rdquo; basis. We do not guarantee specific sales outcomes, conversion rates, or email inbox placement rates which depend on external recipient mail servers.
+                  These Terms are governed exclusively by the laws of India. Any legal dispute shall be subject to the exclusive jurisdiction of the competent courts of <strong>Mumbai, Maharashtra, India</strong>.
+                </p>
+              </section>
+
+              <section className="space-y-1 bg-[#FAF8F5] p-3 rounded-lg border border-[#E5E0D5]">
+                <h4 className="font-bold text-xs uppercase tracking-wider text-[#191716] font-delight">5. Grievance Officer &amp; Notices</h4>
+                <div className="font-delight text-[11px] space-y-0.5 pt-0.5">
+                  <div><strong>Contact:</strong> Ashley Ghose (Founder)</div>
+                  <div><strong>Email:</strong> <a href="mailto:ashleyghose64@gmail.com" className="text-[#C85A32] underline font-semibold">ashleyghose64@gmail.com</a></div>
+                  <div><strong>Helpline:</strong> <a href="tel:+919004804043" className="text-[#C85A32] underline font-semibold">+91 90048 04043</a></div>
+                  <div><strong>Address:</strong> Mumbai, Maharashtra 400050, India</div>
+                </div>
+              </section>
+            </div>
+
+            <div className="p-4 border-t border-[#E5E0D5] bg-[#F5F2EB] flex items-center justify-between">
+              <Link to="/terms" className="text-xs font-delight font-semibold text-[#C85A32] hover:underline flex items-center gap-1">
+                <span>Open Full Terms Page</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </Link>
+              <button onClick={() => setIsTermsOpen(false)} className="px-4 py-1.5 bg-[#191716] text-white rounded-[5px] font-delight font-semibold text-xs hover:bg-[#C85A32] transition-colors cursor-pointer">
+                Acknowledge Terms
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL: REFUND & CANCELLATION POLICY ================= */}
+      {isRefundOpen && (
+        <div className="fixed inset-0 bg-[#191716]/65 backdrop-blur-xs flex items-center justify-center p-4 z-50 font-sans">
+          <div className="bg-white rounded-lg shadow-xl border border-[#D6CFC2] max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden text-[#191716]">
+            <div className="p-5 border-b border-[#E5E0D5] flex items-center justify-between bg-[#F5F2EB]">
+              <div>
+                <h3 className="text-base font-extrabold tracking-tight text-[#191716]">Refund &amp; Cancellation Policy</h3>
+                <p className="text-[11px] font-delight text-[#78716A]">RBI Turn Around Time (TAT) Framework · Consumer Protection Rules 2020</p>
+              </div>
+              <button onClick={() => setIsRefundOpen(false)} className="text-[#78716A] hover:text-[#191716] transition-colors cursor-pointer">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto space-y-4 text-xs text-[#57524B] leading-relaxed">
+              <section className="space-y-1">
+                <h4 className="font-bold text-xs uppercase tracking-wider text-[#191716] font-delight">1. Subscription Cancellation</h4>
+                <p>
+                  You may cancel recurring subscriptions at any time directly through <code>Settings &gt; Billing</code> or by notifying support. Upon cancellation, your service remains fully functional until your current paid billing period expires. No further recurring debits will occur.
+                </p>
+              </section>
+
+              <section className="space-y-1">
+                <h4 className="font-bold text-xs uppercase tracking-wider text-[#191716] font-delight">2. 7-Day Money-Back Guarantee</h4>
+                <p>
+                  First-time purchasers of Basic or Pro plans are eligible for a 100% full refund within <strong>7 calendar days</strong> of purchase if less than 15% of allocated monthly lead tokens have been consumed. Duplicate payments or technical failed debits are reversed in full automatically.
+                </p>
+              </section>
+
+              <section className="space-y-1">
+                <h4 className="font-bold text-xs uppercase tracking-wider text-[#191716] font-delight">3. Refund Settlement Timeline (RBI TAT)</h4>
+                <p>
+                  All refunds are issued exclusively back to the <strong>original payment source</strong> (same UPI ID, Bank Account, or Card via PhonePe). In strict conformity with RBI TAT mandates, refunds are initiated within 24-48 hours and credited to the customer account within <strong>5 to 7 working days</strong>.
+                </p>
+              </section>
+
+              <section className="space-y-1 bg-[#FAF8F5] p-3 rounded-lg border border-[#E5E0D5]">
+                <h4 className="font-bold text-xs uppercase tracking-wider text-[#191716] font-delight">4. How to Request a Refund</h4>
+                <p className="font-delight text-[11px]">
+                  Email <a href="mailto:ashleyghose64@gmail.com" className="text-[#C85A32] underline font-bold">ashleyghose64@gmail.com</a> with subject <code>Refund Request · [Order ID]</code> or call <a href="tel:+919004804043" className="text-[#C85A32] underline font-bold">+91 90048 04043</a>. Our finance desk responds within 24 hours.
                 </p>
               </section>
             </div>
 
-            <div className="p-4 border-t border-[#E5E0D5] bg-[#F5F2EB] flex justify-end">
-              <button onClick={() => setIsTermsOpen(false)} className="px-4 py-1.5 bg-[#191716] text-white rounded-[5px] font-delight font-semibold text-xs hover:bg-[#C85A32] transition-colors cursor-pointer">
-                Acknowledge Terms
+            <div className="p-4 border-t border-[#E5E0D5] bg-[#F5F2EB] flex items-center justify-between">
+              <Link to="/refund-policy" className="text-xs font-delight font-semibold text-[#C85A32] hover:underline flex items-center gap-1">
+                <span>Open Full Refund Policy Page</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </Link>
+              <button onClick={() => setIsRefundOpen(false)} className="px-4 py-1.5 bg-[#191716] text-white rounded-[5px] font-delight font-semibold text-xs hover:bg-[#C85A32] transition-colors cursor-pointer">
+                Close
               </button>
             </div>
           </div>
@@ -1713,67 +1836,101 @@ const Landing = ({ onLogin }: { onLogin: () => void }) => {
       {/* ================= MODAL: CONTACT & SUPPORT ================= */}
       {isContactOpen && (
         <div className="fixed inset-0 bg-[#191716]/65 backdrop-blur-xs flex items-center justify-center p-4 z-50 font-sans">
-          <div className="bg-white rounded-lg shadow-xl border border-[#D6CFC2] max-w-md w-full p-5 space-y-5 text-[#191716]">
-            <div className="flex items-center justify-between pb-3 border-b border-[#E5E0D5]">
+          <div className="bg-white rounded-lg shadow-xl border border-[#D6CFC2] max-w-lg w-full max-h-[85vh] flex flex-col overflow-hidden text-[#191716]">
+            <div className="p-5 border-b border-[#E5E0D5] flex items-center justify-between bg-[#F5F2EB]">
               <div>
-                <h3 className="text-sm font-extrabold tracking-tight text-[#191716]">Technical Support &amp; Inquiries</h3>
-                <p className="text-[10px] font-delight text-[#78716A]">Strovr Engineering Relay • A DocuReady Entity</p>
+                <h3 className="text-base font-extrabold tracking-tight text-[#191716]">Official Contact Details</h3>
+                <p className="text-[11px] font-delight text-[#78716A]">Direct Operational &amp; Grievance Redressal Desk · Strovr</p>
               </div>
               <button onClick={() => setIsContactOpen(false)} className="text-[#78716A] hover:text-[#191716] transition-colors cursor-pointer">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {contactSubmitted ? (
-              <div className="py-6 text-center space-y-2">
-                <h4 className="text-sm font-bold text-[#191716]">Dispatch Successful</h4>
-                <p className="text-xs text-[#57524B]">Telemetry ticket opened. Our team will follow up via your email address.</p>
+            <div className="p-6 overflow-y-auto space-y-4 text-xs text-[#57524B]">
+              <div className="p-4 bg-[#FAF8F5] border border-[#E5E0D5] rounded-xl space-y-2.5 font-delight">
+                <div>
+                  <span className="block text-[10px] uppercase tracking-wider text-[#78716A] font-bold">Authorized Entity &amp; Founder</span>
+                  <span className="font-bold text-[#191716] text-sm">Strovr · A DocuReady Entity (Ashley Ghose)</span>
+                </div>
+                <div>
+                  <span className="block text-[10px] uppercase tracking-wider text-[#78716A] font-bold">Official Support &amp; Grievance Email</span>
+                  <a href="mailto:ashleyghose64@gmail.com" className="font-bold text-[#191716] hover:text-[#C85A32] underline text-xs">
+                    ashleyghose64@gmail.com
+                  </a>
+                </div>
+                <div>
+                  <span className="block text-[10px] uppercase tracking-wider text-[#78716A] font-bold">Helpline / Telephone Contact</span>
+                  <a href="tel:+919004804043" className="font-bold text-[#191716] hover:text-[#C85A32] text-xs">
+                    +91 90048 04043
+                  </a>
+                </div>
+                <div>
+                  <span className="block text-[10px] uppercase tracking-wider text-[#78716A] font-bold">Operating Location</span>
+                  <span className="text-[#191716] text-xs">Bandra West / BKC Financial Hub, Mumbai, Maharashtra 400050, India</span>
+                </div>
+                <div>
+                  <span className="block text-[10px] uppercase tracking-wider text-[#78716A] font-bold">Support Hours</span>
+                  <span className="text-[#191716] text-xs">Monday to Friday, 09:30 - 18:30 IST</span>
+                </div>
               </div>
-            ) : (
-              <form onSubmit={(e) => {
-                e.preventDefault();
-                setContactSubmitted(true);
-                setTimeout(() => {
-                  setContactSubmitted(false);
-                  setIsContactOpen(false);
-                }, 2000);
-              }} className="space-y-3">
-                <div>
-                  <label className="block text-[10.5px] font-delight font-bold text-[#57524B] mb-1 uppercase tracking-wider">Your Name</label>
-                  <input 
-                    type="text" 
-                    required 
-                    placeholder="Alex Rivera"
-                    className="w-full h-8.5 px-2.5 border border-[#D6CFC2] rounded-[5px] text-xs font-delight outline-none focus:ring-1 focus:ring-[#C85A32] focus:border-[#C85A32]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10.5px] font-delight font-bold text-[#57524B] mb-1 uppercase tracking-wider">Work Email</label>
-                  <input 
-                    type="email" 
-                    required 
-                    placeholder="alex@company.com"
-                    className="w-full h-8.5 px-2.5 border border-[#D6CFC2] rounded-[5px] text-xs font-delight outline-none focus:ring-1 focus:ring-[#C85A32] focus:border-[#C85A32]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10.5px] font-delight font-bold text-[#57524B] mb-1 uppercase tracking-wider">Message</label>
-                  <textarea 
-                    rows={3} 
-                    required
-                    placeholder="Describe your inquiry..."
-                    className="w-full p-2.5 border border-[#D6CFC2] rounded-[5px] text-xs font-delight outline-none focus:ring-1 focus:ring-[#C85A32] focus:border-[#C85A32]"
-                  />
-                </div>
-                <button type="submit" className="w-full h-9 bg-[#C85A32] text-white rounded-[5px] font-delight font-bold text-xs hover:bg-[#B04B25] transition-colors border border-[#B04B25] shadow-xs cursor-pointer">
-                  Submit Support Ticket
-                </button>
-              </form>
-            )}
 
-            <div className="pt-2 border-t border-[#E5E0D5] flex items-center justify-between text-[11px] font-delight text-[#78716A]">
-              <span>support@strovr.space</span>
-              <span>SLA: &lt; 2 hrs</span>
+              {contactSubmitted ? (
+                <div className="p-4 text-center space-y-1 bg-emerald-50 border border-emerald-200 rounded-lg">
+                  <h4 className="text-xs font-bold text-emerald-950 font-delight">Dispatch Successful</h4>
+                  <p className="text-[11px] text-emerald-800">Support ticket generated. Ashley Ghose will respond within 24 business hours.</p>
+                </div>
+              ) : (
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  setContactSubmitted(true);
+                  setTimeout(() => {
+                    setContactSubmitted(false);
+                    setIsContactOpen(false);
+                  }, 2500);
+                }} className="space-y-3 pt-1">
+                  <div>
+                    <label className="block text-[10.5px] font-delight font-bold text-[#57524B] mb-1 uppercase tracking-wider">Your Name</label>
+                    <input 
+                      type="text" 
+                      required 
+                      placeholder="e.g. Alex Rivera"
+                      className="w-full h-8.5 px-2.5 border border-[#D6CFC2] rounded-[5px] text-xs font-delight outline-none focus:ring-1 focus:ring-[#C85A32] focus:border-[#C85A32]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10.5px] font-delight font-bold text-[#57524B] mb-1 uppercase tracking-wider">Work Email</label>
+                    <input 
+                      type="email" 
+                      required 
+                      placeholder="alex@company.com"
+                      className="w-full h-8.5 px-2.5 border border-[#D6CFC2] rounded-[5px] text-xs font-delight outline-none focus:ring-1 focus:ring-[#C85A32] focus:border-[#C85A32]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10.5px] font-delight font-bold text-[#57524B] mb-1 uppercase tracking-wider">Message</label>
+                    <textarea 
+                      rows={3} 
+                      required
+                      placeholder="Describe your inquiry or order details..."
+                      className="w-full p-2.5 border border-[#D6CFC2] rounded-[5px] text-xs font-delight outline-none focus:ring-1 focus:ring-[#C85A32] focus:border-[#C85A32]"
+                    />
+                  </div>
+                  <button type="submit" className="w-full h-9 bg-[#C85A32] text-white rounded-[5px] font-delight font-bold text-xs hover:bg-[#B04B25] transition-colors border border-[#B04B25] shadow-xs cursor-pointer">
+                    Submit Support Ticket
+                  </button>
+                </form>
+              )}
+            </div>
+
+            <div className="p-4 border-t border-[#E5E0D5] bg-[#F5F2EB] flex items-center justify-between">
+              <Link to="/contact" className="text-xs font-delight font-semibold text-[#C85A32] hover:underline flex items-center gap-1">
+                <span>Open Full Contact Page</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </Link>
+              <button onClick={() => setIsContactOpen(false)} className="px-4 py-1.5 bg-[#191716] text-white rounded-[5px] font-delight font-semibold text-xs hover:bg-[#C85A32] transition-colors cursor-pointer">
+                Close
+              </button>
             </div>
           </div>
         </div>

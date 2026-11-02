@@ -19,6 +19,10 @@ import Integrations from './pages/Integrations';
 import Team from './pages/Team';
 import Appointments from './pages/Appointments';
 import AdminPanel from './pages/AdminPanel';
+import TermsOfService from './pages/TermsOfService';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import ContactUs from './pages/ContactUs';
+import RefundPolicy from './pages/RefundPolicy';
 
 import MeshBackground from './components/MeshBackground';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -149,6 +153,17 @@ const App = () => {
             <Route path="/admin" element={<AdminRoute><AdminPanel /></AdminRoute>} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/login" element={<Login onBack={() => window.location.href = '/'} />} />
+            
+            {/* Mandatory Public Legal & Compliance Pages (RBI / DPDP / Consumer Protection) */}
+            <Route path="/terms" element={<TermsOfService />} />
+            <Route path="/terms-of-service" element={<TermsOfService />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/contact" element={<ContactUs />} />
+            <Route path="/contact-us" element={<ContactUs />} />
+            <Route path="/refund-policy" element={<RefundPolicy />} />
+            <Route path="/cancellation-policy" element={<RefundPolicy />} />
+
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </ErrorBoundary>
