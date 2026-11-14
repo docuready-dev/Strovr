@@ -1043,97 +1043,97 @@ const OutreachCenter = () => {
           
           {/* ======================================================== */}
           {/* LEFT: COMPOSER STUDIO */}
-          <div className="w-full xl:w-1/2 flex flex-col h-full bg-white border border-[#E5E0D5] rounded-2xl overflow-hidden shadow-xs">
+          <div className="w-full xl:w-[58%] 2xl:w-[60%] flex flex-col h-full bg-white border border-[#E5E0D5] rounded-2xl overflow-hidden shadow-xs">
             
             {/* Clean Segmented Channel Header Bar */}
-            <div className="shrink-0 flex items-center justify-between border-b border-[#E5E0D5] bg-[#FAF8F5] px-4 py-2.5 gap-3">
+            <div className="shrink-0 flex flex-wrap items-center justify-between border-b border-[#E5E0D5] bg-[#FAF8F5] px-4 py-2.5 gap-3">
               {/* Channel Tabs */}
-              <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-[#E5E0D5] shadow-2xs">
+              <div className="flex items-center gap-1.5 bg-white p-1 rounded-xl border border-[#E5E0D5] shadow-2xs shrink-0">
                 <button 
                   onClick={() => setActiveChannel('email')}
-                  className={`px-3 py-1.5 text-xs font-delight font-medium flex items-center gap-2 rounded-lg transition-all cursor-pointer ${
+                  className={`px-3 py-1.5 text-xs font-delight font-medium flex items-center gap-2 rounded-lg transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                     activeChannel === 'email' 
                       ? 'bg-[#191716] text-white shadow-xs' 
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
-                  <Mail className="w-3.5 h-3.5" /> 
-                  <span>Email Studio</span>
+                  <Mail className="w-3.5 h-3.5 shrink-0" /> 
+                  <span className="whitespace-nowrap">Email Studio</span>
                 </button>
                 <button 
                   onClick={() => setActiveChannel('whatsapp')}
-                  className={`px-3 py-1.5 text-xs font-delight font-medium flex items-center gap-2 rounded-lg transition-all cursor-pointer ${
+                  className={`px-3 py-1.5 text-xs font-delight font-medium flex items-center gap-2 rounded-lg transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                     activeChannel === 'whatsapp' 
                       ? 'bg-[#1E6B52] text-white shadow-xs' 
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
-                  <MessageCircle className="w-3.5 h-3.5" /> 
-                  <span>WhatsApp Outreach</span>
+                  <MessageCircle className="w-3.5 h-3.5 shrink-0" /> 
+                  <span className="whitespace-nowrap">WhatsApp Outreach</span>
                 </button>
                 <button 
                   onClick={() => setActiveChannel('sms')}
-                  className={`px-3 py-1.5 text-xs font-delight font-medium flex items-center gap-2 rounded-lg transition-all cursor-pointer ${
+                  className={`px-3 py-1.5 text-xs font-delight font-medium flex items-center gap-2 rounded-lg transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                     activeChannel === 'sms' 
                       ? 'bg-slate-700 text-white shadow-xs' 
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
-                  <MessageSquare className="w-3.5 h-3.5" /> 
-                  <span>SMS Gateway</span>
+                  <MessageSquare className="w-3.5 h-3.5 shrink-0" /> 
+                  <span className="whitespace-nowrap">SMS Gateway</span>
                 </button>
               </div>
               
               {/* Header Right Actions */}
               {activeChannel === 'whatsapp' ? (
-                <div className="flex items-center gap-2">
-                  <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-delight font-medium bg-emerald-50 text-emerald-800 border border-emerald-200">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <div className="flex items-center gap-2.5 shrink-0">
+                  <span className="whitespace-nowrap shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-delight font-medium bg-emerald-50 text-emerald-800 border border-emerald-200">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
                     <span>Direct Web Bridge</span>
                   </span>
                   <button
                     type="button"
                     onClick={() => setIsWhatsAppQueueOpen(true)}
-                    className="bg-[#1E6B52] hover:bg-[#165440] text-white px-3 py-1.5 rounded-lg text-xs font-delight font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    className="whitespace-nowrap shrink-0 bg-[#1E6B52] hover:bg-[#165440] text-white px-3.5 py-1.5 rounded-lg text-xs font-delight font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
                     title="Launch 30-Contact WhatsApp Batch Queue"
                   >
-                    <Send className="w-3.5 h-3.5" />
+                    <Send className="w-3.5 h-3.5 shrink-0" />
                     <span>Batch Queue (30)</span>
                   </button>
                 </div>
               ) : activeChannel === 'email' ? (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5 shrink-0">
                   <button
                     onClick={() => setIsGalleryOpen(true)}
-                    className="bg-white hover:bg-slate-50 border border-[#E5E0D5] text-slate-800 px-2.5 py-1.5 rounded-lg text-xs font-delight font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                    className="whitespace-nowrap shrink-0 bg-white hover:bg-slate-50 border border-[#E5E0D5] text-slate-800 px-3 py-1.5 rounded-lg text-xs font-delight font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
                     title="Change Email Template Layout"
                   >
-                    <Layout className="w-3.5 h-3.5 text-slate-500" />
-                    <span className="max-w-[120px] truncate">{activeTemplateConfig.name}</span>
-                    <ChevronDown className="w-3 h-3 text-slate-400" />
+                    <Layout className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                    <span className="whitespace-nowrap">{activeTemplateConfig.name}</span>
+                    <ChevronDown className="w-3 h-3 text-slate-400 shrink-0" />
                   </button>
 
                   <button
                     onClick={() => setIsProviderModalOpen(true)}
-                    className={`border px-2.5 py-1.5 rounded-lg text-xs font-delight font-medium transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs ${
+                    className={`whitespace-nowrap shrink-0 border px-3 py-1.5 rounded-lg text-xs font-delight font-medium transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs ${
                       connectedMailbox 
                         ? 'bg-emerald-50 border-emerald-200 text-emerald-800' 
                         : 'bg-amber-50 border-amber-200 text-amber-900'
                     }`}
                     title={connectedMailbox ? `Outbox: ${connectedMailbox.fromEmail || connectedMailbox.user} (SendGrid Active)` : "No SendGrid Outbox Connected - Click to configure"}
                   >
-                    <span className={`w-1.5 h-1.5 rounded-full ${connectedMailbox ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
-                    <span className="hidden sm:inline">{connectedMailbox ? 'SendGrid Active' : 'Setup Outbox'}</span>
+                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${connectedMailbox ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
+                    <span className="whitespace-nowrap">{connectedMailbox ? 'SendGrid Active' : 'Setup Outbox'}</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setIsHistoryModalOpen(true)}
-                    className="border border-[#E5E0D5] bg-white hover:bg-slate-50 text-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-delight font-medium transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                    className="whitespace-nowrap shrink-0 border border-[#E5E0D5] bg-white hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-delight font-medium transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
                     title="View dispatch history"
                   >
-                    <History className="w-3.5 h-3.5 text-slate-500" />
-                    <span>{user?.emails_sent || 0}/{user?.emails_limit || 50}</span>
+                    <History className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                    <span className="whitespace-nowrap">{user?.emails_sent || 0}/{user?.emails_limit || 50}</span>
                   </button>
                 </div>
               ) : null}
@@ -1183,8 +1183,8 @@ const OutreachCenter = () => {
                           ({whatsAppMessage.length} chars · ~{whatsAppMessage.trim().split(/\s+/).filter(Boolean).length} words)
                         </span>
                       </div>
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-xs font-medium text-slate-400">Insert:</span>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-medium text-slate-400 shrink-0">Insert:</span>
                         {[
                           { tag: '{{business_name}}', label: 'Business Name' },
                           { tag: '{{first_name}}', label: 'First Name' },
@@ -1195,7 +1195,7 @@ const OutreachCenter = () => {
                             key={tag}
                             type="button"
                             onClick={() => insertTag(tag)}
-                            className="text-xs font-medium px-2.5 py-1 rounded-md bg-white hover:bg-slate-100 text-slate-700 border border-[#E5E0D5] transition-colors cursor-pointer shadow-2xs"
+                            className="text-xs font-medium px-2.5 py-1 rounded-md bg-white hover:bg-slate-100 text-slate-700 border border-[#E5E0D5] whitespace-nowrap shrink-0 transition-colors cursor-pointer shadow-2xs"
                           >
                             + {label}
                           </button>
@@ -1378,10 +1378,10 @@ const OutreachCenter = () => {
                     <div className="space-y-4">
                       
                       {/* Copywriting Presets Bar */}
-                      <div className="p-3 bg-[#FAF8F5] border border-[#E5E0D5] rounded-xl flex items-center justify-between gap-2 shadow-2xs text-xs font-delight font-medium">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="text-slate-500 shrink-0 font-semibold">1-Click Presets:</span>
-                          <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-0.5">
+                      <div className="p-3 bg-[#FAF8F5] border border-[#E5E0D5] rounded-xl flex items-center justify-between gap-3 shadow-2xs text-xs font-delight font-medium">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <span className="text-slate-500 shrink-0 font-semibold whitespace-nowrap">1-Click Presets:</span>
+                          <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-0.5">
                             {[
                               { label: 'Cold B2B Intro', prompt: 'Introduce our agency services to local business owners with a free consultation.' },
                               { label: '15-Min Discovery', prompt: 'Book a 15-minute introductory growth call with decision makers.' },
@@ -1393,7 +1393,7 @@ const OutreachCenter = () => {
                                 type="button"
                                 onClick={() => handleAiGenerate(preset.prompt)}
                                 disabled={isAiGenerating}
-                                className="px-2.5 py-1 bg-white hover:bg-slate-100 border border-[#E5E0D5] text-slate-700 rounded-md shrink-0 transition-colors cursor-pointer shadow-2xs"
+                                className="px-3 py-1.5 bg-white hover:bg-slate-100 border border-[#E5E0D5] text-slate-700 rounded-lg shrink-0 whitespace-nowrap transition-colors cursor-pointer shadow-2xs"
                               >
                                 {preset.label}
                               </button>
@@ -1479,7 +1479,7 @@ const OutreachCenter = () => {
                             <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>
                             <span>Message Body</span>
                           </span>
-                          <div className="flex flex-wrap gap-1.5 items-center">
+                          <div className="flex flex-wrap gap-2 items-center">
                             {mergeTags.map(tag => {
                               const isBooking = tag.includes('booking');
                               const isName = tag.includes('name');
@@ -1496,7 +1496,7 @@ const OutreachCenter = () => {
                                   key={tag}
                                   type="button"
                                   onClick={() => insertTag(tag)}
-                                  className={`text-xs font-delight font-semibold px-2 py-0.5 rounded-md border transition-all cursor-pointer shadow-2xs ${colorClass}`}
+                                  className={`text-xs font-delight font-semibold px-2.5 py-1 rounded-md border whitespace-nowrap shrink-0 transition-all cursor-pointer shadow-2xs ${colorClass}`}
                                 >
                                   + {tag}
                                 </button>
@@ -2454,7 +2454,7 @@ const OutreachCenter = () => {
                   <button 
                     type="button"
                     onClick={handleCopyWhatsApp}
-                    className="bg-white border border-[#E5E0D5] hover:bg-slate-50 px-3.5 py-2 rounded-xl text-xs text-slate-700 shadow-2xs transition-colors cursor-pointer flex items-center gap-1.5"
+                    className="whitespace-nowrap shrink-0 bg-white border border-[#E5E0D5] hover:bg-slate-50 px-3.5 py-2 rounded-xl text-xs text-slate-700 shadow-2xs transition-colors cursor-pointer flex items-center gap-1.5"
                   >
                     {copiedWhatsApp ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
                     <span>{copiedWhatsApp ? 'Copied' : 'Copy Text'}</span>
@@ -2463,7 +2463,7 @@ const OutreachCenter = () => {
                   <button 
                     type="button"
                     onClick={() => handleOpenWhatsAppWeb(previewLead)}
-                    className="bg-white border border-[#E5E0D5] hover:bg-slate-50 px-3.5 py-2 rounded-xl text-xs text-slate-700 shadow-2xs transition-colors cursor-pointer flex items-center gap-1.5"
+                    className="whitespace-nowrap shrink-0 bg-white border border-[#E5E0D5] hover:bg-slate-50 px-3.5 py-2 rounded-xl text-xs text-slate-700 shadow-2xs transition-colors cursor-pointer flex items-center gap-1.5"
                   >
                     <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
                     <span>Open wa.me</span>
@@ -2472,7 +2472,7 @@ const OutreachCenter = () => {
                   <button 
                     type="button"
                     onClick={() => setIsWhatsAppQueueOpen(true)}
-                    className="bg-[#1E6B52] hover:bg-[#165440] text-white px-5 py-2 rounded-xl text-xs font-semibold shadow-xs transition-colors cursor-pointer flex items-center gap-2"
+                    className="whitespace-nowrap shrink-0 bg-[#1E6B52] hover:bg-[#165440] text-white px-5 py-2 rounded-xl text-xs font-semibold shadow-xs transition-colors cursor-pointer flex items-center gap-2"
                   >
                     <Send className="w-3.5 h-3.5" />
                     <span>Launch 30-Contact Queue</span>
@@ -2483,7 +2483,7 @@ const OutreachCenter = () => {
                   <button 
                     type="button"
                     onClick={() => handleOpenWebmail(previewLead)}
-                    className="bg-white border border-[#E5E0D5] hover:bg-slate-50 px-3.5 py-2 rounded-xl text-xs text-slate-700 shadow-2xs transition-colors cursor-pointer flex items-center gap-1.5"
+                    className="whitespace-nowrap shrink-0 bg-white border border-[#E5E0D5] hover:bg-slate-50 px-3.5 py-2 rounded-xl text-xs text-slate-700 shadow-2xs transition-colors cursor-pointer flex items-center gap-1.5"
                     title="Open prefilled email in Gmail"
                   >
                     <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
@@ -2493,7 +2493,7 @@ const OutreachCenter = () => {
                     type="button"
                     onClick={handleSendSingleTest}
                     disabled={isSendingSingle}
-                    className="bg-white border border-[#E5E0D5] hover:bg-slate-50 disabled:opacity-50 px-3.5 py-2 rounded-xl text-xs text-slate-700 shadow-2xs transition-colors cursor-pointer flex items-center gap-1.5"
+                    className="whitespace-nowrap shrink-0 bg-white border border-[#E5E0D5] hover:bg-slate-50 disabled:opacity-50 px-3.5 py-2 rounded-xl text-xs text-slate-700 shadow-2xs transition-colors cursor-pointer flex items-center gap-1.5"
                   >
                     {isSendingSingle ? (
                       <>
@@ -2510,7 +2510,7 @@ const OutreachCenter = () => {
                   <button 
                     type="button"
                     onClick={() => setIsDispatchModalOpen(true)}
-                    className="bg-[#191716] hover:bg-slate-800 text-white px-5 py-2 rounded-xl text-xs font-semibold shadow-xs transition-colors cursor-pointer flex items-center gap-2"
+                    className="whitespace-nowrap shrink-0 bg-[#191716] hover:bg-slate-800 text-white px-5 py-2 rounded-xl text-xs font-semibold shadow-xs transition-colors cursor-pointer flex items-center gap-2"
                   >
                     <Send className="w-3.5 h-3.5" />
                     <span>Launch Email Batch</span>
@@ -2525,7 +2525,7 @@ const OutreachCenter = () => {
           {/* RIGHT: LIVE PREVIEW PANE */}
           <div 
             ref={previewCardRef}
-            className="w-full xl:w-1/2 flex flex-col h-full bg-[#FAF8F5] border border-[#E5E0D5] rounded-2xl overflow-hidden shadow-xs font-delight font-medium"
+            className="w-full xl:w-[42%] 2xl:w-[40%] flex flex-col h-full bg-[#FAF8F5] border border-[#E5E0D5] rounded-2xl overflow-hidden shadow-xs font-delight font-medium"
           >
             {/* Right Pane Header */}
             <div className="shrink-0 px-5 py-2.5 border-b border-[#E5E0D5] bg-white flex items-center justify-between gap-3 relative z-30">

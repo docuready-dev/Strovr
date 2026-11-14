@@ -197,7 +197,6 @@
 
 @layer base {
   html {
-    zoom: 0.8;
     scroll-behavior: smooth;
     font-family: "Creato Display", system-ui, -apple-system, sans-serif;
   }
@@ -606,7 +605,6 @@
 
 /* 60fps+ Hardware Compositor Optimization Layer */
 html {
-  zoom: 0.8;
   scroll-behavior: smooth;
 }
 
