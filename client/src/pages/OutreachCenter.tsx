@@ -146,18 +146,18 @@ const OutreachCenter = () => {
 
   // WhatsApp Rich Media & Document Attachments State (Picture + PDF)
   const [whatsAppImage, setWhatsAppImage] = useState<WhatsAppImageAttachment>({
-    enabled: true,
-    url: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&auto=format&fit=crop&q=80',
-    caption: 'Strovr Growth Analytics & Live Performance Overview',
-    fileName: 'Executive_Analytics_Dashboard.jpg'
+    enabled: false,
+    url: '',
+    caption: '',
+    fileName: ''
   });
 
   const [whatsAppPdf, setWhatsAppPdf] = useState<WhatsAppPdfAttachment>({
-    enabled: true,
-    url: 'https://www.strovr.space/assets/Strovr_Executive_Deck.pdf',
-    fileName: '{{business_name}}_Growth_Blueprint.pdf',
-    fileSize: '2.4 MB',
-    pageCount: '6 pages'
+    enabled: false,
+    url: '',
+    fileName: '',
+    fileSize: '',
+    pageCount: ''
   });
 
   // Universal Email Attachments State (Supported across all 10 Email Frameworks)
@@ -169,16 +169,7 @@ const OutreachCenter = () => {
     url: string;
     base64?: string;
     enabled: boolean;
-  }>>([
-    {
-      id: 'email-att-1',
-      fileName: '{{business_name}}_Growth_Blueprint.pdf',
-      fileSize: '2.4 MB',
-      fileType: 'pdf',
-      url: 'https://www.strovr.space/assets/Strovr_Executive_Deck.pdf',
-      enabled: true
-    }
-  ]);
+  }>>([]);
   const emailFileInputRef = useRef<HTMLInputElement>(null);
 
   const [activeMediaPresetId, setActiveMediaPresetId] = useState<string>('executive_deck');
