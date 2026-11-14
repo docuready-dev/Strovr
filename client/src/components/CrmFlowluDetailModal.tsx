@@ -14,6 +14,7 @@ export interface CrmFlowluModalProps {
   onUpdateLead: (updatedLead: any) => Promise<void>;
   onLaunchWhatsApp: (lead: any) => void;
   onOpenOutreachStudio: (lead: any) => void;
+  onDeleteLead?: (lead: any) => void;
   currentUser?: any;
 }
 
@@ -24,6 +25,7 @@ export const CrmFlowluDetailModal: React.FC<CrmFlowluModalProps> = ({
   onUpdateLead,
   onLaunchWhatsApp,
   onOpenOutreachStudio,
+  onDeleteLead,
   currentUser
 }) => {
   const [activeTab, setActiveTab] = useState<'Main' | 'Tasks' | 'Documents' | 'Opportunities' | 'Events' | 'Calls' | 'Notes' | 'Email'>('Main');
@@ -263,6 +265,21 @@ export const CrmFlowluDetailModal: React.FC<CrmFlowluModalProps> = ({
               <Edit3 className="w-3.5 h-3.5" />
               <span>{isEditingContact ? 'Cancel' : 'Edit'}</span>
             </button>
+
+            {onDeleteLead && (
+              <button
+                type="button"
+                onClick={() => {
+                  onDeleteLead(lead);
+                  onClose();
+                }}
+                className="bg-rose-50 hover:bg-rose-100 text-rose-700 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 border border-rose-200 transition-colors cursor-pointer"
+                title="Delete this lead from pipeline"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete</span>
+              </button>
+            )}
 
             <button
               onClick={onClose}

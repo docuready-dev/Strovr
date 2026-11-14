@@ -245,6 +245,24 @@ const Audience = () => {
     }
   }, [user?._id, user?.email]);
 
+  // Permanent Deleted Tombstones Store
+  const getDeletedTombstones = (): Set<string> => {
+    try {
+      const raw = localStorage.getItem('strovr_deleted_tombstones');
+      if (raw) return new Set(JSON.parse(raw));
+    } catch {}
+    return new Set<string>();
+  };
+
+  const addDeletedTombstone = (id: string, businessName?: string) => {
+    try {
+      const set = getDeletedTombstones();
+      if (id) set.add(id);
+      if (businessName) set.add(`name:${businessName.toLowerCase().trim()}`);
+      localStorage.setItem('strovr_deleted_tombstones', JSON.stringify(Array.from(set)));
+    } catch {}
+  };
+
   const fetchLeads = async () => {
     if (!user?._id && !user?.email) return;
     setLoading(true);
@@ -256,13 +274,18 @@ const Audience = () => {
         }
       });
       const serverLeads = Array.isArray(res.data) ? res.data : [];
-
-      // Strict stacking: never wipe existing contacts; merge local memory + server leads
-      setLeads((prev) => {
-        const combined = mergeLeads(prev || [], serverLeads);
-        updateLocalLeads(combined);
-        return combined;
+      const tombstones = getDeletedTombstones();
+      const validLeads = serverLeads.filter(l => {
+        if (!l) return false;
+        if (tombstones.has(l._id)) return false;
+        const bName = `name:${(l.businessName || '').toLowerCase().trim()}`;
+        if (tombstones.has(bName)) return false;
+        return true;
       });
+
+      // Server is the authoritative source of truth.
+      setLeads(validLeads);
+      updateLocalLeads(validLeads);
     } catch (err) {
       console.error('Failed to fetch contacts:', err);
     } finally {
@@ -520,6 +543,21 @@ const Audience = () => {
       variant: 'danger'
     });
     if (!confirmed) return;
+
+    // Permanently record tombstone so this lead never resurrects
+    addDeletedTombstone(id, targetLead?.businessName);
+    const targetName = (targetLead?.businessName || '').toLowerCase().trim();
+
+    // Optimistically update UI immediately
+    const nextLeads = leads.filter(l => {
+      if (l._id === id) return false;
+      if (targetName && (l.businessName || '').toLowerCase().trim() === targetName) return false;
+      return true;
+    });
+    setLeads(nextLeads);
+    updateLocalLeads(nextLeads);
+    setSelectedLeadIds(prev => prev.filter(i => i !== id));
+
     try {
       await axios.delete(`${API_URL}/api/leads/${id}`, {
         headers: { 
@@ -527,10 +565,7 @@ const Audience = () => {
           useremail: user?.email || ''
         }
       });
-      const nextLeads = leads.filter(l => l._id !== id);
-      updateLocalLeads(nextLeads);
-      setSelectedLeadIds(selectedLeadIds.filter(i => i !== id));
-      showToast('Contact removed from database.');
+      showToast('Contact permanently deleted.');
     } catch (err) {
       console.error('Failed to delete contact:', err);
     }
@@ -546,6 +581,18 @@ const Audience = () => {
       variant: 'danger'
     });
     if (!confirmed) return;
+
+    for (const id of selectedLeadIds) {
+      const l = leads.find(item => item._id === id);
+      addDeletedTombstone(id, l?.businessName);
+    }
+
+    const idSet = new Set(selectedLeadIds);
+    const nextLeads = leads.filter(l => !idSet.has(l._id));
+    setLeads(nextLeads);
+    updateLocalLeads(nextLeads);
+    setSelectedLeadIds([]);
+
     try {
       await axios.post(`${API_URL}/api/leads/batch-delete`, {
         ids: selectedLeadIds
@@ -555,9 +602,6 @@ const Audience = () => {
           useremail: user?.email || ''
         }
       });
-      const nextLeads = leads.filter(l => !selectedLeadIds.includes(l._id));
-      updateLocalLeads(nextLeads);
-      setSelectedLeadIds([]);
       showToast(`Removed ${selectedLeadIds.length} contacts from database.`);
     } catch (err) {
       console.error('Failed to batch delete leads:', err);

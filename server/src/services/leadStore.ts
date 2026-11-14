@@ -426,25 +426,53 @@ class LeadStore {
 
   deleteLead(id: string): boolean {
     this.deletedLeadIds.add(id);
-    this.saveDeletedToDisk();
-    const existed = this.leads.delete(id);
-    if (existed) {
-      this.saveToDisk();
+    let target = this.leads.get(id);
+
+    // If not found by direct map key, look for match by _id
+    if (!target) {
+      for (const [k, v] of this.leads.entries()) {
+        if (k === id || v._id === id) {
+          target = v;
+          id = k;
+          break;
+        }
+      }
     }
-    return existed;
+
+    if (target) {
+      const bName = (target.businessName || '').toLowerCase().trim();
+      const phone = (target.phone || '').replace(/[^0-9]/g, '');
+      const email = (target.email || '').toLowerCase().trim();
+
+      // Clean up all duplicates or legacy occurrences of this lead
+      for (const [otherId, otherLead] of this.leads.entries()) {
+        const oName = (otherLead.businessName || '').toLowerCase().trim();
+        const oPhone = (otherLead.phone || '').replace(/[^0-9]/g, '');
+        const oEmail = (otherLead.email || '').toLowerCase().trim();
+
+        if (bName && oName === bName) {
+          const phoneMatch = !phone || !oPhone || phone === oPhone;
+          const emailMatch = !email || !oEmail || email === oEmail;
+          if (phoneMatch && emailMatch) {
+            this.deletedLeadIds.add(otherId);
+            this.leads.delete(otherId);
+          }
+        }
+      }
+    }
+
+    this.leads.delete(id);
+    this.saveDeletedToDisk();
+    this.saveToDisk();
+    return true;
   }
 
   batchDelete(ids: string[]): number {
     let count = 0;
     for (const id of ids) {
-      this.deletedLeadIds.add(id);
-      if (this.leads.delete(id)) {
+      if (this.deleteLead(id)) {
         count++;
       }
-    }
-    this.saveDeletedToDisk();
-    if (count > 0) {
-      this.saveToDisk();
     }
     return count;
   }

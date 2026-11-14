@@ -238,6 +238,114 @@ const CrmPipeline = () => {
     }
   };
 
+  // Delete Lead from Pipeline
+  const handleDeleteLead = async (leadToDelete: any) => {
+    if (!leadToDelete?._id) return;
+    const confirmed = await confirmDialog({
+      title: 'Delete Lead from Pipeline?',
+      message: `Are you sure you want to permanently remove "${leadToDelete.businessName || 'this lead'}" from your pipeline?`,
+      confirmText: 'Delete Lead',
+      cancelText: 'Cancel',
+      variant: 'danger'
+    });
+    if (!confirmed) return;
+
+    const id = leadToDelete._id;
+    const targetName = (leadToDelete.businessName || '').toLowerCase().trim();
+
+    // Optimistically update UI immediately
+    setLeads(prev => prev.filter(l => {
+      if (l._id === id) return false;
+      if (targetName && (l.businessName || '').toLowerCase().trim() === targetName) return false;
+      return true;
+    }));
+    setSelectedLeads(prev => prev.filter(item => item !== id));
+    if (selectedLeadDetails?._id === id) setSelectedLeadDetails(null);
+    if (editingLead?._id === id) setEditingLead(null);
+
+    // Save tombstone and update local cache so it never reverts
+    try {
+      const rawTombstones = localStorage.getItem('strovr_deleted_tombstones');
+      const tombstoneSet = new Set(rawTombstones ? JSON.parse(rawTombstones) : []);
+      tombstoneSet.add(id);
+      if (targetName) tombstoneSet.add(`name:${targetName}`);
+      localStorage.setItem('strovr_deleted_tombstones', JSON.stringify(Array.from(tombstoneSet)));
+
+      const cacheKey = (user?.email && `strovr_leads_cache_${user.email}`) ||
+                       (user?._id && `strovr_leads_cache_${user._id}`);
+      if (cacheKey) {
+        const raw = localStorage.getItem(cacheKey);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          const filtered = parsed.filter((l: any) => l._id !== id && (targetName ? (l.businessName || '').toLowerCase().trim() !== targetName : true));
+          localStorage.setItem(cacheKey, JSON.stringify(filtered));
+        }
+      }
+    } catch {}
+
+    try {
+      await axios.delete(`${API_URL}/api/leads/${id}`, {
+        headers: {
+          userid: user?._id || '',
+          useremail: user?.email || ''
+        }
+      });
+      showToast(`Removed "${leadToDelete.businessName}" from pipeline.`);
+    } catch (err) {
+      console.error('Failed to delete lead from server:', err);
+    }
+  };
+
+  // Batch Delete Leads from Pipeline
+  const handleBatchDeleteLeads = async () => {
+    if (selectedLeads.length === 0) return;
+    const confirmed = await confirmDialog({
+      title: `Delete ${selectedLeads.length} Selected Leads?`,
+      message: `Are you sure you want to permanently remove ${selectedLeads.length} selected leads from the pipeline?`,
+      confirmText: `Delete ${selectedLeads.length} Leads`,
+      cancelText: 'Cancel',
+      variant: 'danger'
+    });
+    if (!confirmed) return;
+
+    const idSet = new Set(selectedLeads);
+    setLeads(prev => prev.filter(l => !idSet.has(l._id)));
+    setSelectedLeads([]);
+
+    // Update tombstones & local cache
+    try {
+      const rawTombstones = localStorage.getItem('strovr_deleted_tombstones');
+      const tombstoneSet = new Set(rawTombstones ? JSON.parse(rawTombstones) : []);
+      selectedLeads.forEach(i => tombstoneSet.add(i));
+      localStorage.setItem('strovr_deleted_tombstones', JSON.stringify(Array.from(tombstoneSet)));
+
+      const cacheKey = (user?.email && `strovr_leads_cache_${user.email}`) ||
+                       (user?._id && `strovr_leads_cache_${user._id}`);
+      if (cacheKey) {
+        const raw = localStorage.getItem(cacheKey);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          const filtered = parsed.filter((l: any) => !idSet.has(l._id));
+          localStorage.setItem(cacheKey, JSON.stringify(filtered));
+        }
+      }
+    } catch {}
+
+    try {
+      await axios.post(`${API_URL}/api/leads/batch-delete`, {
+        ids: Array.from(idSet)
+      }, {
+        headers: {
+          userid: user?._id || '',
+          useremail: user?.email || ''
+        }
+      });
+      showToast(`Deleted ${idSet.size} leads from pipeline.`);
+    } catch (err) {
+      console.error('Failed to batch delete leads:', err);
+    }
+  };
+
   // 1-Click Sync Active Pipeline Deals to Connected CRM
   const handleSyncPipelineToCrm = async () => {
     if (!activeCrmApp) {
@@ -619,21 +727,12 @@ const CrmPipeline = () => {
             <div className="flex items-center gap-2.5">
               {selectedLeads.length > 0 && (
                 <button 
-                  onClick={async () => {
-                    for (const id of selectedLeads) {
-                      await axios.delete(`${API_URL}/api/leads/${id}`, { 
-                        headers: { 
-                          userid: user?._id || '',
-                          useremail: user?.email || ''
-                        } 
-                      }).catch(() => {});
-                    }
-                    setSelectedLeads([]);
-                    fetchLeads();
-                  }}
-                  className="bg-rose-50 text-rose-700 hover:bg-rose-100 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors border border-rose-200 cursor-pointer font-delight"
+                  type="button"
+                  onClick={handleBatchDeleteLeads}
+                  className="bg-rose-50 text-rose-700 hover:bg-rose-100 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors border border-rose-200 cursor-pointer font-delight flex items-center gap-1.5"
                 >
-                  Delete ({selectedLeads.length})
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Delete ({selectedLeads.length})</span>
                 </button>
               )}
 
@@ -833,6 +932,17 @@ const CrmPipeline = () => {
                                     <span className="truncate">{lead.location}</span>
                                   </div>
                                 </div>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteLead(lead);
+                                  }}
+                                  className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-all cursor-pointer shrink-0"
+                                  title="Delete Lead from Pipeline"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
                               </div>
 
                               {/* Middle Row: Category + Value */}
@@ -1192,6 +1302,13 @@ const CrmPipeline = () => {
                                 >
                                   <Send className="w-3.5 h-3.5" />
                                 </button>
+                                <button 
+                                  onClick={() => handleDeleteLead(lead)}
+                                  className="p-1 rounded hover:bg-rose-100 text-slate-400 hover:text-rose-700 transition-colors cursor-pointer"
+                                  title="Permanently Delete Lead from Pipeline"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
                               </div>
                             </td>
 
@@ -1236,9 +1353,14 @@ const CrmPipeline = () => {
                             </span>
                           </td>
                           <td className="py-2.5 px-3 text-center">
-                            <button onClick={() => setSelectedLeadDetails(lead)} className="p-1 hover:bg-slate-200 rounded text-slate-700 cursor-pointer">
-                              <Maximize2 className="w-3.5 h-3.5" />
-                            </button>
+                            <div className="flex items-center justify-center gap-1">
+                              <button onClick={() => setSelectedLeadDetails(lead)} className="p-1 hover:bg-slate-200 rounded text-slate-700 cursor-pointer" title="Open Workspace">
+                                <Maximize2 className="w-3.5 h-3.5" />
+                              </button>
+                              <button onClick={() => handleDeleteLead(lead)} className="p-1 hover:bg-rose-100 rounded text-slate-400 hover:text-rose-700 cursor-pointer" title="Delete Contact">
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -1280,9 +1402,14 @@ const CrmPipeline = () => {
                             </span>
                           </td>
                           <td className="py-2.5 px-3 text-center">
-                            <button onClick={() => setSelectedLeadDetails(lead)} className="p-1 hover:bg-slate-200 rounded text-slate-700 cursor-pointer">
-                              <Maximize2 className="w-3.5 h-3.5" />
-                            </button>
+                            <div className="flex items-center justify-center gap-1">
+                              <button onClick={() => setSelectedLeadDetails(lead)} className="p-1 hover:bg-slate-200 rounded text-slate-700 cursor-pointer" title="Open Workspace">
+                                <Maximize2 className="w-3.5 h-3.5" />
+                              </button>
+                              <button onClick={() => handleDeleteLead(lead)} className="p-1 hover:bg-rose-100 rounded text-slate-400 hover:text-rose-700 cursor-pointer" title="Delete Contact">
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -1536,6 +1663,7 @@ const CrmPipeline = () => {
           setSelectedLeadDetails(null);
           navigate('/outreach');
         }}
+        onDeleteLead={handleDeleteLead}
         currentUser={user}
       />
 
@@ -1643,21 +1771,32 @@ const CrmPipeline = () => {
                 </select>
               </div>
 
-              <div className="pt-2 flex justify-end gap-2 border-t border-slate-200">
-                <button 
-                  type="button" 
-                  onClick={() => setEditingLead(null)}
-                  className="px-3 py-1.5 rounded-md border border-slate-200 text-slate-600 font-delight font-medium text-xs hover:bg-slate-50 cursor-pointer"
+              <div className="pt-2 flex items-center justify-between border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => handleDeleteLead(editingLead)}
+                  className="px-3 py-1.5 rounded-md border border-rose-200 text-rose-600 hover:bg-rose-50 font-delight font-medium text-xs flex items-center gap-1 cursor-pointer"
+                  title="Permanently remove lead from pipeline"
                 >
-                  Cancel
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Delete Lead</span>
                 </button>
-                <button 
-                  type="submit" 
-                  disabled={isSavingEdit}
-                  className="px-3.5 py-1.5 bg-slate-900 text-white rounded-md font-delight font-medium text-xs hover:bg-slate-800 transition-colors disabled:opacity-50 border border-slate-900 cursor-pointer"
-                >
-                  {isSavingEdit ? 'Saving...' : 'Save Changes'}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button 
+                    type="button" 
+                    onClick={() => setEditingLead(null)}
+                    className="px-3 py-1.5 rounded-md border border-slate-200 text-slate-600 font-delight font-medium text-xs hover:bg-slate-50 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    disabled={isSavingEdit}
+                    className="px-3.5 py-1.5 bg-slate-900 text-white rounded-md font-delight font-medium text-xs hover:bg-slate-800 transition-colors disabled:opacity-50 border border-slate-900 cursor-pointer"
+                  >
+                    {isSavingEdit ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </div>
               </div>
             </form>
           </div>

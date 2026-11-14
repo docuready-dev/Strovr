@@ -144,6 +144,15 @@ const LeadFinder = () => {
     } catch {}
   };
 
+  // Permanent Deleted Tombstones Store
+  const getDeletedTombstones = (): Set<string> => {
+    try {
+      const raw = localStorage.getItem('strovr_deleted_tombstones');
+      if (raw) return new Set(JSON.parse(raw));
+    } catch {}
+    return new Set<string>();
+  };
+
   const fetchLeads = async () => {
     if (!user?._id && !user?.email) return;
     setLoading(true);
@@ -155,13 +164,18 @@ const LeadFinder = () => {
         }
       });
       const serverLeads = Array.isArray(res.data) ? res.data : [];
-
-      // Stack leads: Never delete or wipe existing leads! Merge local cache + server leads with deduplication.
-      setLeads((prev) => {
-        const combined = mergeLeads(prev || [], serverLeads);
-        updateCache(combined);
-        return combined;
+      const tombstones = getDeletedTombstones();
+      const validLeads = serverLeads.filter(l => {
+        if (!l) return false;
+        if (tombstones.has(l._id)) return false;
+        const bName = `name:${(l.businessName || '').toLowerCase().trim()}`;
+        if (tombstones.has(bName)) return false;
+        return true;
       });
+
+      // Update leads list and sync cache
+      setLeads(validLeads);
+      updateCache(validLeads);
     } catch (err) {
       console.error('Failed to fetch harvested leads:', err);
     } finally {
@@ -176,7 +190,17 @@ const LeadFinder = () => {
                   (user?._id && localStorage.getItem(`strovr_leads_cache_${user._id}`));
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) setLeads(parsed);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const tombstones = getDeletedTombstones();
+          const valid = parsed.filter((l: any) => {
+            if (!l) return false;
+            if (tombstones.has(l._id)) return false;
+            const bName = `name:${(l.businessName || '').toLowerCase().trim()}`;
+            if (tombstones.has(bName)) return false;
+            return true;
+          });
+          setLeads(valid);
+        }
       }
     } catch {}
     fetchLeads();
