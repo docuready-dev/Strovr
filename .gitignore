@@ -52,9 +52,11 @@ Thumbs.db
 # /screenshots/
 /fonts/
 /integrations-icons/
-# Local persistent data storage
+# Local persistent data storage (whitelist core user store & integrations vault so Render never wipes them)
 server/data/*.json
 !server/data/.gitkeep
+!server/data/users.json
+!server/data/integrations_vault.json
 
 # Electron Desktop Packaging
 release/

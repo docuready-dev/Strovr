@@ -182,7 +182,7 @@ class InMemScraperQueue {
 
   private async executeJob(job: ScrapeJob) {
     let browser: any;
-    const maxItems = Math.min(job.limit || 10, 20);
+    const maxItems = Math.max(1, job.limit || 10);
     const isDeep = job.scope === 'deep';
     const costPerContact = job.costPerContact ?? (isDeep ? 2 : 1);
     const tokensReserved = job.tokensReserved ?? (maxItems * costPerContact);
@@ -225,15 +225,26 @@ class InMemScraperQueue {
         });
 
         try {
-          const serpUrl = `https://serpapi.com/search.json?engine=google_maps&q=${encodeURIComponent(`${job.keyword} in ${job.location}`)}&api_key=${resolvedSerpKey}&hl=en`;
-          const serpResp = await fetch(serpUrl);
-          const serpData: any = await serpResp.json();
+          let startOffset = 0;
+          let hasMorePages = true;
 
-          if (serpData.error) {
-            console.warn(`[SerpApi Engine] Search error:`, serpData.error);
-          } else {
+          while (extractedItems.length < maxItems && hasMorePages) {
+            const serpUrl = `https://serpapi.com/search.json?engine=google_maps&q=${encodeURIComponent(`${job.keyword} in ${job.location}`)}&api_key=${resolvedSerpKey}&hl=en&start=${startOffset}`;
+            const serpResp = await fetch(serpUrl);
+            const serpData: any = await serpResp.json();
+
+            if (serpData.error) {
+              console.warn(`[SerpApi Engine] Search error at offset ${startOffset}:`, serpData.error);
+              break;
+            }
+
             const localResults = serpData.local_results || [];
-            console.log(`[SerpApi Engine] Retrieved ${localResults.length} local results from Google Maps.`);
+            console.log(`[SerpApi Engine] Retrieved ${localResults.length} local results from Google Maps (offset: ${startOffset}, target: ${maxItems}).`);
+
+            if (localResults.length === 0) {
+              hasMorePages = false;
+              break;
+            }
 
             for (let i = 0; i < localResults.length && extractedItems.length < maxItems; i++) {
               const item = localResults[i];
@@ -271,6 +282,12 @@ class InMemScraperQueue {
                 rating,
                 category: item.type || (Array.isArray(item.types) ? item.types[0] : '') || job.keyword
               });
+            }
+
+            if (localResults.length < 20 || extractedItems.length >= maxItems) {
+              hasMorePages = false;
+            } else {
+              startOffset += 20;
             }
           }
         } catch (serpErr) {

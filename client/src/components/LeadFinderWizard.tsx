@@ -38,6 +38,7 @@ const LeadFinderWizard = ({ onHarvestStarted }: WizardProps) => {
   const [location, setLocation] = useState((user as any)?.location || (user as any)?.city || '');
   const [keyword, setKeyword] = useState(user?.niche || user?.field_of_work || user?.target_audience || '');
   const [scope, setScope] = useState<'quick' | 'deep'>('quick');
+  const [customHarvestCount, setCustomHarvestCount] = useState<number>(20);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -172,25 +173,27 @@ const LeadFinderWizard = ({ onHarvestStarted }: WizardProps) => {
 
   const currentPlan = (user?.plan || 'free').toLowerCase();
   const isFree = currentPlan === 'free';
+  const isPro = currentPlan === 'pro' || (user?.role || '').toUpperCase() === 'SUPER_ADMIN';
   const defaultDaily = currentPlan === 'basic' ? 600 : currentPlan === 'pro' ? 1500 : 15;
   const baseCredits = Math.max(0, user?.lead_credits !== undefined ? user.lead_credits : defaultDaily);
   const topupCredits = Math.max(0, user?.topup_credits || 0);
   const credits = baseCredits + topupCredits;
   const maxPool = isFree ? '15' : (currentPlan === 'basic' ? '600' : '1500');
-  const perQueryLimit = isFree ? 10 : 20;
   const isExhausted = credits < 1;
 
   // Cost Per Contact based on Scope:
   // Quick: 1 Token = 1 Contact
   // Deep: 2 Tokens = 1 Contact (strictly guarantees mobile/phone contact number)
   const costPerContact = scope === 'deep' ? 2 : 1;
-  const quickContactsCount = Math.min(perQueryLimit, Math.max(0, credits));
-  const deepContactsCount = Math.min(perQueryLimit, Math.max(0, Math.floor(credits / 2)));
-  const deepTokensNeeded = deepContactsCount * 2;
-  const cannotAffordDeep = scope === 'deep' && credits < 2;
+  const maxAffordableContacts = Math.max(0, Math.floor(credits / costPerContact));
 
-  const batchContactsCount = scope === 'deep' ? deepContactsCount : quickContactsCount;
+  const effectiveContactsLimit = isPro
+    ? Math.max(1, Number(customHarvestCount) || 20)
+    : (isFree ? 10 : 20);
+
+  const batchContactsCount = Math.min(effectiveContactsLimit, maxAffordableContacts);
   const batchTokensCount = batchContactsCount * costPerContact;
+  const cannotAffordDeep = scope === 'deep' && credits < 2;
 
   const locationPresets = ['Mumbai', 'Bengaluru', 'Delhi NCR', 'Hyderabad', 'Pune', 'New York', 'London', 'Dubai'];
   const keywordPresets = ['SaaS & Software', 'Real Estate Agencies', 'Healthcare Clinics', 'Digital Marketing', 'Legal & Advisory', 'Hospitality'];
@@ -200,7 +203,7 @@ const LeadFinderWizard = ({ onHarvestStarted }: WizardProps) => {
     if (credits < 1) {
       await alertDialog({
         title: 'Token Pool Exhausted',
-        message: 'You have exhausted all available contact tokens in your Free Tier pool (0 / 15 remaining). Free tier tokens auto-refresh every 4 days, or you can top up / upgrade to Basic or Pro.',
+        message: 'You have exhausted all available contact tokens in your pool (0 remaining). Tokens auto-refresh everyday or you can top up.',
         variant: 'warning'
       });
       setUpgradeTab('topup');
@@ -229,7 +232,7 @@ const LeadFinderWizard = ({ onHarvestStarted }: WizardProps) => {
       return;
     }
 
-    const expectedContacts = scope === 'deep' ? deepContactsCount : quickContactsCount;
+    const expectedContacts = batchContactsCount > 0 ? batchContactsCount : (isPro ? effectiveContactsLimit : (isFree ? 10 : 20));
     const expectedTokens = expectedContacts * costPerContact;
 
     setIsSubmitting(true);
@@ -250,7 +253,12 @@ const LeadFinderWizard = ({ onHarvestStarted }: WizardProps) => {
     try {
       const res = await axios.post(
         `${API_URL}/api/leads/scrape`,
-        { keyword, location, scope },
+        { 
+          keyword, 
+          location, 
+          scope,
+          limit: isPro ? effectiveContactsLimit : (isFree ? 10 : 20)
+        },
         { 
           headers: { 
             userid: user?._id || '',
@@ -661,7 +669,7 @@ const LeadFinderWizard = ({ onHarvestStarted }: WizardProps) => {
                     Primary public business profile, verified phone, address, and ratings.
                   </p>
                   <div className={`text-[10px] font-delight font-semibold pt-2 mt-2 border-t border-slate-200 ${isExhausted ? 'text-rose-600' : 'text-slate-700'}`}>
-                    {isExhausted ? '0 Tokens Available (Pool Exhausted)' : `1 Token = 1 Contact (${quickContactsCount} Tokens for ${quickContactsCount} Contacts)`}
+                    {isExhausted ? '0 Tokens Available (Pool Exhausted)' : `1 Token = 1 Contact (${batchContactsCount} Contacts = ${batchContactsCount} Tokens)`}
                   </div>
                 </div>
 
@@ -690,10 +698,100 @@ const LeadFinderWizard = ({ onHarvestStarted }: WizardProps) => {
                       ? '0 Tokens Available (Pool Exhausted)' 
                       : cannotAffordDeep
                         ? 'Requires 2 Tokens (1 available - switch to Quick)'
-                        : `2 Tokens = 1 Contact (${deepTokensNeeded} Tokens for ${deepContactsCount} Contacts • Guaranteed Mobile)`}
+                        : `2 Tokens = 1 Contact (${batchContactsCount} Contacts = ${batchTokensCount} Tokens • Guaranteed Mobile)`}
                   </div>
                 </div>
               </div>
+
+              {/* BATCH SIZE SELECTOR: Custom Count for Pro Tier */}
+              {isPro ? (
+                <div className="p-3.5 rounded-md border border-purple-200 bg-purple-50/40 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-delight font-bold text-purple-950">
+                        Custom Harvest Batch Size
+                      </span>
+                      <span className="px-1.5 py-0.2 bg-purple-200 text-purple-900 rounded text-[9px] font-extrabold uppercase tracking-wider">
+                        Pro Tier Unlimited
+                      </span>
+                    </div>
+                    <span className="text-[11px] font-delight font-medium text-purple-800">
+                      Pool: {credits} tokens available ({maxAffordableContacts} contacts max)
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="relative flex-1">
+                      <input
+                        type="number"
+                        min="1"
+                        max={Math.max(1, maxAffordableContacts)}
+                        value={customHarvestCount}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10);
+                          setCustomHarvestCount(isNaN(val) ? 1 : Math.max(1, Math.min(val, maxAffordableContacts || 1000)));
+                        }}
+                        className="w-full bg-white border border-purple-300 rounded-md px-3 py-2 text-xs font-mono font-bold text-purple-950 outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600"
+                        placeholder="Type number of leads (e.g. 50, 100, 250)..."
+                      />
+                      <span className="absolute right-3 top-2.5 text-[11px] font-delight text-purple-600 font-medium">
+                        leads
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      {[20, 50, 100, 250].map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={() => setCustomHarvestCount(Math.min(preset, maxAffordableContacts || preset))}
+                          className={`px-2.5 py-1.5 rounded text-[11px] font-mono font-medium transition-colors cursor-pointer border ${
+                            customHarvestCount === preset
+                              ? 'bg-purple-900 text-white border-purple-900'
+                              : 'bg-white hover:bg-purple-100/70 text-purple-900 border-purple-200'
+                          }`}
+                        >
+                          {preset}
+                        </button>
+                      ))}
+                      {maxAffordableContacts > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setCustomHarvestCount(maxAffordableContacts)}
+                          className="px-2.5 py-1.5 rounded text-[11px] font-mono font-medium transition-colors cursor-pointer border bg-white hover:bg-purple-100/70 text-purple-900 border-purple-200"
+                        >
+                          Max ({maxAffordableContacts})
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <p className="text-[11px] text-purple-800 font-delight font-normal">
+                    Type any number of leads you want extracted in this single pass. You are not restricted to the standard 20-lead batch.
+                  </p>
+                </div>
+              ) : (
+                <div className="p-3 rounded-md border border-slate-200 bg-slate-50/70 flex items-center justify-between text-xs font-delight">
+                  <div className="space-y-0.5">
+                    <span className="font-semibold text-slate-800">
+                      Standard Batch Limit: {isFree ? '10 leads/harvest' : '20 leads/harvest'}
+                    </span>
+                    <p className="text-[11px] text-slate-500">
+                      Upgrade to Pro Tier to type custom harvest numbers (50, 100, 250+ leads per run).
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUpgradeTab('plans');
+                      setUpgradeModalOpen(true);
+                    }}
+                    className="px-3 py-1 bg-white hover:bg-slate-100 text-slate-900 border border-slate-200 rounded text-xs font-semibold cursor-pointer transition-colors"
+                  >
+                    Unlock Custom Count
+                  </button>
+                </div>
+              )}
 
               {/* Execution Summary Strip */}
               <div className={`p-3 rounded-md border flex items-center justify-between text-xs font-delight font-medium ${

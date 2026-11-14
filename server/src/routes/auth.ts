@@ -40,6 +40,8 @@ async function provisionSystemAccounts() {
       phone: '+919004804043',
       role: 'SUPER_ADMIN',
       plan: 'pro',
+      superadmin_overridden: true,
+      manual_plan_override: true,
       lead_credits: existingSuper?.lead_credits !== undefined ? existingSuper.lead_credits : 1500,
       base_daily_credits: existingSuper?.base_daily_credits || 1500,
       topup_credits: existingSuper?.topup_credits !== undefined ? existingSuper.topup_credits : 0,
@@ -47,6 +49,8 @@ async function provisionSystemAccounts() {
       emails_sent: existingSuper?.emails_sent !== undefined ? existingSuper.emails_sent : 0,
       ai_pitches_limit: -1,
       ai_pitches_used: existingSuper?.ai_pitches_used !== undefined ? existingSuper.ai_pitches_used : 0,
+      integrations: existingSuper?.integrations || [],
+      integrationLogs: existingSuper?.integrationLogs || [],
       password: superAdminHash,
       last_token_reset_date: existingSuper?.last_token_reset_date || getTodayDateString(),
       onboarding_complete: true,
@@ -84,9 +88,10 @@ async function provisionSystemAccounts() {
 
     const localBicon = userStore.getUserById('user_ashleyghose28') || userStore.getUserByEmail('ashleyghose28@gmail.com');
     const existingBicon = { ...firestoreBiconData, ...localBicon };
-    const biconPlan = existingBicon?.plan && existingBicon.plan !== 'free' ? existingBicon.plan : 'basic';
+    const biconPlan = existingBicon?.plan || 'pro';
     const emailLimits: Record<string, number> = { free: 50, basic: 1500, pro: 5000 };
     const aiLimits: Record<string, number> = { free: 5, basic: 250, pro: -1 };
+    const biconDailyTokens = biconPlan === 'basic' ? 600 : biconPlan === 'pro' ? 1500 : 15;
 
     const biconUser: any = {
       ...existingBicon,
@@ -97,13 +102,17 @@ async function provisionSystemAccounts() {
       phone: '+919004804043',
       role: 'USER',
       plan: biconPlan,
-      lead_credits: existingBicon?.lead_credits !== undefined ? existingBicon.lead_credits : (biconPlan === 'basic' ? 600 : 15),
-      base_daily_credits: existingBicon?.base_daily_credits || (biconPlan === 'basic' ? 600 : 15),
+      superadmin_overridden: true,
+      manual_plan_override: true,
+      lead_credits: existingBicon?.lead_credits !== undefined ? existingBicon.lead_credits : biconDailyTokens,
+      base_daily_credits: existingBicon?.base_daily_credits || biconDailyTokens,
       topup_credits: existingBicon?.topup_credits !== undefined ? existingBicon.topup_credits : 0,
-      emails_limit: existingBicon?.emails_limit !== undefined && existingBicon.emails_limit >= 1500 ? existingBicon.emails_limit : (emailLimits[biconPlan] || 1500),
+      emails_limit: existingBicon?.emails_limit !== undefined && existingBicon.emails_limit >= 1500 ? existingBicon.emails_limit : (emailLimits[biconPlan] || 5000),
       emails_sent: existingBicon?.emails_sent !== undefined ? existingBicon.emails_sent : 0,
-      ai_pitches_limit: existingBicon?.ai_pitches_limit !== undefined ? existingBicon.ai_pitches_limit : (aiLimits[biconPlan] !== undefined ? aiLimits[biconPlan] : 250),
+      ai_pitches_limit: existingBicon?.ai_pitches_limit !== undefined ? existingBicon.ai_pitches_limit : (aiLimits[biconPlan] !== undefined ? aiLimits[biconPlan] : -1),
       ai_pitches_used: existingBicon?.ai_pitches_used !== undefined ? existingBicon.ai_pitches_used : 0,
+      integrations: existingBicon?.integrations || [],
+      integrationLogs: existingBicon?.integrationLogs || [],
       password: biconPasswordHash,
       last_token_reset_date: existingBicon?.last_token_reset_date || getTodayDateString(),
       onboarding_complete: true,

@@ -610,7 +610,12 @@ router.post('/scrape', async (req, res) => {
       });
     }
 
-    const maxPerQuery = userPlan === 'free' ? 10 : 20;
+    const isPro = userPlan === 'pro' || (userData?.role || '').toUpperCase() === 'SUPER_ADMIN';
+    const requestedLimit = req.body.limit ? parseInt(String(req.body.limit), 10) : undefined;
+    const maxPerQuery = isPro && requestedLimit && requestedLimit > 0 
+      ? requestedLimit 
+      : (userPlan === 'free' ? 10 : 20);
+
     // Cap query limit strictly by affordable contacts
     const maxContactsAffordable = Math.floor(totalAvailable / costPerContact);
     let limit = Math.min(maxPerQuery, maxContactsAffordable);

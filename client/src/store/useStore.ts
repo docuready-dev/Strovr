@@ -166,6 +166,9 @@ export const useStore = create<AppState>()(
           } catch {}
         }
         set({ user: normalized });
+        if (normalized?._id) {
+          get().fetchWorkspaceIntegrations(normalized._id);
+        }
       },
       setToken: (token) => set({ token }),
       setActiveFilter: (filter) => set({ activeFilter: filter }),
@@ -208,9 +211,13 @@ export const useStore = create<AppState>()(
       fetchWorkspaceIntegrations: async (overrideUserId?: string) => {
         const uid = overrideUserId || get().user?._id;
         if (!uid) return;
+        const email = get().user?.email || '';
         try {
           const res = await axios.get(`${API_URL}/api/integrations`, {
-            headers: { userid: uid }
+            headers: { 
+              userid: uid,
+              useremail: email
+            }
           });
           if (res.data?.integrations) {
             set({ integrations: res.data.integrations });
@@ -318,6 +325,9 @@ export const useStore = create<AppState>()(
       onRehydrateStorage: () => (state) => {
         if (state?.user) {
           state.setUser(normalizeUserCredits(state.user));
+          if (state.user._id) {
+            state.fetchWorkspaceIntegrations(state.user._id);
+          }
         }
       },
     }

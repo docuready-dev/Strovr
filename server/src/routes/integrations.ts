@@ -5,6 +5,7 @@ import path from 'path';
 import { db } from '../index';
 import { userStore } from '../services/userStore';
 import { memorySmtpStore } from './outreach';
+import { integrationsVault } from '../services/integrationsVault';
 
 const router = express.Router();
 
@@ -414,42 +415,66 @@ const getUserLogs = (docData: any): IntegrationLogEntry[] => {
 
 // GET /api/integrations - Fetch user's integrations & activity logs
 router.get('/', async (req, res) => {
-  const userId = req.headers.userid as string;
-  if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+  const rawId = (req.headers.userid as string || '').trim();
+  const rawEmail = (req.headers.useremail as string || '').trim().toLowerCase();
+  if (!rawId && !rawEmail) return res.status(401).json({ error: 'Unauthorized' });
 
   try {
+    const localUser = (rawId ? userStore.getUserById(rawId) : null) || 
+      (rawEmail ? userStore.getUserByEmail(rawEmail) : null) || 
+      (rawId.includes('@') ? userStore.getUserByEmail(rawId) : null) ||
+      (rawId === 'user_ashleyghose28' ? userStore.getUserByEmail('ashleyghose28@gmail.com') : null) ||
+      (rawId === 'user_ashleyghose64' ? userStore.getUserByEmail('ashleyghose64@gmail.com') : null);
+
+    const effectiveUserId = localUser?._id || rawId;
+    const effectiveEmail = localUser?.email || rawEmail;
+
     let userIntegrations = DEFAULT_APPS;
-    let apiKey = `lp_live_${userId.substring(0, 8)}_${Buffer.from(userId).toString('hex').substring(0, 12)}`;
+    let apiKey = `lp_live_${effectiveUserId.substring(0, 8)}_${Buffer.from(effectiveUserId).toString('hex').substring(0, 12)}`;
     let logs = DEFAULT_LOGS;
 
     // 1. Try local UserStore first
-    const localUser = userStore.getUserById(userId) || (userId.includes('@') ? userStore.getUserByEmail(userId) : null);
-    if ((localUser as any)?.integrations) {
+    if ((localUser as any)?.integrations && Array.isArray((localUser as any).integrations)) {
       userIntegrations = getMergedIntegrations((localUser as any).integrations);
     }
-    if ((localUser as any)?.integrationLogs) {
+    if ((localUser as any)?.integrationLogs && Array.isArray((localUser as any).integrationLogs)) {
       logs = (localUser as any).integrationLogs;
     }
 
-    // 2. Query Firestore if online
+    // 2. Check disk-persisted Integrations Vault
+    const vaultData = integrationsVault.get(effectiveUserId, effectiveEmail);
+    if (vaultData?.integrations && vaultData.integrations.length > 0) {
+      userIntegrations = getMergedIntegrations(vaultData.integrations);
+      if (vaultData.integrationLogs && vaultData.integrationLogs.length > 0) {
+        logs = vaultData.integrationLogs;
+      }
+    }
+
+    // 3. Query Firestore if online
     let firestoreData: any = null;
     try {
-      const userRef = db.collection('users').doc(userId);
+      const userRef = db.collection('users').doc(effectiveUserId);
       const doc = await userRef.get();
       if (doc.exists) {
         firestoreData = doc.data();
-        if (firestoreData?.integrations) {
+        if (firestoreData?.integrations && Array.isArray(firestoreData.integrations)) {
           userIntegrations = getMergedIntegrations(firestoreData.integrations);
-          userStore.updateUser(userId, { integrations: userIntegrations, integrationLogs: getUserLogs(firestoreData) });
         }
-        logs = getUserLogs(firestoreData);
+        if (firestoreData?.integrationLogs && Array.isArray(firestoreData.integrationLogs)) {
+          logs = getUserLogs(firestoreData);
+        }
       }
     } catch (fsErr: any) {
-      // Graceful fallback to local store
+      // Graceful fallback
     }
 
-    // 3. Ensure SendGrid status is synchronized with active SMTP / Outreach settings
-    const activeSmtp = memorySmtpStore.get(userId) || 
+    // Always synchronize back to UserStore & Vault so memory & disk stay warm
+    userStore.updateUser(effectiveUserId, { integrations: userIntegrations, integrationLogs: logs });
+    integrationsVault.save(effectiveUserId, effectiveEmail, userIntegrations, logs);
+
+    // 4. Ensure SendGrid status is synchronized with active SMTP / Outreach settings
+    const activeSmtp = memorySmtpStore.get(effectiveUserId) || 
+      (effectiveEmail ? memorySmtpStore.get(effectiveEmail) : null) ||
       firestoreData?.smtpSettings || firestoreData?.smtp_settings ||
       (localUser as any)?.smtpSettings || (localUser as any)?.smtp_settings;
 
@@ -642,9 +667,19 @@ router.post('/connect', async (req, res) => {
       }
     }
 
+    const localUserMatch = userStore.getUserById(userId) || (userId.includes('@') ? userStore.getUserByEmail(userId) : null);
+    const effectiveEmail = localUserMatch?.email || (userId.includes('@') ? userId : '');
+    integrationsVault.save(userId, effectiveEmail, updatedList, updatedLogs);
+
     userStore.updateUser(userId, updatedUserFields);
+    if (effectiveEmail && effectiveEmail !== userId) {
+      userStore.updateUser(effectiveEmail, updatedUserFields);
+    }
     try {
       await userRef.set(updatedUserFields, { merge: true });
+      if (effectiveEmail && effectiveEmail !== userId) {
+        await db.collection('users').doc(effectiveEmail).set(updatedUserFields, { merge: true });
+      }
     } catch (fsErr) {
       console.warn('[Integrations] Firestore sync warning:', fsErr);
     }
@@ -845,9 +880,19 @@ router.post('/disconnect', async (req, res) => {
       updatedUserFields.smtp_settings = null;
     }
 
+    const localUserMatch = userStore.getUserById(userId) || (userId.includes('@') ? userStore.getUserByEmail(userId) : null);
+    const effectiveEmail = localUserMatch?.email || (userId.includes('@') ? userId : '');
+    integrationsVault.save(userId, effectiveEmail, updatedList, updatedLogs);
+
     userStore.updateUser(userId, updatedUserFields);
+    if (effectiveEmail && effectiveEmail !== userId) {
+      userStore.updateUser(effectiveEmail, updatedUserFields);
+    }
     try {
       await userRef.set(updatedUserFields, { merge: true });
+      if (effectiveEmail && effectiveEmail !== userId) {
+        await db.collection('users').doc(effectiveEmail).set(updatedUserFields, { merge: true });
+      }
     } catch (fsErr) {
       console.warn('[Integrations] Firestore sync warning on disconnect:', fsErr);
     }

@@ -246,6 +246,8 @@ router.post('/users/:id/tier', async (req, res) => {
 
     const updates: any = {
       plan: normalizedPlan,
+      superadmin_overridden: true,
+      manual_plan_override: true,
       lead_credits: dailyTokens,
       base_daily_credits: dailyTokens,
       last_token_reset_date: getTodayDateString(),

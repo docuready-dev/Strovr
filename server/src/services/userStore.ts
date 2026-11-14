@@ -65,6 +65,8 @@ export interface UserRecord {
   two_factor_enabled?: boolean;
   phone_verified?: boolean;
   has_topup?: boolean;
+  superadmin_overridden?: boolean;
+  manual_plan_override?: boolean;
   integrations?: any;
   integrationLogs?: any;
   active_devices?: UserActiveDevices;
@@ -199,6 +201,24 @@ class UserStore {
     const isSuperAdmin = cleanEmail === 'ashleyghose64@gmail.com' || user._id === 'user_ashleyghose64' || existing?._id === 'user_ashleyghose64';
     const isBiconEmail = cleanEmail === 'ashleyghose28@gmail.com' || user._id === 'user_ashleyghose28' || existing?._id === 'user_ashleyghose28';
     
+    // Superadmin override check: If a plan was assigned/overridden by Superadmin, preserve it permanently
+    const isPlanOverridden = Boolean(user.superadmin_overridden ?? user.manual_plan_override ?? existing?.superadmin_overridden ?? existing?.manual_plan_override);
+    let resolvedPlan: 'free' | 'basic' | 'pro' = isSuperAdmin ? 'pro' : 'free';
+    if (!isSuperAdmin) {
+      if (isPlanOverridden && existing?.plan) {
+        resolvedPlan = (user.plan || existing.plan) as any;
+      } else if (existing?.plan && existing.plan !== 'free' && (!user.plan || user.plan === 'free')) {
+        resolvedPlan = existing.plan as any;
+      } else {
+        resolvedPlan = (user.plan || existing?.plan || (isBiconEmail ? 'pro' : 'free')) as any;
+      }
+    }
+
+    const defaultCreditsForPlan = resolvedPlan === 'basic' ? 600 : resolvedPlan === 'pro' ? 1500 : 15;
+    const resolvedLeadCredits = user.lead_credits !== undefined 
+      ? user.lead_credits 
+      : (existing?.lead_credits !== undefined ? existing.lead_credits : defaultCreditsForPlan);
+
     const record: UserRecord = {
       _id: isSuperAdmin ? 'user_ashleyghose64' : (isBiconEmail ? 'user_ashleyghose28' : user._id),
       email: cleanEmail,
@@ -206,16 +226,18 @@ class UserStore {
       googleId: user.googleId || existing?.googleId,
       name: isSuperAdmin ? 'Ashley' : (user.name || (isBiconEmail ? 'Bicon Ghose' : existing?.name || 'Strovr User')),
       role: isSuperAdmin ? 'SUPER_ADMIN' : (user.role || existing?.role || 'USER'),
-      plan: isSuperAdmin ? 'pro' : ((existing?.plan && existing.plan !== 'free' && (!user.plan || user.plan === 'free')) ? existing.plan : (user.plan || existing?.plan || 'free')),
-      lead_credits: user.lead_credits !== undefined ? user.lead_credits : (existing?.lead_credits !== undefined ? existing.lead_credits : (isSuperAdmin ? 1500 : ((user.plan || existing?.plan) === 'basic' ? 600 : (user.plan || existing?.plan) === 'pro' ? 1500 : 15))),
+      plan: resolvedPlan,
+      superadmin_overridden: isPlanOverridden,
+      manual_plan_override: isPlanOverridden,
+      lead_credits: resolvedLeadCredits,
       topup_credits: user.topup_credits !== undefined ? user.topup_credits : (existing?.topup_credits !== undefined ? existing.topup_credits : 0),
-      base_daily_credits: user.base_daily_credits !== undefined ? user.base_daily_credits : (existing?.base_daily_credits !== undefined ? existing.base_daily_credits : (isSuperAdmin ? 1500 : ((user.plan || existing?.plan) === 'basic' ? 600 : (user.plan || existing?.plan) === 'pro' ? 1500 : 15))),
+      base_daily_credits: user.base_daily_credits !== undefined ? user.base_daily_credits : (existing?.base_daily_credits !== undefined ? existing.base_daily_credits : defaultCreditsForPlan),
       last_token_reset_date: user.last_token_reset_date || existing?.last_token_reset_date || nowIso.split('T')[0],
       admin_credits_granted: user.admin_credits_granted !== undefined ? user.admin_credits_granted : (existing?.admin_credits_granted ?? false),
       pool_refreshed_at: user.pool_refreshed_at || existing?.pool_refreshed_at || nowIso,
-      emails_limit: isSuperAdmin ? 5000 : ((user.plan === 'pro' || existing?.plan === 'pro') ? 5000 : ((user.plan === 'basic' || existing?.plan === 'basic') ? Math.max(1500, user.emails_limit ?? 0, existing?.emails_limit ?? 0) : (user.emails_limit ?? existing?.emails_limit ?? 50))),
+      emails_limit: isSuperAdmin ? 5000 : (resolvedPlan === 'pro' ? 5000 : (resolvedPlan === 'basic' ? Math.max(1500, user.emails_limit ?? 0, existing?.emails_limit ?? 0) : (user.emails_limit ?? existing?.emails_limit ?? 50))),
       emails_sent: user.emails_sent !== undefined ? user.emails_sent : (existing?.emails_sent ?? 0),
-      ai_pitches_limit: isSuperAdmin ? -1 : ((user.plan === 'pro' || existing?.plan === 'pro') ? -1 : ((user.plan === 'basic' || existing?.plan === 'basic') ? Math.max(250, user.ai_pitches_limit ?? 0, existing?.ai_pitches_limit ?? 0) : (user.ai_pitches_limit ?? existing?.ai_pitches_limit ?? 5))),
+      ai_pitches_limit: isSuperAdmin ? -1 : (resolvedPlan === 'pro' ? -1 : (resolvedPlan === 'basic' ? Math.max(250, user.ai_pitches_limit ?? 0, existing?.ai_pitches_limit ?? 0) : (user.ai_pitches_limit ?? existing?.ai_pitches_limit ?? 5))),
       ai_pitches_used: user.ai_pitches_used !== undefined ? user.ai_pitches_used : (existing?.ai_pitches_used ?? 0),
       two_factor_enabled: isSuperAdmin ? false : (user.two_factor_enabled !== undefined ? user.two_factor_enabled : (existing?.two_factor_enabled ?? false)),
       phone_verified: user.phone_verified !== undefined ? user.phone_verified : (existing?.phone_verified ?? true),
@@ -240,6 +262,8 @@ class UserStore {
       serpapi_this_month_usage: user.serpapi_this_month_usage !== undefined ? user.serpapi_this_month_usage : existing?.serpapi_this_month_usage,
       serpapi_updated_at: user.serpapi_updated_at !== undefined ? user.serpapi_updated_at : existing?.serpapi_updated_at,
       has_topup: user.has_topup !== undefined ? user.has_topup : existing?.has_topup,
+      integrations: user.integrations !== undefined ? user.integrations : existing?.integrations,
+      integrationLogs: user.integrationLogs !== undefined ? user.integrationLogs : existing?.integrationLogs,
       active_devices: user.active_devices !== undefined ? user.active_devices : existing?.active_devices,
       createdAt: user.createdAt || existing?.createdAt || nowIso,
       updatedAt: nowIso
@@ -293,6 +317,10 @@ class UserStore {
     const updated: UserRecord = {
       ...existing,
       ...updates,
+      superadmin_overridden: updates.superadmin_overridden !== undefined ? updates.superadmin_overridden : (existing.superadmin_overridden ?? false),
+      manual_plan_override: updates.manual_plan_override !== undefined ? updates.manual_plan_override : (existing.manual_plan_override ?? false),
+      integrations: updates.integrations !== undefined ? updates.integrations : (existing.integrations ?? []),
+      integrationLogs: updates.integrationLogs !== undefined ? updates.integrationLogs : (existing.integrationLogs ?? []),
       updatedAt: new Date().toISOString()
     };
 

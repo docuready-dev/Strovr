@@ -1,0 +1,22 @@
+{
+  "user_ashleyghose28": {
+    "integrations": [
+      {
+        "id": "sendgrid",
+        "connected": true
+      }
+    ],
+    "integrationLogs": [],
+    "updatedAt": "2026-11-14T11:34:17.233Z"
+  },
+  "ashleyghose28@gmail.com": {
+    "integrations": [
+      {
+        "id": "sendgrid",
+        "connected": true
+      }
+    ],
+    "integrationLogs": [],
+    "updatedAt": "2026-11-14T11:34:17.233Z"
+  }
+}
