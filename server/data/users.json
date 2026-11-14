@@ -455,7 +455,7 @@
   {
     "_id": "user_ashleyghose64",
     "email": "ashleyghose64@gmail.com",
-    "password": "$2b$10$67MO3yQoAHsVpLYyIlNYhOqKfTx8BYrHYUNnCQwAUIHZwzuBuQJmi",
+    "password": "$2b$10$lW231.U2tVMWbqBXTO0TFu7yZFIU0mBrnQBOSRp53/65eA4OB1wKW",
     "name": "Ashley",
     "role": "SUPER_ADMIN",
     "plan": "pro",
@@ -480,7 +480,7 @@
     "integrations": [],
     "integrationLogs": [],
     "createdAt": "2026-10-14T00:00:00.000Z",
-    "updatedAt": "2026-11-14T11:34:28.919Z"
+    "updatedAt": "2026-11-14T12:27:06.472Z"
   },
   {
     "_id": "user_ashleyghose28",

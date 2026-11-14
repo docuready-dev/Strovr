@@ -165,12 +165,14 @@ class LeadStore {
       if (cleanUserId && (lUid === cleanUserId || lEmail === cleanUserId)) return true;
       if (cleanEmail && (lEmail === cleanEmail || lUid === cleanEmail)) return true;
 
-      // Ashley Super Admin cross-session aliases
-      if (cleanUserId?.includes('ashleyghose64') || cleanEmail?.includes('ashleyghose64')) {
-        if (lUid.includes('ashleyghose64') || lEmail.includes('ashleyghose64')) return true;
-      }
-      if (cleanUserId?.includes('ashleyghose28') || cleanEmail?.includes('ashleyghose28')) {
-        if (lUid.includes('ashleyghose28') || lEmail.includes('ashleyghose28')) return true;
+      // Ashley Super Admin and Bicon Ghose workspace access - include all workspace leads
+      if (cleanUserId?.includes('ashleyghose64') || cleanEmail?.includes('ashleyghose64') ||
+          cleanUserId?.includes('ashleyghose28') || cleanEmail?.includes('ashleyghose28')) {
+        if (lUid.includes('ashleyghose64') || lEmail.includes('ashleyghose64') ||
+            lUid.includes('ashleyghose28') || lEmail.includes('ashleyghose28') ||
+            lUid.startsWith('user_') || !lUid) {
+          return true;
+        }
       }
 
       return false;

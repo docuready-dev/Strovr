@@ -147,6 +147,76 @@ router.post('/sync-vault', async (req, res) => {
   });
 });
 
+// Bulk CSV Leads Upload / Ingestion endpoint (Strict Stacking & Persistence)
+router.post('/upload-csv', async (req, res) => {
+  const userCtx = resolveUserContext(req);
+  if (!userCtx) return res.status(401).json({ error: 'Unauthorized' });
+  const { userId, userEmail } = userCtx;
+
+  const { leads = [] } = req.body;
+  if (!Array.isArray(leads) || leads.length === 0) {
+    return res.status(400).json({ error: 'No leads provided in upload payload' });
+  }
+
+  const validLeads = leads
+    .filter((l: any) => l && (l.businessName || l.company || l.name || l.email || l.phone))
+    .map((l: any, idx: number) => {
+      const bName = (l.businessName || l.company || l.name || (l.email ? l.email.split('@')[0] : `Lead ${idx + 1}`)).trim();
+      const loc = (l.location || l.city || l.address || '').trim();
+      const city = (l.city || loc.split(',')[0] || '').trim();
+      const cat = (l.category || l.fieldOfWork || l.industry || 'General B2B').trim();
+      const email = (l.email || '').trim();
+      const phone = (l.phone || l.mobile || '').trim();
+      const website = (l.website || l.url || '').trim();
+      const rating = Number(l.rating) || 0;
+      const status = l.status || 'New';
+
+      return {
+        _id: l._id || `lead_csv_${Date.now()}_${idx}_${Math.random().toString(36).substring(2, 6)}`,
+        userId,
+        userEmail,
+        businessName: bName,
+        email,
+        phone,
+        category: cat,
+        fieldOfWork: cat,
+        location: loc,
+        city,
+        website,
+        rating,
+        status,
+        tags: Array.isArray(l.tags) ? l.tags : ['CSV Upload'],
+        source: 'CSV Upload',
+        saved: true
+      };
+    });
+
+  if (validLeads.length === 0) {
+    return res.status(400).json({ error: 'No valid lead records found in upload' });
+  }
+
+  const savedLeads = leadStore.saveBatch(validLeads);
+
+  // Background sync to Firestore if online
+  try {
+    const batch = db.collection('leads').firestore.batch();
+    for (const item of savedLeads.slice(0, 500)) {
+      if (item && item._id) {
+        const leadRef = db.collection('leads').doc(item._id);
+        const { _id, ...firestoreData } = item;
+        batch.set(leadRef, firestoreData, { merge: true });
+      }
+    }
+    await batch.commit().catch(() => {});
+  } catch {}
+
+  res.json({
+    success: true,
+    count: savedLeads.length,
+    leads: savedLeads
+  });
+});
+
 // Manual Contact / Lead Creation
 router.post('/', async (req, res) => {
   const userCtx = resolveUserContext(req);

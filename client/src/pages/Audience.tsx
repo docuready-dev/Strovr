@@ -6,7 +6,7 @@ import {
   Phone, CheckCircle2, Trash2, Send, Download, ExternalLink, 
   Code, Eye, Check, X, Sparkles, Building2, Globe, Copy, AlertCircle, Edit3,
   Webhook, Zap, ArrowUpDown, ArrowUp, ArrowDown, Calendar, MapPin, Star,
-  Lock
+  Lock, Upload
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { confirmDialog, alertDialog } from '../components/AppConfirmModal';
@@ -257,10 +257,12 @@ const Audience = () => {
       });
       const serverLeads = Array.isArray(res.data) ? res.data : [];
 
-      // Server is the authoritative source of truth.
-      // Deduplicate server leads and update local memory & cache.
-      const deduplicated = mergeLeads([], serverLeads);
-      updateLocalLeads(deduplicated);
+      // Strict stacking: never wipe existing contacts; merge local memory + server leads
+      setLeads((prev) => {
+        const combined = mergeLeads(prev || [], serverLeads);
+        updateLocalLeads(combined);
+        return combined;
+      });
     } catch (err) {
       console.error('Failed to fetch contacts:', err);
     } finally {
@@ -562,6 +564,155 @@ const Audience = () => {
     }
   };
 
+  // CSV Import & Stacking
+  const audienceFileInputRef = useState<HTMLInputElement | null>(null)[0], setAudienceFileInput = useState<HTMLInputElement | null>(null)[1];
+  const audienceFileRef = (el: HTMLInputElement | null) => { audienceFileRefHolder.current = el; };
+  const audienceFileRefHolder = { current: null as HTMLInputElement | null };
+  const [isUploadingAudienceCsv, setIsUploadingAudienceCsv] = useState(false);
+
+  const parseAudienceCsvText = (text: string): any[] => {
+    const lines = text.split(/\r?\n/).filter(line => line.trim().length > 0);
+    if (lines.length < 2) return [];
+
+    const parseLine = (line: string): string[] => {
+      const result: string[] = [];
+      let cur = '';
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"' || char === "'") {
+          if (inQuotes && line[i + 1] === char) {
+            cur += char;
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (char === ',' && !inQuotes) {
+          result.push(cur.trim());
+          cur = '';
+        } else {
+          cur += char;
+        }
+      }
+      result.push(cur.trim());
+      return result;
+    };
+
+    const rawHeaders = parseLine(lines[0]).map(h => h.toLowerCase().replace(/[^a-z0-9]/g, ''));
+    const findCol = (keywords: string[]) => rawHeaders.findIndex(h => keywords.some(k => h.includes(k)));
+
+    const nameIdx = findCol(['business', 'company', 'name', 'title', 'brand', 'org', 'listing']);
+    const phoneIdx = findCol(['phone', 'mobile', 'cell', 'tel', 'whatsapp', 'number', 'contact']);
+    const emailIdx = findCol(['email', 'mail']);
+    const locIdx = findCol(['location', 'address', 'city', 'state', 'place', 'area']);
+    const catIdx = findCol(['category', 'field', 'industry', 'type', 'niche', 'work']);
+    const webIdx = findCol(['website', 'url', 'web', 'link', 'domain', 'site']);
+    const ratingIdx = findCol(['rating', 'star', 'score']);
+
+    const parsed: any[] = [];
+    for (let i = 1; i < lines.length; i++) {
+      const cols = parseLine(lines[i]);
+      if (cols.length === 0 || cols.every(c => !c)) continue;
+
+      let bName = nameIdx >= 0 ? cols[nameIdx] : '';
+      let phone = phoneIdx >= 0 ? cols[phoneIdx] : '';
+      let email = emailIdx >= 0 ? cols[emailIdx] : '';
+      let location = locIdx >= 0 ? cols[locIdx] : '';
+      let category = catIdx >= 0 ? cols[catIdx] : '';
+      let website = webIdx >= 0 ? cols[webIdx] : '';
+      let rating = ratingIdx >= 0 ? parseFloat(cols[ratingIdx]) || 0 : 0;
+
+      if (!bName && !email && !phone) {
+        for (const col of cols) {
+          if (!email && col.includes('@') && col.includes('.')) email = col;
+          else if (!phone && col.replace(/[^0-9]/g, '').length >= 8) phone = col;
+          else if (!website && (col.startsWith('http') || col.includes('.com') || col.includes('.in'))) website = col;
+          else if (!bName && col.length > 2) bName = col;
+        }
+      }
+
+      if (bName || email || phone) {
+        parsed.push({
+          businessName: bName || (email ? email.split('@')[0] : `Contact ${i}`),
+          phone: phone || '',
+          email: email || '',
+          location: location || '',
+          city: location ? location.split(',')[0].trim() : '',
+          category: category || 'General B2B',
+          fieldOfWork: category || 'General B2B',
+          website: website || '',
+          rating: rating || 0,
+          status: 'New',
+          source: 'CSV Upload'
+        });
+      }
+    }
+    return parsed;
+  };
+
+  const handleAudienceCsvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const text = event.target?.result as string;
+      if (!text || !text.trim()) {
+        await alertDialog({
+          title: 'Empty File',
+          message: 'The selected CSV file contains no data.',
+          variant: 'warning'
+        });
+        return;
+      }
+
+      const parsed = parseAudienceCsvText(text);
+      if (parsed.length === 0) {
+        await alertDialog({
+          title: 'No Contacts Found',
+          message: 'Could not extract valid contacts from this CSV. Check that columns like Business Name, Phone, or Email exist.',
+          variant: 'warning'
+        });
+        return;
+      }
+
+      setIsUploadingAudienceCsv(true);
+      try {
+        const res = await axios.post(
+          `${API_URL}/api/leads/upload-csv`,
+          { leads: parsed },
+          {
+            headers: {
+              userid: user?._id || '',
+              useremail: user?.email || ''
+            }
+          }
+        );
+
+        const savedBatch = Array.isArray(res.data?.leads) ? res.data.leads : parsed;
+        setLeads((prev) => {
+          const combined = mergeLeads(prev || [], savedBatch);
+          updateLocalLeads(combined);
+          return combined;
+        });
+
+        showToast(`Stacked ${savedBatch.length} contacts from CSV into your pipeline!`);
+      } catch (err: any) {
+        console.error('Failed to upload CSV leads:', err);
+        setLeads((prev) => {
+          const combined = mergeLeads(prev || [], parsed);
+          updateLocalLeads(combined);
+          return combined;
+        });
+        showToast(`Locally stacked ${parsed.length} contacts from CSV!`);
+      } finally {
+        setIsUploadingAudienceCsv(false);
+      }
+    };
+    reader.readAsText(file);
+  };
+
   // Export CSV
   const handleExportCSV = async () => {
     if (isExportLocked) {
@@ -821,6 +972,25 @@ const Audience = () => {
                         </span>
                       )}
                     </button>
+
+                    {/* Import CSV */}
+                    <button
+                      type="button"
+                      disabled={isUploadingAudienceCsv}
+                      onClick={() => audienceFileRefHolder.current?.click()}
+                      className="h-8 px-3 rounded-md font-delight font-medium text-xs flex items-center gap-1.5 transition-all cursor-pointer bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 disabled:opacity-60"
+                      title="Upload and stack contacts from CSV file"
+                    >
+                      <Upload className="w-3.5 h-3.5 text-slate-500" />
+                      <span>{isUploadingAudienceCsv ? 'Stacking CSV...' : 'Import CSV'}</span>
+                    </button>
+                    <input
+                      type="file"
+                      ref={audienceFileRef}
+                      onChange={handleAudienceCsvUpload}
+                      accept=".csv,text/csv,text/plain"
+                      className="hidden"
+                    />
                   </>
                 )}
 

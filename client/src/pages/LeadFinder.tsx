@@ -11,7 +11,7 @@ import SerpApiConnectModal from '../components/SerpApiConnectModal';
 import { 
   Building2, Phone, MapPin, Star, Globe, 
   ExternalLink, ArrowRight, Search, Users2, Check,
-  Edit3, X, Mail, Sparkles, Compass
+  Edit3, X, Mail, Sparkles, Compass, Upload
 } from 'lucide-react';
 
 const LeadFinder = () => {
@@ -156,9 +156,12 @@ const LeadFinder = () => {
       });
       const serverLeads = Array.isArray(res.data) ? res.data : [];
 
-      // Server is authoritative source of truth. Deduplicate server leads and update local memory & cache.
-      const deduplicated = mergeLeads([], serverLeads);
-      updateCache(deduplicated);
+      // Stack leads: Never delete or wipe existing leads! Merge local cache + server leads with deduplication.
+      setLeads((prev) => {
+        const combined = mergeLeads(prev || [], serverLeads);
+        updateCache(combined);
+        return combined;
+      });
     } catch (err) {
       console.error('Failed to fetch harvested leads:', err);
     } finally {
@@ -255,6 +258,156 @@ const LeadFinder = () => {
       setLeads(prev => prev.map(l => l._id === lead._id ? { ...l, ...updatedLead } : l));
       showToast(`Enriched ${lead.businessName} (${updatedLead.email}) via ${activeEnrichApp.name} [200 OK]`);
     }
+  };
+
+  // CSV Import & Stacking
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+  const [isUploadingCsv, setIsUploadingCsv] = useState(false);
+
+  const parseCsvText = (text: string): any[] => {
+    const lines = text.split(/\r?\n/).filter(line => line.trim().length > 0);
+    if (lines.length < 2) return [];
+
+    const parseLine = (line: string): string[] => {
+      const result: string[] = [];
+      let cur = '';
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"' || char === "'") {
+          if (inQuotes && line[i + 1] === char) {
+            cur += char;
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (char === ',' && !inQuotes) {
+          result.push(cur.trim());
+          cur = '';
+        } else {
+          cur += char;
+        }
+      }
+      result.push(cur.trim());
+      return result;
+    };
+
+    const rawHeaders = parseLine(lines[0]).map(h => h.toLowerCase().replace(/[^a-z0-9]/g, ''));
+    const findCol = (keywords: string[]) => rawHeaders.findIndex(h => keywords.some(k => h.includes(k)));
+
+    const nameIdx = findCol(['business', 'company', 'name', 'title', 'brand', 'org', 'listing']);
+    const phoneIdx = findCol(['phone', 'mobile', 'cell', 'tel', 'whatsapp', 'number', 'contact']);
+    const emailIdx = findCol(['email', 'mail']);
+    const locIdx = findCol(['location', 'address', 'city', 'state', 'place', 'area']);
+    const catIdx = findCol(['category', 'field', 'industry', 'type', 'niche', 'work']);
+    const webIdx = findCol(['website', 'url', 'web', 'link', 'domain', 'site']);
+    const ratingIdx = findCol(['rating', 'star', 'score']);
+
+    const parsed: any[] = [];
+    for (let i = 1; i < lines.length; i++) {
+      const cols = parseLine(lines[i]);
+      if (cols.length === 0 || cols.every(c => !c)) continue;
+
+      let bName = nameIdx >= 0 ? cols[nameIdx] : '';
+      let phone = phoneIdx >= 0 ? cols[phoneIdx] : '';
+      let email = emailIdx >= 0 ? cols[emailIdx] : '';
+      let location = locIdx >= 0 ? cols[locIdx] : '';
+      let category = catIdx >= 0 ? cols[catIdx] : '';
+      let website = webIdx >= 0 ? cols[webIdx] : '';
+      let rating = ratingIdx >= 0 ? parseFloat(cols[ratingIdx]) || 0 : 0;
+
+      // Fallbacks if columns were not matched by standard headers
+      if (!bName && !email && !phone) {
+        for (const col of cols) {
+          if (!email && col.includes('@') && col.includes('.')) email = col;
+          else if (!phone && col.replace(/[^0-9]/g, '').length >= 8) phone = col;
+          else if (!website && (col.startsWith('http') || col.includes('.com') || col.includes('.in'))) website = col;
+          else if (!bName && col.length > 2) bName = col;
+        }
+      }
+
+      if (bName || email || phone) {
+        parsed.push({
+          businessName: bName || (email ? email.split('@')[0] : `Imported Contact ${i}`),
+          phone: phone || '',
+          email: email || '',
+          location: location || '',
+          city: location ? location.split(',')[0].trim() : '',
+          category: category || 'General B2B',
+          fieldOfWork: category || 'General B2B',
+          website: website || '',
+          rating: rating || 0,
+          status: 'New',
+          source: 'CSV Upload'
+        });
+      }
+    }
+    return parsed;
+  };
+
+  const handleCsvFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const text = event.target?.result as string;
+      if (!text || !text.trim()) {
+        await alertDialog({
+          title: 'Empty File',
+          message: 'The selected CSV file contains no data.',
+          variant: 'warning'
+        });
+        return;
+      }
+
+      const parsed = parseCsvText(text);
+      if (parsed.length === 0) {
+        await alertDialog({
+          title: 'No Valid Leads Found',
+          message: 'Could not extract valid leads from this CSV. Please check that it contains headers like Business Name, Phone, or Email.',
+          variant: 'warning'
+        });
+        return;
+      }
+
+      setIsUploadingCsv(true);
+      try {
+        const res = await axios.post(
+          `${API_URL}/api/leads/upload-csv`,
+          { leads: parsed },
+          {
+            headers: {
+              userid: user?._id || '',
+              useremail: user?.email || ''
+            }
+          }
+        );
+
+        const savedBatch = Array.isArray(res.data?.leads) ? res.data.leads : parsed;
+        // Strict stacking: never replace or reset existing leads
+        setLeads((prev) => {
+          const combined = mergeLeads(prev || [], savedBatch);
+          updateCache(combined);
+          return combined;
+        });
+
+        showToast(`Stacked ${savedBatch.length} lead(s) from CSV into your pipeline!`);
+      } catch (err: any) {
+        console.error('Failed to upload CSV leads to server:', err);
+        // Fallback: stack to client cache so data is never lost
+        setLeads((prev) => {
+          const combined = mergeLeads(prev || [], parsed);
+          updateCache(combined);
+          return combined;
+        });
+        showToast(`Locally stacked ${parsed.length} lead(s) from CSV!`);
+      } finally {
+        setIsUploadingCsv(false);
+      }
+    };
+    reader.readAsText(file);
   };
 
   return (
@@ -381,6 +534,25 @@ const LeadFinder = () => {
                       </div>
                     )}
                   </div>
+
+                  {/* Import Leads via CSV */}
+                  <button
+                    type="button"
+                    disabled={isUploadingCsv}
+                    onClick={() => fileInputRef.current?.click()}
+                    className="h-8 px-3 bg-white hover:bg-slate-50 border border-slate-200 rounded-md font-delight text-xs text-slate-700 font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs disabled:opacity-60"
+                    title="Upload and stack leads from CSV file"
+                  >
+                    <Upload className="w-3.5 h-3.5 text-slate-500" />
+                    <span>{isUploadingCsv ? 'Stacking CSV...' : 'Import CSV'}</span>
+                  </button>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleCsvFileChange}
+                    accept=".csv,text/csv,text/plain"
+                    className="hidden"
+                  />
 
                   <div className="relative">
                     <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />

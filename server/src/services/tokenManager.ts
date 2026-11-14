@@ -51,11 +51,12 @@ export function applyDailyTokenReset(userData: any): { userData: any; didReset: 
       : 0;
   }
 
-  // Daily reset check
+  // Daily reset check - never decrease credits if user already has a higher balance or purchased top-up!
   if (lastResetDate !== todayUtc) {
     if (plan === 'basic' || plan === 'pro') {
-      userData.lead_credits = maxDaily;
-      userData.base_daily_credits = maxDaily;
+      // Refresh up to maxDaily if balance is lower; never reduce existing higher balance
+      userData.lead_credits = Math.max(Number(userData.lead_credits) || 0, maxDaily);
+      userData.base_daily_credits = Math.max(Number(userData.base_daily_credits) || 0, maxDaily);
       userData.last_token_reset_date = todayUtc;
       didReset = true;
     } else if (plan === 'free') {
@@ -63,12 +64,10 @@ export function applyDailyTokenReset(userData: any): { userData: any; didReset: 
       const lastRefresh = userData.pool_refreshed_at ? new Date(userData.pool_refreshed_at).getTime() : 0;
       const isPastFourDays = lastRefresh === 0 || Date.now() - lastRefresh >= fourDaysMs;
 
-      if (isPastFourDays || !userData.has_topup) {
-        if (!userData.has_topup && (userData.lead_credits === undefined || userData.lead_credits > 15)) {
-          userData.lead_credits = 15;
-        }
+      if (isPastFourDays) {
+        userData.lead_credits = Math.max(Number(userData.lead_credits) || 0, 15);
       }
-      userData.base_daily_credits = 15;
+      userData.base_daily_credits = Math.max(Number(userData.base_daily_credits) || 0, 15);
       userData.last_token_reset_date = todayUtc;
     }
   }

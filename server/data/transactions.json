@@ -1,0 +1,62 @@
+[
+  {
+    "_id": "txn_init_001",
+    "transactionId": "TXN_PH_1791985400_a1b2",
+    "userId": "user_ashleyghose64",
+    "userEmail": "ashleyghose64@gmail.com",
+    "userName": "Ashley",
+    "itemKey": "pro",
+    "itemName": "LeadPulse Pro Subscription (1,500 Leads/mo)",
+    "amount": 1999,
+    "currency": "INR",
+    "type": "subscription",
+    "status": "SUCCESS",
+    "gateway": "PhonePe",
+    "createdAt": "2026-10-17T11:20:00.000Z"
+  },
+  {
+    "_id": "txn_init_002",
+    "transactionId": "TXN_PH_1791982100_c3d4",
+    "userId": "user_ashleyghose28",
+    "userEmail": "ashleyghose28@gmail.com",
+    "userName": "Bicon Ghose",
+    "itemKey": "micro",
+    "itemName": "Micro Top-Up Pack (20 Leads)",
+    "amount": 50,
+    "currency": "INR",
+    "type": "bundle",
+    "status": "SUCCESS",
+    "gateway": "PhonePe",
+    "createdAt": "2026-10-16T15:45:00.000Z"
+  },
+  {
+    "_id": "txn_init_003",
+    "transactionId": "TXN_PH_1791979000_e5f6",
+    "userId": "user_enterprise_corp",
+    "userEmail": "finance@apexsolutions.io",
+    "userName": "Apex Cloud Solutions",
+    "itemKey": "mega",
+    "itemName": "Mega Top-Up Pack (1,000 Leads)",
+    "amount": 1000,
+    "currency": "INR",
+    "type": "bundle",
+    "status": "SUCCESS",
+    "gateway": "PhonePe",
+    "createdAt": "2026-10-15T09:12:00.000Z"
+  },
+  {
+    "_id": "txn_init_004",
+    "transactionId": "TXN_PH_1791971200_g7h8",
+    "userId": "user_growth_biz",
+    "userEmail": "billing@nextgenai.tech",
+    "userName": "NextGen AI Labs",
+    "itemKey": "basic",
+    "itemName": "LeadPulse Basic Subscription (600 Leads/mo)",
+    "amount": 699,
+    "currency": "INR",
+    "type": "subscription",
+    "status": "SUCCESS",
+    "gateway": "PhonePe",
+    "createdAt": "2026-10-14T18:30:00.000Z"
+  }
+]

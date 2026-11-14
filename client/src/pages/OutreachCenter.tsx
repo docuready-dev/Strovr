@@ -673,9 +673,28 @@ const OutreachCenter = () => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (uploadEvent) => {
+      reader.onload = async (uploadEvent) => {
         const result = uploadEvent.target?.result as string;
         if (result) {
+          try {
+            const res = await axios.post(`${API_URL}/api/media/upload`, {
+              fileData: result,
+              fileName: file.name,
+              fileType: file.type || 'image/png'
+            });
+            if (res.data?.url) {
+              setWhatsAppImage({
+                enabled: true,
+                url: res.data.url,
+                fileName: file.name,
+                caption: whatsAppImage.caption || `Visual preview: ${file.name}`
+              });
+              return;
+            }
+          } catch (uploadErr) {
+            console.warn('[OutreachCenter] Image upload fallback:', uploadErr);
+          }
+
           setWhatsAppImage({
             enabled: true,
             url: result,
@@ -695,8 +714,28 @@ const OutreachCenter = () => {
       const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
       const sizeStr = parseFloat(sizeMb) > 0.1 ? `${sizeMb} MB` : `${Math.round(file.size / 1024)} KB`;
       const reader = new FileReader();
-      reader.onload = (uploadEvent) => {
+      reader.onload = async (uploadEvent) => {
         const result = uploadEvent.target?.result as string;
+        try {
+          const res = await axios.post(`${API_URL}/api/media/upload`, {
+            fileData: result,
+            fileName: file.name,
+            fileType: file.type || 'application/pdf'
+          });
+          if (res.data?.url) {
+            setWhatsAppPdf({
+              enabled: true,
+              url: res.data.url,
+              fileName: file.name,
+              fileSize: sizeStr,
+              pageCount: 'Doc'
+            });
+            return;
+          }
+        } catch (uploadErr) {
+          console.warn('[OutreachCenter] PDF upload fallback:', uploadErr);
+        }
+
         setWhatsAppPdf({
           enabled: true,
           url: result || `https://www.strovr.space/assets/${encodeURIComponent(file.name)}`,
@@ -746,28 +785,24 @@ const OutreachCenter = () => {
     msg = msg.replace(/{{rating}}/g, rating);
     msg = msg.replace(/{{(booking_link|calendly_link|appointment_link)}}/g, `Book an Appointment : ${resolvedBookingUrl}`);
 
-    // Append Media Attachments neatly (Safeguard: never embed giant data: base64 URLs in text or wa.me URLs)
+    // Append Media Attachments neatly with verified public URLs (never insert fake "attached" text when no link exists)
     const mediaItems: string[] = [];
-    if (whatsAppPdf?.enabled) {
+    if (whatsAppPdf?.enabled && whatsAppPdf.url) {
       const cleanPdfName = String(whatsAppPdf.fileName || 'Overview.pdf').replace(/{{business_name}}/g, bName);
-      if (whatsAppPdf.url && (whatsAppPdf.url.startsWith('http://') || whatsAppPdf.url.startsWith('https://'))) {
-        mediaItems.push(`📄 *Document Attached:* ${cleanPdfName} (${whatsAppPdf.fileSize || 'PDF'})\n🔗 Access Link: ${whatsAppPdf.url}`);
-      } else {
-        mediaItems.push(`📄 *Document Attached:* ${cleanPdfName} (${whatsAppPdf.fileSize || 'PDF'}) [📎 File Attached in Strovr]`);
+      if (whatsAppPdf.url.startsWith('http://') || whatsAppPdf.url.startsWith('https://')) {
+        mediaItems.push(`📄 *Document:* ${cleanPdfName}\n🔗 View / Download: ${whatsAppPdf.url}`);
       }
     }
-    if (whatsAppImage?.enabled) {
-      const captionStr = whatsAppImage.caption ? ` (${whatsAppImage.caption})` : '';
+    if (whatsAppImage?.enabled && whatsAppImage.url) {
       const cleanImgName = whatsAppImage.fileName || 'Visual Preview';
-      if (whatsAppImage.url && (whatsAppImage.url.startsWith('http://') || whatsAppImage.url.startsWith('https://'))) {
-        mediaItems.push(`🖼️ *Visual Preview:* ${cleanImgName}${captionStr}\n🔗 Access Link: ${whatsAppImage.url}`);
-      } else {
-        mediaItems.push(`🖼️ *Visual Preview:* ${cleanImgName}${captionStr} [📎 Visual Attached in Strovr]`);
+      const captionStr = whatsAppImage.caption ? ` (${whatsAppImage.caption})` : '';
+      if (whatsAppImage.url.startsWith('http://') || whatsAppImage.url.startsWith('https://')) {
+        mediaItems.push(`🖼️ *Visual Preview:* ${cleanImgName}${captionStr}\n🔗 View: ${whatsAppImage.url}`);
       }
     }
 
     if (mediaItems.length > 0) {
-      msg += `\n\n────────────────\n📎 *Attached Media & Deliverables:*\n\n` + mediaItems.join('\n\n');
+      msg += `\n\n────────────────\n📎 *Media & Documents:*\n\n` + mediaItems.join('\n\n');
     }
 
     return msg;
