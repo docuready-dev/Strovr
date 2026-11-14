@@ -455,8 +455,8 @@
   {
     "_id": "user_ashleyghose64",
     "email": "ashleyghose64@gmail.com",
-    "password": "$2b$10$lW231.U2tVMWbqBXTO0TFu7yZFIU0mBrnQBOSRp53/65eA4OB1wKW",
-    "name": "Ashley",
+    "password": "$2b$10$ZyrAsA20aKziLZivzkNcNOEh/rARYXfInOEp2t3DOxWIOsx8ptI/G",
+    "name": "Ashley Super Admin",
     "role": "SUPER_ADMIN",
     "plan": "pro",
     "superadmin_overridden": true,
@@ -474,18 +474,19 @@
     "two_factor_enabled": false,
     "phone_verified": true,
     "onboarding_complete": true,
+    "company_name": "Strovr Corp",
     "phone": "+919004804043",
     "profile_picture": "",
     "has_topup": true,
     "integrations": [],
     "integrationLogs": [],
     "createdAt": "2026-10-14T00:00:00.000Z",
-    "updatedAt": "2026-11-14T12:27:06.472Z"
+    "updatedAt": "2026-11-14T13:14:39.996Z"
   },
   {
     "_id": "user_ashleyghose28",
     "email": "ashleyghose28@gmail.com",
-    "password": "$2b$10$gWxX2d751N4cybKU.4XiQuERDaql39AilVB9dKYpG9i7Q9U5RQZaO",
+    "password": "$2b$10$nMTPAFOTV9okbQYPo1Jli.4q7OKRSXv.uReLgkNQunLsWR2.1nNy6",
     "name": "Bicon Ghose",
     "role": "USER",
     "plan": "pro",
@@ -510,7 +511,7 @@
     "integrations": [],
     "integrationLogs": [],
     "createdAt": "2026-10-14T00:00:00.000Z",
-    "updatedAt": "2026-11-14T11:34:29.271Z"
+    "updatedAt": "2026-11-14T13:14:40.203Z"
   },
   {
     "_id": "user_1791977130509_svako",

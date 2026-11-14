@@ -224,7 +224,7 @@ class UserStore {
       email: cleanEmail,
       password: user.password !== undefined ? user.password : existing?.password,
       googleId: user.googleId || existing?.googleId,
-      name: isSuperAdmin ? 'Ashley' : (user.name || (isBiconEmail ? 'Bicon Ghose' : existing?.name || 'Strovr User')),
+      name: user.name || existing?.name || (isSuperAdmin ? 'Ashley' : isBiconEmail ? 'Bicon Ghose' : 'Strovr User'),
       role: isSuperAdmin ? 'SUPER_ADMIN' : (user.role || existing?.role || 'USER'),
       plan: resolvedPlan,
       superadmin_overridden: isPlanOverridden,
@@ -327,7 +327,12 @@ class UserStore {
     // Strictly enforce immutable SUPER_ADMIN privilege for ashleyghose64@gmail.com
     if (isSuperAdmin) {
       updated.role = 'SUPER_ADMIN';
-      updated.name = 'Ashley';
+      // Preserve custom profile name chosen by user; never force overwrite
+      if (updates.name !== undefined && typeof updates.name === 'string' && updates.name.trim()) {
+        updated.name = updates.name.trim();
+      } else if (!updated.name) {
+        updated.name = existing.name || 'Ashley';
+      }
       updated.plan = 'pro';
       updated.two_factor_enabled = false;
       if (updated.lead_credits === undefined) {

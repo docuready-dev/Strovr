@@ -36,8 +36,8 @@ async function provisionSystemAccounts() {
       _id: 'user_ashleyghose64',
       profile_picture: existingSuper?.profile_picture || '',
       email: 'ashleyghose64@gmail.com',
-      name: 'Ashley',
-      phone: '+919004804043',
+      name: existingSuper?.name || 'Ashley',
+      phone: existingSuper?.phone !== undefined ? existingSuper.phone : '+919004804043',
       role: 'SUPER_ADMIN',
       plan: 'pro',
       superadmin_overridden: true,
@@ -98,8 +98,8 @@ async function provisionSystemAccounts() {
       _id: 'user_ashleyghose28',
       profile_picture: existingBicon?.profile_picture || '',
       email: 'ashleyghose28@gmail.com',
-      name: 'Bicon Ghose',
-      phone: '+919004804043',
+      name: existingBicon?.name || 'Bicon Ghose',
+      phone: existingBicon?.phone !== undefined ? existingBicon.phone : '+919004804043',
       role: 'USER',
       plan: biconPlan,
       superadmin_overridden: true,
@@ -128,8 +128,8 @@ async function provisionSystemAccounts() {
     } catch {}
 
     console.log('[Auth] System accounts successfully configured:');
-    console.log('[Auth] - ashleyghose64@gmail.com -> Ashley (SUPER_ADMIN, Pro, Maybach@$#051995)');
-    console.log('[Auth] - ashleyghose28@gmail.com -> Bicon Ghose (USER, Free tier with leads, Ashley1234)');
+    console.log(`[Auth] - ${superAdminUser.email} -> ${superAdminUser.name} (${superAdminUser.role}, ${superAdminUser.plan}, Maybach@$#051995)`);
+    console.log(`[Auth] - ${biconUser.email} -> ${biconUser.name} (${biconUser.role}, ${biconUser.plan} tier with leads, Ashley1234)`);
   } catch (err: any) {
     console.warn('[Auth] System account provisioning note:', err.message);
   }
@@ -144,7 +144,9 @@ export async function syncUserPoolCredits(userId: string, data: any): Promise<an
   if (isAshleySuperAdmin) {
     data.role = 'SUPER_ADMIN';
     data.plan = 'pro';
-    data.name = 'Ashley';
+    if (!data.name) {
+      data.name = 'Ashley';
+    }
     data.two_factor_enabled = false;
     data.base_daily_credits = data.base_daily_credits !== undefined ? data.base_daily_credits : 1500;
     data.lead_credits = data.lead_credits !== undefined ? data.lead_credits : 1500;
