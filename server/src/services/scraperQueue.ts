@@ -3,6 +3,7 @@ import fs from 'fs';
 import { crawlWebsiteForEmails } from './fastCrawler';
 import { leadStore } from './leadStore';
 import { userStore } from './userStore';
+import { harvestHistoryStore } from './harvestHistoryStore';
 
 export interface ScrapeJob {
   id: string;
@@ -608,7 +609,11 @@ class InMemScraperQueue {
             source: isDeep ? 'Deep Harvest Engine' : 'Quick Harvest Engine',
             harvestedAt: harvestIso,
             createdAt: harvestIso,
-            updatedAt: new Date().toISOString()
+            updatedAt: new Date().toISOString(),
+            whatsapp_contacted: false,
+            email_contacted: false,
+            phone_contacted: false,
+            harvestJobId: job.id
           });
         }
       });
@@ -619,6 +624,22 @@ class InMemScraperQueue {
       if (addedCount > 0) {
         leadStore.saveBatch(leadsToSave);
         console.log(`[Scraper] Successfully saved ${addedCount} authentic deduplicated leads to persistent LeadStore.`);
+
+        // Record to persistent Harvest History
+        harvestHistoryStore.addEntry({
+          id: `harvest_${job.id}`,
+          userId: job.userId,
+          userEmail: job.userEmail,
+          keyword: job.keyword,
+          location: job.location,
+          scope: (job.scope as any) || 'quick',
+          leadsCount: addedCount,
+          tokensUsed: addedCount * costPerContact,
+          leadIds: leadsToSave.map(l => l._id),
+          sampleNames: leadsToSave.slice(0, 3).map(l => l.businessName),
+          status: 'completed',
+          createdAt: new Date().toISOString()
+        });
       }
 
       // 2. Also sync to Firestore (safely caught if unauthenticated/offline)

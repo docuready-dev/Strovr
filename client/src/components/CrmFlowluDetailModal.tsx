@@ -39,6 +39,23 @@ export const CrmFlowluDetailModal: React.FC<CrmFlowluModalProps> = ({
   const [editStage, setEditStage] = useState(lead?.status || 'New');
   const [editPriority, setEditPriority] = useState(lead?.priority || 'Medium');
   const [editValue, setEditValue] = useState(lead ? (lead.dealValue || getEstimatedValue(lead)) : 1000);
+  const [editWhatsappContacted, setEditWhatsappContacted] = useState(Boolean(lead?.whatsapp_contacted || lead?.whatsappContacted));
+  const [editEmailContacted, setEditEmailContacted] = useState(Boolean(lead?.email_contacted || lead?.emailContacted));
+  const [editPhoneContacted, setEditPhoneContacted] = useState(Boolean(lead?.phone_contacted || lead?.telephonic_contacted || lead?.phoneContacted));
+
+  useEffect(() => {
+    if (lead) {
+      setEditEmail(lead.email || '');
+      setEditPhone(lead.phone || '');
+      setEditWebsite(lead.website || '');
+      setEditStage(lead.status || 'New');
+      setEditPriority(lead.priority || 'Medium');
+      setEditValue(lead.dealValue || getEstimatedValue(lead));
+      setEditWhatsappContacted(Boolean(lead.whatsapp_contacted || lead.whatsappContacted));
+      setEditEmailContacted(Boolean(lead.email_contacted || lead.emailContacted));
+      setEditPhoneContacted(Boolean(lead.phone_contacted || lead.telephonic_contacted || lead.phoneContacted));
+    }
+  }, [lead]);
 
   // Requirements List state
   const defaultReqs = Array.isArray(lead?.requirements) && lead.requirements.length > 0 
@@ -175,9 +192,35 @@ export const CrmFlowluDetailModal: React.FC<CrmFlowluModalProps> = ({
       website: editWebsite,
       status: editStage,
       priority: editPriority,
-      dealValue: editValue
+      dealValue: editValue,
+      whatsapp_contacted: editWhatsappContacted,
+      email_contacted: editEmailContacted,
+      phone_contacted: editPhoneContacted,
+      telephonic_contacted: editPhoneContacted
     });
     setIsEditingContact(false);
+  };
+
+  const handleQuickToggleChannel = async (channel: 'whatsapp' | 'email' | 'phone') => {
+    const isWa = channel === 'whatsapp';
+    const isEm = channel === 'email';
+    const isPh = channel === 'phone';
+
+    const nextWa = isWa ? !editWhatsappContacted : editWhatsappContacted;
+    const nextEm = isEm ? !editEmailContacted : editEmailContacted;
+    const nextPh = isPh ? !editPhoneContacted : editPhoneContacted;
+
+    if (isWa) setEditWhatsappContacted(nextWa);
+    if (isEm) setEditEmailContacted(nextEm);
+    if (isPh) setEditPhoneContacted(nextPh);
+
+    await onUpdateLead({
+      ...lead,
+      whatsapp_contacted: nextWa,
+      email_contacted: nextEm,
+      phone_contacted: nextPh,
+      telephonic_contacted: nextPh
+    });
   };
 
   const filteredActivities = activities.filter(act => {
@@ -218,6 +261,51 @@ export const CrmFlowluDetailModal: React.FC<CrmFlowluModalProps> = ({
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${statusTheme.bg} ${statusTheme.border}`}>
                   {statusTheme.label}
                 </span>
+
+                {/* Direct Contact Status Toggle Badges */}
+                <div className="hidden sm:flex items-center gap-1.5 ml-1">
+                  <button
+                    type="button"
+                    onClick={() => handleQuickToggleChannel('whatsapp')}
+                    title="Click to toggle WhatsApp Contacted status"
+                    className={`text-[10px] font-bold px-2 py-0.5 rounded-md border flex items-center gap-1 transition-all cursor-pointer ${
+                      editWhatsappContacted
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-300 shadow-2xs'
+                        : 'bg-slate-50 text-slate-400 border-slate-200 hover:border-emerald-300 hover:text-emerald-600'
+                    }`}
+                  >
+                    <MessageCircle className="w-2.5 h-2.5" />
+                    <span>WA: {editWhatsappContacted ? 'Contacted ✓' : 'Not Contacted'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleQuickToggleChannel('email')}
+                    title="Click to toggle Email Contacted status"
+                    className={`text-[10px] font-bold px-2 py-0.5 rounded-md border flex items-center gap-1 transition-all cursor-pointer ${
+                      editEmailContacted
+                        ? 'bg-blue-50 text-blue-700 border-blue-300 shadow-2xs'
+                        : 'bg-slate-50 text-slate-400 border-slate-200 hover:border-blue-300 hover:text-blue-600'
+                    }`}
+                  >
+                    <Mail className="w-2.5 h-2.5" />
+                    <span>Email: {editEmailContacted ? 'Contacted ✓' : 'Not Contacted'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleQuickToggleChannel('phone')}
+                    title="Click to toggle Telephonic Contacted status"
+                    className={`text-[10px] font-bold px-2 py-0.5 rounded-md border flex items-center gap-1 transition-all cursor-pointer ${
+                      editPhoneContacted
+                        ? 'bg-amber-50 text-amber-800 border-amber-300 shadow-2xs'
+                        : 'bg-slate-50 text-slate-400 border-slate-200 hover:border-amber-300 hover:text-amber-700'
+                    }`}
+                  >
+                    <Phone className="w-2.5 h-2.5" />
+                    <span>Call: {editPhoneContacted ? 'Contacted ✓' : 'Not Contacted'}</span>
+                  </button>
+                </div>
               </div>
               <p className="text-xs text-slate-500 mt-1 flex items-center gap-1 font-delight">
                 <span>Organization:</span>
@@ -404,6 +492,38 @@ export const CrmFlowluDetailModal: React.FC<CrmFlowluModalProps> = ({
                       placeholder="Phone Number"
                       className="w-full bg-white border border-slate-200 rounded p-1.5 text-xs outline-none"
                     />
+
+                    {/* Contact Channels Flags */}
+                    <div className="pt-2 border-t border-slate-200/80 space-y-1.5">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Contact Channels Tracked</span>
+                      <label className="flex items-center gap-2 text-xs font-delight cursor-pointer select-none">
+                        <input 
+                          type="checkbox" 
+                          checked={editWhatsappContacted} 
+                          onChange={(e) => setEditWhatsappContacted(e.target.checked)} 
+                          className="w-3.5 h-3.5 rounded text-emerald-600 cursor-pointer" 
+                        />
+                        <span className="text-slate-800 font-medium">WhatsApp Contacted</span>
+                      </label>
+                      <label className="flex items-center gap-2 text-xs font-delight cursor-pointer select-none">
+                        <input 
+                          type="checkbox" 
+                          checked={editEmailContacted} 
+                          onChange={(e) => setEditEmailContacted(e.target.checked)} 
+                          className="w-3.5 h-3.5 rounded text-blue-600 cursor-pointer" 
+                        />
+                        <span className="text-slate-800 font-medium">Email Contacted</span>
+                      </label>
+                      <label className="flex items-center gap-2 text-xs font-delight cursor-pointer select-none">
+                        <input 
+                          type="checkbox" 
+                          checked={editPhoneContacted} 
+                          onChange={(e) => setEditPhoneContacted(e.target.checked)} 
+                          className="w-3.5 h-3.5 rounded text-amber-600 cursor-pointer" 
+                        />
+                        <span className="text-slate-800 font-medium">Telephonic / Call Contacted</span>
+                      </label>
+                    </div>
                     <div className="flex justify-end gap-2 pt-1">
                       <button 
                         onClick={() => setIsEditingContact(false)}

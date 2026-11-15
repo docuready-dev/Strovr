@@ -2,10 +2,11 @@ import express from 'express';
 import { db } from '../index';
 import { scraperQueue } from '../services/scraperQueue';
 import { syncUserPoolCredits } from './auth';
-import { leadStore } from '../services/leadStore';
+import { leadStore, PERMANENT_BANNED_LEAD_NAMES } from '../services/leadStore';
 import { userStore } from '../services/userStore';
 import { triggerMatchingAutomations } from './automations';
 import { applyDailyTokenReset, deductTokens } from '../services/tokenManager';
+import { harvestHistoryStore } from '../services/harvestHistoryStore';
 
 const router = express.Router();
 
@@ -54,9 +55,10 @@ router.get('/', async (req, res) => {
     console.warn('[Leads] Firestore unauthenticated or offline, serving from local store:', err.message);
   }
 
-  // Filter out any deleted leads from firestore results & clean up Firestore tombstones
+  // Filter out any deleted leads or banned mock test leads from firestore results & clean up Firestore tombstones
   firestoreLeads = firestoreLeads.filter(f => {
-    if (leadStore.isDeleted(f._id)) {
+    const normName = (f.businessName || '').toLowerCase().trim();
+    if (PERMANENT_BANNED_LEAD_NAMES.has(normName) || leadStore.isDeleted(f._id)) {
       db.collection('leads').doc(f._id).delete().catch(() => {});
       return false;
     }
@@ -196,6 +198,24 @@ router.post('/upload-csv', async (req, res) => {
   }
 
   const savedLeads = leadStore.saveBatch(validLeads);
+
+  // Record CSV upload into Harvest History
+  if (savedLeads.length > 0) {
+    harvestHistoryStore.addEntry({
+      id: `harvest_csv_${Date.now()}`,
+      userId,
+      userEmail,
+      keyword: 'CSV File Ingestion',
+      location: 'Bulk Contact Upload',
+      scope: 'csv_import',
+      leadsCount: savedLeads.length,
+      tokensUsed: 0,
+      leadIds: savedLeads.map(l => l._id),
+      sampleNames: savedLeads.slice(0, 3).map(l => l.businessName),
+      status: 'completed',
+      createdAt: new Date().toISOString()
+    });
+  }
 
   // Background sync to Firestore if online
   try {
@@ -898,10 +918,64 @@ router.delete('/all', async (req, res) => {
   }
 });
 
+// ============================================================================
+// HARVEST HISTORY & LOGS ENDPOINTS
+// ============================================================================
+
+router.get('/harvest-history', (req, res) => {
+  const userCtx = resolveUserContext(req);
+  if (!userCtx) return res.status(401).json({ error: 'Unauthorized' });
+  const { userId, userEmail } = userCtx;
+
+  const history = harvestHistoryStore.getHistory(userId, userEmail);
+  res.json({ success: true, count: history.length, history });
+});
+
+router.delete('/harvest-history/:id', (req, res) => {
+  const userCtx = resolveUserContext(req);
+  if (!userCtx) return res.status(401).json({ error: 'Unauthorized' });
+
+  const { id } = req.params;
+  const deleted = harvestHistoryStore.deleteEntry(id);
+  res.json({ success: true, deleted });
+});
+
+// Clean Slate: Purge All Leads Permanently from Database, Disk, and Firestore
+router.post('/purge-all', async (req, res) => {
+  try {
+    const userCtx = resolveUserContext(req);
+    if (!userCtx) return res.status(401).json({ error: 'Unauthorized' });
+    const { userId, userEmail } = userCtx;
+
+    leadStore.purgeAll();
+
+    try {
+      const snap = await db.collection('leads').limit(500).get();
+      if (!snap.empty) {
+        const batch = db.batch();
+        snap.docs.forEach(d => batch.delete(d.ref));
+        await batch.commit();
+      }
+    } catch (fsErr: any) {
+      console.warn('[Leads] Firestore purge-all notice:', fsErr.message);
+    }
+
+    res.json({
+      success: true,
+      count: 0,
+      message: 'Clean slate achieved: all leads have been completely and permanently purged.'
+    });
+  } catch (err: any) {
+    console.error('Failed to purge all leads:', err);
+    res.status(500).json({ error: err.message || 'Failed to purge leads' });
+  }
+});
+
 router.patch('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.headers.userid;
+    const userCtx = resolveUserContext(req);
+    const userId = userCtx?.userId || req.headers.userid;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
     const updates = req.body;
@@ -909,10 +983,10 @@ router.patch('/:id', async (req, res) => {
 
     try {
       const docRef = db.collection('leads').doc(id);
-      await docRef.update({
+      await docRef.set({
         ...updates,
         updatedAt: new Date().toISOString()
-      });
+      }, { merge: true });
     } catch (fsErr: any) {
       console.warn('[Leads] Firestore patch failed (updated locally):', fsErr.message);
     }

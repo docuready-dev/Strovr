@@ -6,13 +6,14 @@ import {
   Phone, CheckCircle2, Trash2, Send, Download, ExternalLink, 
   Code, Eye, Check, X, Sparkles, Building2, Globe, Copy, AlertCircle, Edit3,
   Webhook, Zap, ArrowUpDown, ArrowUp, ArrowDown, Calendar, MapPin, Star,
-  Lock, Upload
+  Lock, Upload, MessageCircle
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { confirmDialog, alertDialog } from '../components/AppConfirmModal';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import API_URL from '../config/api';
+import { filterOutBannedLeads } from '../utils/bannedLeads';
 
 interface FormTemplate {
   id: string;
@@ -237,7 +238,8 @@ const Audience = () => {
         if (raw) {
           const parsed = JSON.parse(raw);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            setLeads(parsed);
+            const clean = filterOutBannedLeads(parsed);
+            setLeads(clean);
           }
         }
       } catch {}
@@ -274,8 +276,9 @@ const Audience = () => {
         }
       });
       const serverLeads = Array.isArray(res.data) ? res.data : [];
+      const cleanServerLeads = filterOutBannedLeads(serverLeads);
       const tombstones = getDeletedTombstones();
-      const validLeads = serverLeads.filter(l => {
+      const validLeads = cleanServerLeads.filter(l => {
         if (!l) return false;
         if (tombstones.has(l._id)) return false;
         const bName = `name:${(l.businessName || '').toLowerCase().trim()}`;
@@ -364,6 +367,9 @@ const Audience = () => {
     if (stageFilter === 'All') return true;
     if (stageFilter === 'has_email') return Boolean(lead.email);
     if (stageFilter === 'has_phone') return Boolean(lead.phone);
+    if (stageFilter === 'wa_contacted') return Boolean(lead.whatsapp_contacted || lead.whatsappContacted);
+    if (stageFilter === 'email_contacted') return Boolean(lead.email_contacted || lead.emailContacted);
+    if (stageFilter === 'phone_contacted') return Boolean(lead.phone_contacted || lead.telephonic_contacted || lead.phoneContacted);
     if (stageFilter === 'hot_leads') return lead.status === 'Proposal Sent' || lead.status === 'Closed Won';
     if (stageFilter === 'new_leads') return lead.status === 'New';
     return lead.status === stageFilter;
@@ -507,7 +513,10 @@ const Audience = () => {
         category: editingContact.category || 'General',
         location: editingContact.location || '',
         city: editingContact.city || (editingContact.location ? editingContact.location.split(',')[0].trim() : ''),
-        status: editingContact.status || 'New'
+        status: editingContact.status || 'New',
+        whatsapp_contacted: Boolean(editingContact.whatsapp_contacted || editingContact.whatsappContacted),
+        email_contacted: Boolean(editingContact.email_contacted || editingContact.emailContacted),
+        phone_contacted: Boolean(editingContact.phone_contacted || editingContact.telephonic_contacted || editingContact.phoneContacted)
       };
       const res = await axios.patch(`${API_URL}/api/leads/${editingContact._id}`, payload, {
         headers: { 
@@ -605,6 +614,83 @@ const Audience = () => {
       showToast(`Removed ${selectedLeadIds.length} contacts from database.`);
     } catch (err) {
       console.error('Failed to batch delete leads:', err);
+    }
+  };
+
+  // Toggle contact channels (WhatsApp, Email, Telephonic/Call)
+  const handleToggleContactChannel = async (
+    lead: any, 
+    channel: 'whatsapp' | 'email' | 'phone', 
+    e?: React.MouseEvent
+  ) => {
+    if (e) e.stopPropagation();
+    const leadId = lead._id;
+    const currentStatus = 
+      channel === 'whatsapp' ? Boolean(lead.whatsapp_contacted || lead.whatsappContacted) :
+      channel === 'email' ? Boolean(lead.email_contacted || lead.emailContacted) :
+      Boolean(lead.phone_contacted || lead.telephonic_contacted || lead.phoneContacted);
+    const newStatus = !currentStatus;
+
+    // Optimistic UI update
+    const updated = leads.map(l => {
+      if (l._id !== leadId) return l;
+      if (channel === 'whatsapp') {
+        return { ...l, whatsapp_contacted: newStatus, whatsappContacted: newStatus };
+      }
+      if (channel === 'email') {
+        return { ...l, email_contacted: newStatus, emailContacted: newStatus };
+      }
+      return { ...l, phone_contacted: newStatus, telephonic_contacted: newStatus, phoneContacted: newStatus };
+    });
+    setLeads(updated);
+    updateLocalLeads(updated);
+
+    try {
+      const payload: any = {};
+      if (channel === 'whatsapp') payload.whatsapp_contacted = newStatus;
+      if (channel === 'email') payload.email_contacted = newStatus;
+      if (channel === 'phone') payload.phone_contacted = newStatus;
+
+      await axios.patch(`${API_URL}/api/leads/${leadId}`, payload, {
+        headers: {
+          userid: user?._id || '',
+          useremail: user?.email || ''
+        }
+      });
+      showToast(`${channel.toUpperCase()} status updated: ${newStatus ? 'Contacted ✓' : 'Not Contacted'}`);
+    } catch (err) {
+      console.error('Failed to update contact channel status:', err);
+      showToast('Failed to update contact status on server.');
+      fetchLeads();
+    }
+  };
+
+  // Clean Slate: Erase all leads across local cache, memory, and database
+  const handlePurgeAllLeads = async () => {
+    const confirmed = await confirmDialog({
+      title: 'Clean Slate — Purge All Leads',
+      message: 'Are you sure you want to completely erase all leads and start with a clean slate? This will remove all contacts from your audience, pipeline, and database. This action cannot be undone.',
+      confirmText: 'Yes, Purge Everything',
+      cancelText: 'Cancel',
+      danger: true
+    });
+    if (!confirmed) return;
+
+    try {
+      await axios.post(`${API_URL}/api/leads/purge-all`, {}, {
+        headers: {
+          userid: user?._id || '',
+          useremail: user?.email || ''
+        }
+      });
+      if (user?.email) localStorage.removeItem(`strovr_leads_cache_${user.email}`);
+      if (user?._id) localStorage.removeItem(`strovr_leads_cache_${user._id}`);
+      setLeads([]);
+      setSelectedLeadIds([]);
+      showToast('All contacts purged successfully. Clean slate active.');
+    } catch (err) {
+      console.error('Failed to purge leads:', err);
+      showToast('Failed to purge contacts. Please try again.');
     }
   };
 
@@ -1035,6 +1121,17 @@ const Audience = () => {
                       accept=".csv,text/csv,text/plain"
                       className="hidden"
                     />
+
+                    {/* Clean Slate Button */}
+                    <button
+                      type="button"
+                      onClick={handlePurgeAllLeads}
+                      className="h-8 px-3 rounded-md font-delight font-medium text-xs flex items-center gap-1.5 transition-all cursor-pointer bg-white border border-rose-200 text-rose-700 hover:bg-rose-50 hover:border-rose-300 shadow-2xs"
+                      title="Clean Slate: Purge all contacts and start fresh"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                      <span>Clean Slate</span>
+                    </button>
                   </>
                 )}
 
@@ -1179,6 +1276,9 @@ const Audience = () => {
                         <option value="Closed Won">Stage: Closed Won</option>
                         <option value="has_email">Filter: Has Email</option>
                         <option value="has_phone">Filter: Has Phone</option>
+                        <option value="wa_contacted">Filter: WhatsApp Contacted</option>
+                        <option value="email_contacted">Filter: Email Contacted</option>
+                        <option value="phone_contacted">Filter: Telephonic Contacted</option>
                       </select>
                     </div>
                   </div>
@@ -1281,6 +1381,7 @@ const Audience = () => {
                               {renderSortIcon('status')}
                             </button>
                           </th>
+                          <th className="py-3.5 px-5 font-medium text-center min-w-[180px]">Channels Contacted</th>
                           <th className="py-3.5 px-6 text-right font-medium">Actions</th>
                         </tr>
                       </thead>
@@ -1421,6 +1522,56 @@ const Audience = () => {
                                     <span>{appBadge}</span>
                                   </span>
                                 ))}
+                              </div>
+                            </td>
+
+                            {/* Channels Contacted */}
+                            <td className="py-5 px-5 font-delight font-medium align-middle">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                {/* WhatsApp */}
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleToggleContactChannel(lead, 'whatsapp', e)}
+                                  className={`px-2 py-1 rounded-sm text-[10px] font-delight border flex items-center gap-1 cursor-pointer transition-colors ${
+                                    (lead.whatsapp_contacted || lead.whatsappContacted)
+                                      ? 'bg-emerald-50 text-emerald-700 border-emerald-300 font-bold'
+                                      : 'bg-white text-slate-400 border-slate-200 hover:text-slate-600 font-medium'
+                                  }`}
+                                  title={(lead.whatsapp_contacted || lead.whatsappContacted) ? 'WhatsApp: Contacted (Click to toggle)' : 'WhatsApp: Not Contacted (Click to toggle)'}
+                                >
+                                  <MessageCircle className={`w-3 h-3 ${(lead.whatsapp_contacted || lead.whatsappContacted) ? 'text-emerald-600' : 'text-slate-400'}`} />
+                                  <span>{(lead.whatsapp_contacted || lead.whatsappContacted) ? 'WA ✓' : 'WA ✕'}</span>
+                                </button>
+
+                                {/* Email */}
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleToggleContactChannel(lead, 'email', e)}
+                                  className={`px-2 py-1 rounded-sm text-[10px] font-delight border flex items-center gap-1 cursor-pointer transition-colors ${
+                                    (lead.email_contacted || lead.emailContacted)
+                                      ? 'bg-blue-50 text-blue-700 border-blue-300 font-bold'
+                                      : 'bg-white text-slate-400 border-slate-200 hover:text-slate-600 font-medium'
+                                  }`}
+                                  title={(lead.email_contacted || lead.emailContacted) ? 'Email: Contacted (Click to toggle)' : 'Email: Not Contacted (Click to toggle)'}
+                                >
+                                  <Mail className={`w-3 h-3 ${(lead.email_contacted || lead.emailContacted) ? 'text-blue-600' : 'text-slate-400'}`} />
+                                  <span>{(lead.email_contacted || lead.emailContacted) ? 'Email ✓' : 'Email ✕'}</span>
+                                </button>
+
+                                {/* Call / Phone */}
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleToggleContactChannel(lead, 'phone', e)}
+                                  className={`px-2 py-1 rounded-sm text-[10px] font-delight border flex items-center gap-1 cursor-pointer transition-colors ${
+                                    (lead.phone_contacted || lead.telephonic_contacted || lead.phoneContacted)
+                                      ? 'bg-amber-50 text-amber-700 border-amber-300 font-bold'
+                                      : 'bg-white text-slate-400 border-slate-200 hover:text-slate-600 font-medium'
+                                  }`}
+                                  title={(lead.phone_contacted || lead.telephonic_contacted || lead.phoneContacted) ? 'Telephonic: Contacted (Click to toggle)' : 'Telephonic: Not Contacted (Click to toggle)'}
+                                >
+                                  <Phone className={`w-3 h-3 ${(lead.phone_contacted || lead.telephonic_contacted || lead.phoneContacted) ? 'text-amber-600' : 'text-slate-400'}`} />
+                                  <span>{(lead.phone_contacted || lead.telephonic_contacted || lead.phoneContacted) ? 'Call ✓' : 'Call ✕'}</span>
+                                </button>
                               </div>
                             </td>
 
@@ -2171,6 +2322,53 @@ const Audience = () => {
                     <option value="Proposal Sent">Proposal Sent</option>
                     <option value="Closed Won">Closed Won</option>
                   </select>
+                </div>
+              </div>
+
+              {/* Multichannel Contact Status */}
+              <div className="pt-2 border-t border-slate-100">
+                <label className="block text-[11px] font-delight font-semibold text-slate-700 mb-2">Multichannel Contact Status</label>
+                <div className="grid grid-cols-3 gap-2">
+                  <label className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-md cursor-pointer text-xs font-delight text-slate-700 hover:bg-emerald-50/50">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(editingContact.whatsapp_contacted || editingContact.whatsappContacted)}
+                      onChange={(e) => setEditingContact({
+                        ...editingContact,
+                        whatsapp_contacted: e.target.checked,
+                        whatsappContacted: e.target.checked
+                      })}
+                      className="w-3.5 h-3.5 rounded text-emerald-600 cursor-pointer"
+                    />
+                    <span className="font-medium">WhatsApp</span>
+                  </label>
+                  <label className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-md cursor-pointer text-xs font-delight text-slate-700 hover:bg-blue-50/50">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(editingContact.email_contacted || editingContact.emailContacted)}
+                      onChange={(e) => setEditingContact({
+                        ...editingContact,
+                        email_contacted: e.target.checked,
+                        emailContacted: e.target.checked
+                      })}
+                      className="w-3.5 h-3.5 rounded text-blue-600 cursor-pointer"
+                    />
+                    <span className="font-medium">Email</span>
+                  </label>
+                  <label className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-md cursor-pointer text-xs font-delight text-slate-700 hover:bg-amber-50/50">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(editingContact.phone_contacted || editingContact.telephonic_contacted || editingContact.phoneContacted)}
+                      onChange={(e) => setEditingContact({
+                        ...editingContact,
+                        phone_contacted: e.target.checked,
+                        telephonic_contacted: e.target.checked,
+                        phoneContacted: e.target.checked
+                      })}
+                      className="w-3.5 h-3.5 rounded text-amber-600 cursor-pointer"
+                    />
+                    <span className="font-medium">Telephonic</span>
+                  </label>
                 </div>
               </div>
 

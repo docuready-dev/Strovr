@@ -19,6 +19,7 @@ import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import { EMAIL_CAPTURE_BRIDGE_SCRIPT } from '../data/whatsappTemplates';
 import { CrmFlowluDetailModal } from '../components/CrmFlowluDetailModal';
+import { filterOutBannedLeads } from '../utils/bannedLeads';
 import { 
   exportCrmToXlsx, 
   exportCrmToCsv, 
@@ -128,19 +129,18 @@ const CrmPipeline = () => {
         }
       });
       const fetched = Array.isArray(res.data) ? res.data : [];
-      if (fetched.length > 0) {
-        setLeads(fetched);
-      } else {
+      const cleanLeads = filterOutBannedLeads(fetched);
+      if (cleanLeads.length > 0) {
+        setLeads(cleanLeads);
         try {
-          const raw = (user?.email && localStorage.getItem(`strovr_leads_cache_${user.email}`)) ||
-                      (user?._id && localStorage.getItem(`strovr_leads_cache_${user._id}`));
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              setLeads(parsed);
-              return;
-            }
-          }
+          if (user?.email) localStorage.setItem(`strovr_leads_cache_${user.email}`, JSON.stringify(cleanLeads));
+          if (user?._id) localStorage.setItem(`strovr_leads_cache_${user._id}`, JSON.stringify(cleanLeads));
+        } catch {}
+      } else {
+        // Authoritative clean slate: do NOT revive old mock leads from local cache
+        try {
+          if (user?.email) localStorage.removeItem(`strovr_leads_cache_${user.email}`);
+          if (user?._id) localStorage.removeItem(`strovr_leads_cache_${user._id}`);
         } catch {}
         setLeads([]);
       }
@@ -152,7 +152,8 @@ const CrmPipeline = () => {
         if (raw) {
           const parsed = JSON.parse(raw);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            setLeads(parsed);
+            const clean = filterOutBannedLeads(parsed);
+            setLeads(clean);
             return;
           }
         }
@@ -293,6 +294,81 @@ const CrmPipeline = () => {
       showToast(`Removed "${leadToDelete.businessName}" from pipeline.`);
     } catch (err) {
       console.error('Failed to delete lead from server:', err);
+    }
+  };
+
+  // Toggle contact channels (WhatsApp, Email, Telephonic/Call)
+  const handleToggleContactChannel = async (
+    lead: any, 
+    channel: 'whatsapp' | 'email' | 'phone', 
+    e?: React.MouseEvent
+  ) => {
+    if (e) e.stopPropagation();
+    const leadId = lead._id;
+    const currentStatus = 
+      channel === 'whatsapp' ? Boolean(lead.whatsapp_contacted || lead.whatsappContacted) :
+      channel === 'email' ? Boolean(lead.email_contacted || lead.emailContacted) :
+      Boolean(lead.phone_contacted || lead.telephonic_contacted || lead.phoneContacted);
+    const newStatus = !currentStatus;
+
+    // Optimistic UI update
+    setLeads(prev => prev.map(l => {
+      if (l._id !== leadId) return l;
+      if (channel === 'whatsapp') {
+        return { ...l, whatsapp_contacted: newStatus, whatsappContacted: newStatus };
+      }
+      if (channel === 'email') {
+        return { ...l, email_contacted: newStatus, emailContacted: newStatus };
+      }
+      return { ...l, phone_contacted: newStatus, telephonic_contacted: newStatus, phoneContacted: newStatus };
+    }));
+
+    try {
+      const payload: any = {};
+      if (channel === 'whatsapp') payload.whatsapp_contacted = newStatus;
+      if (channel === 'email') payload.email_contacted = newStatus;
+      if (channel === 'phone') payload.phone_contacted = newStatus;
+
+      await axios.patch(`${API_URL}/api/leads/${leadId}`, payload, {
+        headers: {
+          userid: user?._id || '',
+          useremail: user?.email || ''
+        }
+      });
+      showToast(`${channel.toUpperCase()} status updated: ${newStatus ? 'Contacted ✓' : 'Not Contacted'}`);
+    } catch (err) {
+      console.error('Failed to update contact channel status:', err);
+      showToast('Failed to update contact status on server.');
+      fetchLeads();
+    }
+  };
+
+  // Clean Slate: Erase all leads across local cache, memory, and database
+  const handlePurgeAllLeads = async () => {
+    const confirmed = await confirmDialog({
+      title: 'Clean Slate — Purge All Leads',
+      message: 'Are you sure you want to completely erase all leads and start with a clean slate? This will remove all leads from your pipeline, audience, and database. This action cannot be undone.',
+      confirmText: 'Yes, Purge Everything',
+      cancelText: 'Cancel',
+      danger: true
+    });
+    if (!confirmed) return;
+
+    try {
+      await axios.post(`${API_URL}/api/leads/purge-all`, {}, {
+        headers: {
+          userid: user?._id || '',
+          useremail: user?.email || ''
+        }
+      });
+      if (user?.email) localStorage.removeItem(`strovr_leads_cache_${user.email}`);
+      if (user?._id) localStorage.removeItem(`strovr_leads_cache_${user._id}`);
+      setLeads([]);
+      setSelectedLeads([]);
+      showToast('All leads purged successfully. Clean slate active.');
+    } catch (err) {
+      console.error('Failed to purge leads:', err);
+      showToast('Failed to purge leads. Please try again.');
     }
   };
 
@@ -801,6 +877,16 @@ const CrmPipeline = () => {
                 <span>New Harvest</span>
               </button>
 
+              <button
+                type="button"
+                onClick={handlePurgeAllLeads}
+                className="bg-white hover:bg-rose-50 text-rose-700 border border-rose-200 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer"
+                title="Clean Slate: Purge all leads from pipeline and database"
+              >
+                <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                <span>Clean Slate</span>
+              </button>
+
               <div className="flex items-center bg-white border border-slate-200 rounded-md p-0.5 shadow-xs">
                 <button 
                   onClick={() => setViewMode('kanban')}
@@ -955,41 +1041,56 @@ const CrmPipeline = () => {
                                 </span>
                               </div>
 
-                              {/* Bottom Row: Contact Status Badge + Synced Indicator + Click hint */}
-                              <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between text-[10px] gap-1">
-                                <div className="flex items-center gap-1 min-w-0">
-                                  {lead.tags?.includes('Pending WhatsApp Task') ? (
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        const cleanPhone = (lead.phone || '').replace(/[^0-9]/g, '');
-                                        const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(`Hi ${lead.businessName}, wanted to follow up regarding our earlier message!`)}`;
-                                        window.open(url, '_blank');
-                                      }}
-                                      className="font-delight font-bold text-[9px] text-white bg-emerald-600 hover:bg-emerald-700 px-1.5 py-0.5 rounded-sm flex items-center gap-1 shadow-2xs transition-colors cursor-pointer"
-                                      title="Open WhatsApp with pre-filled outreach message"
-                                    >
-                                      <MessageCircle className="w-2.5 h-2.5" />
-                                      <span>WA Ping</span>
-                                    </button>
-                                  ) : isPhoneOnly ? (
-                                    <span className="font-delight font-medium text-[9px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded-sm border border-amber-200 flex items-center gap-1 truncate max-w-[90px]">
-                                      <Phone className="w-2.5 h-2.5 shrink-0" />
-                                      <span className="truncate">WA</span>
-                                    </span>
-                                  ) : (
-                                    <span className="font-delight font-medium text-[9px] text-slate-700 bg-slate-50 px-1.5 py-0.5 rounded-sm border border-slate-200 flex items-center gap-1 truncate max-w-[90px]">
-                                      <ShieldCheck className="w-2.5 h-2.5 text-slate-500 shrink-0" />
-                                      <span className="truncate">Email</span>
-                                    </span>
-                                  )}
-                                  {lead.tags?.includes('Inbound Lead') && (
-                                    <span className="font-delight font-medium text-[8px] text-blue-700 bg-blue-50 px-1 py-0.5 rounded-sm border border-blue-200 truncate max-w-[60px]">
-                                      Inbound
-                                    </span>
-                                  )}
+                              {/* Bottom Row: Multichannel Contact Badges */}
+                              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] gap-1">
+                                <div className="flex items-center gap-1 min-w-0 flex-wrap">
+                                  {/* WhatsApp Contacted Toggle */}
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleToggleContactChannel(lead, 'whatsapp', e)}
+                                    className={`font-delight text-[9px] px-1.5 py-0.5 rounded-sm border flex items-center gap-1 transition-colors cursor-pointer ${
+                                      (lead.whatsapp_contacted || lead.whatsappContacted)
+                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-300 font-bold'
+                                        : 'bg-slate-50 text-slate-400 border-slate-200 hover:text-slate-700 hover:border-slate-300 font-medium'
+                                    }`}
+                                    title={(lead.whatsapp_contacted || lead.whatsappContacted) ? 'WhatsApp: Contacted (Click to toggle)' : 'WhatsApp: Not Contacted (Click to toggle)'}
+                                  >
+                                    <MessageCircle className={`w-2.5 h-2.5 ${(lead.whatsapp_contacted || lead.whatsappContacted) ? 'text-emerald-600' : 'text-slate-400'}`} />
+                                    <span>{(lead.whatsapp_contacted || lead.whatsappContacted) ? 'WA ✓' : 'WA ✕'}</span>
+                                  </button>
+
+                                  {/* Email Contacted Toggle */}
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleToggleContactChannel(lead, 'email', e)}
+                                    className={`font-delight text-[9px] px-1.5 py-0.5 rounded-sm border flex items-center gap-1 transition-colors cursor-pointer ${
+                                      (lead.email_contacted || lead.emailContacted)
+                                        ? 'bg-blue-50 text-blue-700 border-blue-300 font-bold'
+                                        : 'bg-slate-50 text-slate-400 border-slate-200 hover:text-slate-700 hover:border-slate-300 font-medium'
+                                    }`}
+                                    title={(lead.email_contacted || lead.emailContacted) ? 'Email: Contacted (Click to toggle)' : 'Email: Not Contacted (Click to toggle)'}
+                                  >
+                                    <Mail className={`w-2.5 h-2.5 ${(lead.email_contacted || lead.emailContacted) ? 'text-blue-600' : 'text-slate-400'}`} />
+                                    <span>{(lead.email_contacted || lead.emailContacted) ? 'Email ✓' : 'Email ✕'}</span>
+                                  </button>
+
+                                  {/* Call / Phone Contacted Toggle */}
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleToggleContactChannel(lead, 'phone', e)}
+                                    className={`font-delight text-[9px] px-1.5 py-0.5 rounded-sm border flex items-center gap-1 transition-colors cursor-pointer ${
+                                      (lead.phone_contacted || lead.telephonic_contacted || lead.phoneContacted)
+                                        ? 'bg-amber-50 text-amber-700 border-amber-300 font-bold'
+                                        : 'bg-slate-50 text-slate-400 border-slate-200 hover:text-slate-700 hover:border-slate-300 font-medium'
+                                    }`}
+                                    title={(lead.phone_contacted || lead.telephonic_contacted || lead.phoneContacted) ? 'Telephonic: Contacted (Click to toggle)' : 'Telephonic: Not Contacted (Click to toggle)'}
+                                  >
+                                    <Phone className={`w-2.5 h-2.5 ${(lead.phone_contacted || lead.telephonic_contacted || lead.phoneContacted) ? 'text-amber-600' : 'text-slate-400'}`} />
+                                    <span>{(lead.phone_contacted || lead.telephonic_contacted || lead.phoneContacted) ? 'Call ✓' : 'Call ✕'}</span>
+                                  </button>
+
                                   {Array.isArray(lead.syncedTo) && lead.syncedTo.length > 0 && (
-                                    <span className="font-delight font-medium text-[8px] text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded-sm border border-emerald-200 truncate max-w-[70px]" title={`Synced: ${lead.syncedTo.join(', ')}`}>
+                                    <span className="font-delight font-medium text-[8px] text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded-sm border border-emerald-200 truncate max-w-[65px]" title={`Synced: ${lead.syncedTo.join(', ')}`}>
                                       ✓ {lead.syncedTo[0]}
                                     </span>
                                   )}
@@ -1102,6 +1203,7 @@ const CrmPipeline = () => {
                         <th className="py-2.5 px-3 border-r border-[#2C485F] w-28 text-right">Value</th>
                         <th className="py-2.5 px-3 border-r border-[#2C485F] w-24 text-center">Probability</th>
                         <th className="py-2.5 px-3 border-r border-[#2C485F] w-28 text-center">Interactions</th>
+                        <th className="py-2.5 px-3 border-r border-[#2C485F] w-40 text-center">Channels Contacted</th>
                         <th className="py-2.5 px-3 w-28 text-center">Actions</th>
                       </tr>
                     </thead>
@@ -1271,6 +1373,51 @@ const CrmPipeline = () => {
                               })()}
                             </td>
 
+                            {/* Channels Contacted */}
+                            <td className="py-2.5 px-3 border-r border-slate-200">
+                              <div className="flex items-center justify-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleToggleContactChannel(lead, 'whatsapp', e)}
+                                  className={`px-1.5 py-0.5 rounded text-[9px] font-medium border flex items-center gap-1 cursor-pointer transition-colors ${
+                                    (lead.whatsapp_contacted || lead.whatsappContacted)
+                                      ? 'bg-emerald-50 text-emerald-700 border-emerald-300 font-bold'
+                                      : 'bg-slate-50 text-slate-400 border-slate-200 hover:text-slate-600'
+                                  }`}
+                                  title={(lead.whatsapp_contacted || lead.whatsappContacted) ? 'WhatsApp: Contacted (Click to toggle)' : 'WhatsApp: Not Contacted (Click to toggle)'}
+                                >
+                                  <MessageCircle className="w-2.5 h-2.5" />
+                                  <span>{(lead.whatsapp_contacted || lead.whatsappContacted) ? 'WA ✓' : 'WA ✕'}</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleToggleContactChannel(lead, 'email', e)}
+                                  className={`px-1.5 py-0.5 rounded text-[9px] font-medium border flex items-center gap-1 cursor-pointer transition-colors ${
+                                    (lead.email_contacted || lead.emailContacted)
+                                      ? 'bg-blue-50 text-blue-700 border-blue-300 font-bold'
+                                      : 'bg-slate-50 text-slate-400 border-slate-200 hover:text-slate-600'
+                                  }`}
+                                  title={(lead.email_contacted || lead.emailContacted) ? 'Email: Contacted (Click to toggle)' : 'Email: Not Contacted (Click to toggle)'}
+                                >
+                                  <Mail className="w-2.5 h-2.5" />
+                                  <span>{(lead.email_contacted || lead.emailContacted) ? 'Email ✓' : 'Email ✕'}</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleToggleContactChannel(lead, 'phone', e)}
+                                  className={`px-1.5 py-0.5 rounded text-[9px] font-medium border flex items-center gap-1 cursor-pointer transition-colors ${
+                                    (lead.phone_contacted || lead.telephonic_contacted || lead.phoneContacted)
+                                      ? 'bg-amber-50 text-amber-700 border-amber-300 font-bold'
+                                      : 'bg-slate-50 text-slate-400 border-slate-200 hover:text-slate-600'
+                                  }`}
+                                  title={(lead.phone_contacted || lead.telephonic_contacted || lead.phoneContacted) ? 'Telephonic: Contacted (Click to toggle)' : 'Telephonic: Not Contacted (Click to toggle)'}
+                                >
+                                  <Phone className="w-2.5 h-2.5" />
+                                  <span>{(lead.phone_contacted || lead.telephonic_contacted || lead.phoneContacted) ? 'Call ✓' : 'Call ✕'}</span>
+                                </button>
+                              </div>
+                            </td>
+
                             {/* Actions */}
                             <td className="py-2.5 px-3 text-center">
                               <div className="flex items-center justify-center gap-1">
@@ -1332,6 +1479,7 @@ const CrmPipeline = () => {
                         <th className="py-2.5 px-3 border-r border-[#2C485F] w-32">Industry</th>
                         <th className="py-2.5 px-3 border-r border-[#2C485F] w-36">Location</th>
                         <th className="py-2.5 px-3 border-r border-[#2C485F] w-28">Stage</th>
+                        <th className="py-2.5 px-3 border-r border-[#2C485F] w-40 text-center">Channels Contacted</th>
                         <th className="py-2.5 px-3 w-24 text-center">Actions</th>
                       </tr>
                     </thead>
@@ -1351,6 +1499,49 @@ const CrmPipeline = () => {
                             <span className={`px-2 py-0.5 rounded text-[10px] font-bold text-white ${getStageColorTheme(mapStageToQuickSheets(lead.status)).bg}`}>
                               {mapStageToQuickSheets(lead.status)}
                             </span>
+                          </td>
+                          <td className="py-2.5 px-3 border-r border-slate-200 text-center">
+                            <div className="flex items-center justify-center gap-1">
+                              <button
+                                type="button"
+                                onClick={(e) => handleToggleContactChannel(lead, 'whatsapp', e)}
+                                className={`px-1.5 py-0.5 rounded text-[9px] font-medium border flex items-center gap-1 cursor-pointer transition-colors ${
+                                  (lead.whatsapp_contacted || lead.whatsappContacted)
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-300 font-bold'
+                                    : 'bg-slate-50 text-slate-400 border-slate-200 hover:text-slate-600'
+                                }`}
+                                title={(lead.whatsapp_contacted || lead.whatsappContacted) ? 'WhatsApp: Contacted (Click to toggle)' : 'WhatsApp: Not Contacted (Click to toggle)'}
+                              >
+                                <MessageCircle className="w-2.5 h-2.5" />
+                                <span>{(lead.whatsapp_contacted || lead.whatsappContacted) ? 'WA ✓' : 'WA ✕'}</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => handleToggleContactChannel(lead, 'email', e)}
+                                className={`px-1.5 py-0.5 rounded text-[9px] font-medium border flex items-center gap-1 cursor-pointer transition-colors ${
+                                  (lead.email_contacted || lead.emailContacted)
+                                    ? 'bg-blue-50 text-blue-700 border-blue-300 font-bold'
+                                    : 'bg-slate-50 text-slate-400 border-slate-200 hover:text-slate-600'
+                                }`}
+                                title={(lead.email_contacted || lead.emailContacted) ? 'Email: Contacted (Click to toggle)' : 'Email: Not Contacted (Click to toggle)'}
+                              >
+                                <Mail className="w-2.5 h-2.5" />
+                                <span>{(lead.email_contacted || lead.emailContacted) ? 'Email ✓' : 'Email ✕'}</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => handleToggleContactChannel(lead, 'phone', e)}
+                                className={`px-1.5 py-0.5 rounded text-[9px] font-medium border flex items-center gap-1 cursor-pointer transition-colors ${
+                                  (lead.phone_contacted || lead.telephonic_contacted || lead.phoneContacted)
+                                    ? 'bg-amber-50 text-amber-700 border-amber-300 font-bold'
+                                    : 'bg-slate-50 text-slate-400 border-slate-200 hover:text-slate-600'
+                                }`}
+                                title={(lead.phone_contacted || lead.telephonic_contacted || lead.phoneContacted) ? 'Telephonic: Contacted (Click to toggle)' : 'Telephonic: Not Contacted (Click to toggle)'}
+                              >
+                                <Phone className="w-2.5 h-2.5" />
+                                <span>{(lead.phone_contacted || lead.telephonic_contacted || lead.phoneContacted) ? 'Call ✓' : 'Call ✕'}</span>
+                              </button>
+                            </div>
                           </td>
                           <td className="py-2.5 px-3 text-center">
                             <div className="flex items-center justify-center gap-1">

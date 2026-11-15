@@ -455,7 +455,7 @@
   {
     "_id": "user_ashleyghose64",
     "email": "ashleyghose64@gmail.com",
-    "password": "$2b$10$ZyrAsA20aKziLZivzkNcNOEh/rARYXfInOEp2t3DOxWIOsx8ptI/G",
+    "password": "$2b$10$gNDAEZ6.0hCKMtq6cqslx.1OiMLgtNflA6CmhNCiyi5DGiSsZrQJa",
     "name": "Ashley Super Admin",
     "role": "SUPER_ADMIN",
     "plan": "pro",
@@ -481,12 +481,12 @@
     "integrations": [],
     "integrationLogs": [],
     "createdAt": "2026-10-14T00:00:00.000Z",
-    "updatedAt": "2026-11-14T13:14:39.996Z"
+    "updatedAt": "2026-11-15T09:48:19.829Z"
   },
   {
     "_id": "user_ashleyghose28",
     "email": "ashleyghose28@gmail.com",
-    "password": "$2b$10$nMTPAFOTV9okbQYPo1Jli.4q7OKRSXv.uReLgkNQunLsWR2.1nNy6",
+    "password": "$2b$10$nvhsJmjvguOnBO7wxww2V.co8N/54FZ0RMXLc5r0TAgphUdGYS18a",
     "name": "Bicon Ghose",
     "role": "USER",
     "plan": "pro",
@@ -511,7 +511,7 @@
     "integrations": [],
     "integrationLogs": [],
     "createdAt": "2026-10-14T00:00:00.000Z",
-    "updatedAt": "2026-11-14T13:14:40.203Z"
+    "updatedAt": "2026-11-15T09:48:20.098Z"
   },
   {
     "_id": "user_1791977130509_svako",

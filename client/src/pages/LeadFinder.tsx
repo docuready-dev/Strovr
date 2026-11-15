@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from '../store/useStore';
-import { alertDialog } from '../components/AppConfirmModal';
+import { alertDialog, confirmDialog } from '../components/AppConfirmModal';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import API_URL from '../config/api';
@@ -8,11 +8,29 @@ import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import LeadFinderWizard from '../components/LeadFinderWizard';
 import SerpApiConnectModal from '../components/SerpApiConnectModal';
+import { filterOutBannedLeads } from '../utils/bannedLeads';
 import { 
   Building2, Phone, MapPin, Star, Globe, 
   ExternalLink, ArrowRight, Search, Users2, Check,
-  Edit3, X, Mail, Sparkles, Compass, Upload
+  Edit3, X, Mail, Sparkles, Compass, Upload,
+  History, Download, Trash2, Calendar, Clock, Layers, Filter
 } from 'lucide-react';
+
+interface HarvestHistoryEntry {
+  id: string;
+  userId?: string;
+  userEmail?: string;
+  query: string;
+  location: string;
+  scope?: string;
+  mode?: string;
+  leadCount: number;
+  leadIds?: string[];
+  tokensUsed?: number;
+  costPerContact?: number;
+  status: string;
+  timestamp: string;
+}
 
 const LeadFinder = () => {
   const { user, integrations, syncLeadsToIntegration, enrichLeadViaIntegration } = useStore();
@@ -20,6 +38,12 @@ const LeadFinder = () => {
   const [leads, setLeads] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [filterQuery, setFilterQuery] = useState('');
+
+  // Harvest History state
+  const [activeFinderTab, setActiveFinderTab] = useState<'listings' | 'history'>('listings');
+  const [harvestHistory, setHarvestHistory] = useState<HarvestHistoryEntry[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [inspectedBatchId, setInspectedBatchId] = useState<string | null>(null);
 
   // SerpApi Engine State
   const [isSerpModalOpen, setIsSerpModalOpen] = useState(false);
@@ -164,8 +188,9 @@ const LeadFinder = () => {
         }
       });
       const serverLeads = Array.isArray(res.data) ? res.data : [];
+      const cleanServerLeads = filterOutBannedLeads(serverLeads);
       const tombstones = getDeletedTombstones();
-      const validLeads = serverLeads.filter(l => {
+      const validLeads = cleanServerLeads.filter(l => {
         if (!l) return false;
         if (tombstones.has(l._id)) return false;
         const bName = `name:${(l.businessName || '').toLowerCase().trim()}`;
@@ -183,6 +208,101 @@ const LeadFinder = () => {
     }
   };
 
+  const fetchHarvestHistory = async () => {
+    if (!user?._id && !user?.email) return;
+    setLoadingHistory(true);
+    try {
+      const res = await axios.get(`${API_URL}/api/leads/harvest-history`, {
+        headers: {
+          userid: user._id || '',
+          useremail: user.email || ''
+        }
+      });
+      if (Array.isArray(res.data)) {
+        setHarvestHistory(res.data);
+      }
+    } catch (err) {
+      console.error('Failed to load harvest history:', err);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  const handleDeleteHistoryEntry = async (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const confirmed = await confirmDialog({
+      title: 'Delete History Log?',
+      message: 'Are you sure you want to delete this harvest history log entry? (Harvested leads already in your audience will not be deleted.)',
+      confirmText: 'Delete Log',
+      cancelText: 'Cancel',
+      danger: true
+    });
+    if (!confirmed) return;
+
+    try {
+      await axios.delete(`${API_URL}/api/leads/harvest-history/${id}`, {
+        headers: {
+          userid: user?._id || '',
+          useremail: user?.email || ''
+        }
+      });
+      setHarvestHistory(prev => prev.filter(item => item.id !== id));
+      if (inspectedBatchId === id) setInspectedBatchId(null);
+      showToast('Harvest history log deleted.');
+    } catch (err) {
+      console.error('Failed to delete history log:', err);
+      showToast('Failed to delete history log.');
+    }
+  };
+
+  const handleInspectBatch = (entry: HarvestHistoryEntry) => {
+    setInspectedBatchId(entry.id);
+    setActiveFinderTab('listings');
+    showToast(`Filtering to batch: "${entry.query} in ${entry.location}" (${entry.leadCount} leads)`);
+  };
+
+  const handleExportBatchCsv = (entry: HarvestHistoryEntry, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const batchLeadIdSet = Array.isArray(entry.leadIds) ? new Set(entry.leadIds) : null;
+    const batchLeads = batchLeadIdSet 
+      ? leads.filter(l => batchLeadIdSet.has(l._id))
+      : leads.filter(l => {
+          const q = entry.query.toLowerCase();
+          const loc = entry.location.toLowerCase();
+          return ((l.category || '').toLowerCase().includes(q) || (l.businessName || '').toLowerCase().includes(q)) &&
+                 (l.location || '').toLowerCase().includes(loc);
+        });
+
+    if (batchLeads.length === 0) {
+      showToast('No leads found for this batch to export.');
+      return;
+    }
+
+    const headers = ['Business Name', 'Phone', 'Email', 'Website', 'Location', 'Category', 'Rating', 'Reviews', 'Harvested At'];
+    const rows = batchLeads.map(l => [
+      `"${(l.businessName || '').replace(/"/g, '""')}"`,
+      `"${(l.phone || '').replace(/"/g, '""')}"`,
+      `"${(l.email || '').replace(/"/g, '""')}"`,
+      `"${(l.website || '').replace(/"/g, '""')}"`,
+      `"${(l.location || '').replace(/"/g, '""')}"`,
+      `"${(l.category || '').replace(/"/g, '""')}"`,
+      `"${l.rating || ''}"`,
+      `"${l.reviews || ''}"`,
+      `"${l.harvestedAt || l.createdAt || ''}"`
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const cleanName = (entry.query || 'harvest_batch').replace(/[^a-zA-Z0-9]/g, '_');
+    link.download = `harvest_${cleanName}_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    showToast(`Exported ${batchLeads.length} leads from this batch to CSV.`);
+  };
+
   useEffect(() => {
     // Immediate hydration from cache
     try {
@@ -191,8 +311,9 @@ const LeadFinder = () => {
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length > 0) {
+          const clean = filterOutBannedLeads(parsed);
           const tombstones = getDeletedTombstones();
-          const valid = parsed.filter((l: any) => {
+          const valid = clean.filter((l: any) => {
             if (!l) return false;
             if (tombstones.has(l._id)) return false;
             const bName = `name:${(l.businessName || '').toLowerCase().trim()}`;
@@ -204,6 +325,7 @@ const LeadFinder = () => {
       }
     } catch {}
     fetchLeads();
+    fetchHarvestHistory();
   }, [user?._id, user?.email]);
 
   const handleSaveEditLead = async (e: React.FormEvent) => {
@@ -241,12 +363,20 @@ const LeadFinder = () => {
     }
   };
 
-  const filteredLeads = leads.filter(l => 
-    (l.businessName || '').toLowerCase().includes(filterQuery.toLowerCase()) ||
-    (l.category || '').toLowerCase().includes(filterQuery.toLowerCase()) ||
-    (l.location || '').toLowerCase().includes(filterQuery.toLowerCase()) ||
-    (l.phone || '').includes(filterQuery)
-  );
+  const inspectedBatch = harvestHistory.find(h => h.id === inspectedBatchId);
+  const batchLeadIds = inspectedBatch && Array.isArray(inspectedBatch.leadIds) ? new Set(inspectedBatch.leadIds) : null;
+
+  const filteredLeads = leads.filter(l => {
+    if (batchLeadIds && !batchLeadIds.has(l._id)) return false;
+    const q = filterQuery.toLowerCase();
+    return (
+      (l.businessName || '').toLowerCase().includes(q) ||
+      (l.category || '').toLowerCase().includes(q) ||
+      (l.location || '').toLowerCase().includes(q) ||
+      (l.phone || '').includes(filterQuery) ||
+      (l.email || '').toLowerCase().includes(q)
+    );
+  });
 
   const handlePushHarvestToIntegration = async (appId: string, appName: string) => {
     const targetIds = filteredLeads.map(l => l._id);
@@ -491,10 +621,66 @@ const LeadFinder = () => {
             </div>
 
             {/* Extraction Wizard */}
-            <LeadFinderWizard onHarvestStarted={fetchLeads} />
+            <LeadFinderWizard onHarvestStarted={() => { fetchLeads(); fetchHarvestHistory(); }} />
 
-            {/* HARVESTED SEARCH RESULTS */}
+            {/* HARVESTED SEARCH RESULTS & HARVEST HISTORY */}
             <div className="bg-white border border-slate-200 rounded-md shadow-xs overflow-hidden">
+              {/* Top View Selector Tabs */}
+              <div className="px-4 pt-3 pb-0 border-b border-slate-200 bg-slate-50 flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setActiveFinderTab('listings')}
+                    className={`px-3.5 py-2 text-xs font-delight font-medium border-b-2 flex items-center gap-2 cursor-pointer transition-all ${
+                      activeFinderTab === 'listings'
+                        ? 'border-slate-900 text-slate-900 font-bold bg-white rounded-t-md shadow-2xs'
+                        : 'border-transparent text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    <Building2 className="w-3.5 h-3.5 text-slate-600" />
+                    <span>Harvested Listings</span>
+                    <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-200 text-slate-700 font-mono font-bold">
+                      {filteredLeads.length}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveFinderTab('history');
+                      fetchHarvestHistory();
+                    }}
+                    className={`px-3.5 py-2 text-xs font-delight font-medium border-b-2 flex items-center gap-2 cursor-pointer transition-all ${
+                      activeFinderTab === 'history'
+                        ? 'border-slate-900 text-slate-900 font-bold bg-white rounded-t-md shadow-2xs'
+                        : 'border-transparent text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    <History className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Harvest History &amp; Logs</span>
+                    <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-blue-100 text-blue-700 font-mono font-bold">
+                      {harvestHistory.length}
+                    </span>
+                  </button>
+                </div>
+
+                {activeFinderTab === 'listings' && inspectedBatch && (
+                  <div className="flex items-center gap-2 text-xs font-delight text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-md mb-1.5">
+                    <span className="font-semibold">Batch: {inspectedBatch.query} ({inspectedBatch.location})</span>
+                    <button
+                      type="button"
+                      onClick={() => setInspectedBatchId(null)}
+                      className="text-[11px] underline hover:text-blue-900 cursor-pointer ml-1 font-bold"
+                    >
+                      Show All ({leads.length})
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* TAB 1: HARVESTED LISTINGS */}
+              {activeFinderTab === 'listings' && (
+                <div>
               <div className="p-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4 bg-slate-50/70">
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
@@ -734,6 +920,146 @@ const LeadFinder = () => {
                       ))}
                     </tbody>
                   </table>
+                </div>
+              )}
+                </div>
+              )}
+
+              {/* TAB 2: HARVEST HISTORY & LOGS */}
+              {activeFinderTab === 'history' && (
+                <div>
+                  <div className="p-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4 bg-slate-50/70">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-xs font-bold uppercase tracking-wider font-delight text-slate-600">Harvest Execution History</h2>
+                        <span className="px-2 py-0.5 bg-slate-900 text-white rounded-sm text-[10px] font-delight font-bold">
+                          {harvestHistory.length} Batches
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-400 font-sans">
+                        Audit trail of all scraping and CSV import batches with token expenditure and 1-click batch CSV exports.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={fetchHarvestHistory}
+                      className="h-8 px-3 bg-white hover:bg-slate-50 border border-slate-200 rounded-md font-delight text-xs text-slate-700 font-medium flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                      title="Refresh harvest history"
+                    >
+                      <History className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Refresh History</span>
+                    </button>
+                  </div>
+
+                  {loadingHistory ? (
+                    <div className="py-16 text-center text-xs text-gray-400 font-bold">
+                      Loading harvest history logs...
+                    </div>
+                  ) : harvestHistory.length === 0 ? (
+                    <div className="py-16 text-center space-y-2 font-delight">
+                      <p className="text-xs font-bold text-gray-500">No harvest batches logged yet.</p>
+                      <p className="text-[11px] text-gray-400">Launch a search above or import a CSV to generate a harvest history entry.</p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-medium text-slate-500 uppercase tracking-wider font-delight">
+                          <tr>
+                            <th className="py-3.5 px-4 w-12 text-center text-slate-400 font-mono">#</th>
+                            <th className="py-3.5 px-6 min-w-[220px] font-medium">Search Query &amp; Market</th>
+                            <th className="py-3.5 px-5 font-medium">Scope / Mode</th>
+                            <th className="py-3.5 px-5 font-medium text-center">Leads Harvested</th>
+                            <th className="py-3.5 px-5 font-medium text-center">Tokens Used</th>
+                            <th className="py-3.5 px-5 font-medium">Execution Time</th>
+                            <th className="py-3.5 px-5 font-medium text-center">Status</th>
+                            <th className="py-3.5 px-6 text-right font-medium">Batch Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {harvestHistory.map((entry, index) => (
+                            <tr key={entry.id || index} className="hover:bg-slate-50/80 transition-colors">
+                              <td className="py-4 px-4 text-center text-slate-400 font-mono text-[11px]">{index + 1}</td>
+                              <td className="py-4 px-6 min-w-[220px]">
+                                <div className="font-delight font-bold text-slate-900 text-[13px]">
+                                  {entry.query}
+                                </div>
+                                <div className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5 font-delight">
+                                  <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                                  <span>{entry.location || 'Local Target'}</span>
+                                </div>
+                              </td>
+                              <td className="py-4 px-5">
+                                <span className={`px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase ${
+                                  entry.mode === 'csv' 
+                                    ? 'bg-amber-50 text-amber-800 border border-amber-200' 
+                                    : entry.scope === 'deep' 
+                                    ? 'bg-purple-50 text-purple-800 border border-purple-200'
+                                    : 'bg-blue-50 text-blue-800 border border-blue-200'
+                                }`}>
+                                  {entry.scope ? `${entry.scope} Extraction` : entry.mode === 'csv' ? 'CSV Import' : 'Quick Scan'}
+                                </span>
+                              </td>
+                              <td className="py-4 px-5 text-center">
+                                <span className="font-mono font-bold text-xs text-slate-900 px-2 py-0.5 bg-slate-100 rounded-sm border border-slate-200">
+                                  {entry.leadCount} leads
+                                </span>
+                              </td>
+                              <td className="py-4 px-5 text-center">
+                                <span className="font-mono text-xs text-slate-600">
+                                  {entry.tokensUsed ?? entry.leadCount ?? 0} tokens
+                                </span>
+                              </td>
+                              <td className="py-4 px-5 text-slate-500 text-[11px]">
+                                {entry.timestamp ? new Date(entry.timestamp).toLocaleString(undefined, {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                }) : 'Recently'}
+                              </td>
+                              <td className="py-4 px-5 text-center">
+                                <span className="px-2 py-0.5 rounded-sm text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                  Completed ✓
+                                </span>
+                              </td>
+                              <td className="py-4 px-6 text-right">
+                                <div className="flex items-center justify-end gap-1.5">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleInspectBatch(entry)}
+                                    className="px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-200 rounded text-xs font-delight font-medium text-slate-700 transition-colors cursor-pointer flex items-center gap-1 shadow-2xs"
+                                    title="Inspect only the leads in this batch"
+                                  >
+                                    <Filter className="w-3 h-3 text-slate-500" />
+                                    <span>Inspect</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleExportBatchCsv(entry, e)}
+                                    className="px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-200 rounded text-xs font-delight font-medium text-slate-700 transition-colors cursor-pointer flex items-center gap-1 shadow-2xs"
+                                    title="Export leads in this batch to CSV"
+                                  >
+                                    <Download className="w-3 h-3 text-slate-500" />
+                                    <span>Export</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleDeleteHistoryEntry(entry.id, e)}
+                                    className="p-1 rounded bg-white hover:bg-rose-50 border border-slate-200 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer shadow-2xs"
+                                    title="Delete this history log"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
