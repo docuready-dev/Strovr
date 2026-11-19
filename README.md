@@ -25,7 +25,7 @@
 - [Interactive Email Frameworks](#interactive-email-frameworks)
 - [Universal Email Attachments Engine](#universal-email-attachments-engine)
 - [Executive AI Co-Pilot](#executive-ai-co-pilot)
-- [Email Studio & Deliverability Architecture](#email-studio--deliverability-architecture)
+- [High-Deliverability Email Outbox Architecture](#high-deliverability-email-outbox-architecture)
 - [System Architecture & Data Flow](#system-architecture--data-flow)
 - [Tech Stack](#tech-stack)
 - [Project Directory Structure](#project-directory-structure)
@@ -99,7 +99,7 @@ Strovr replaces generic boilerplate strings with an intent-driven, high-converti
 
 ---
 
-## Multi-Channel Outbox Architecture
+## High-Deliverability Email Outbox Architecture
 
 ```
                 +-----------------------------+
@@ -122,9 +122,6 @@ Strovr replaces generic boilerplate strings with an intent-driven, high-converti
                     |    Recipient Mailbox      |
                     |  (Google, Outlook, etc.)  |
                     +---------------------------+
-
-```
-
 ```
 
 - **Render-Proof Cloud Deliverability**: Standard outbound ports (25, 465, 587) are frequently blocked on cloud container platforms. Strovr uses Twilio SendGrid's v3 Web API over standard HTTPS (Port 443) for 100% reliable cloud dispatch.
@@ -135,8 +132,7 @@ Strovr replaces generic boilerplate strings with an intent-driven, high-converti
 
 ## System Architecture & Data Flow
 
-
-``
+```
 
 +-----------------------------------------------------------------------------------+
 |                                    CLIENT LAYER                                   |
