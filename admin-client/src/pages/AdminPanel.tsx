@@ -819,7 +819,7 @@ const AdminPanel = () => {
                     <option value="System Nodemailer / SendGrid">System Nodemailer / SendGrid (Recommended)</option>
                     <option value="Amazon SES Gateway">Amazon SES Gateway</option>
                     <option value="Postmark Transactional">Postmark Transactional</option>
-                    <option value="Twilio / Meta WhatsApp Cloud">Twilio & Meta WhatsApp Cloud API</option>
+                    <option value="Mailgun High-Volume Delivery">Mailgun High-Volume Delivery</option>
                   </select>
                 </div>
 

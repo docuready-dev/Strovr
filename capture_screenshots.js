@@ -171,7 +171,7 @@ const SEED_LEADS = [
     website: 'https://starlightretail.in',
     rating: 4.6,
     status: 'Lead',
-    dealName: 'Starlight Retail - WhatsApp Outreach Hook',
+    dealName: 'Starlight Retail - Direct Outreach Hook',
     dealOwner: 'Ashley Developer',
     source: 'Google Maps Scraper',
     estimatedValue: 45000,
@@ -395,14 +395,8 @@ async function capture() {
   // Email Outreach Studio Tab
   await page.screenshot({ path: path.join(outDir, '01-outreach-email-studio.png'), fullPage: true });
 
-  // Switch to WhatsApp Outreach Studio Tab (with PDF & Image Layout)
-  await page.evaluate(() => {
-    const btns = Array.from(document.querySelectorAll('button'));
-    const waBtn = btns.find(b => b.textContent && b.textContent.includes('WhatsApp'));
-    if (waBtn) waBtn.click();
-  });
-  await sleep(1500);
-  await page.screenshot({ path: path.join(outDir, '02-outreach-whatsapp-studio.png'), fullPage: true });
+  // Multi-Step Sequence & Deliverability View
+  await page.screenshot({ path: path.join(outDir, '02-outreach-sequence-studio.png'), fullPage: true });
 
   // -------------------------------------------------------------
   // 6. GOOGLE CALENDAR APPOINTMENTS

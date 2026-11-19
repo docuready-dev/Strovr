@@ -7,7 +7,6 @@ import {
   Copy, ExternalLink, Sparkles, Key, Link2, MessageCircle
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
-import AppointmentMobileWhatsAppModal from './AppointmentMobileWhatsAppModal';
 import API_URL from '../config/api';
 
 interface BookingWidgetProps {
@@ -70,9 +69,7 @@ export const BookingWidget: React.FC<BookingWidgetProps> = ({
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
 
-  // WhatsApp Mobile-View Modal State
-  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
-  const [selectedAppointmentForModal, setSelectedAppointmentForModal] = useState<any | null>(null);
+  const [copiedConfirmation, setCopiedConfirmation] = useState(false);
 
   // Settings Form State
   const [settingsCalendarId, setSettingsCalendarId] = useState('primary');
@@ -306,7 +303,7 @@ export const BookingWidget: React.FC<BookingWidgetProps> = ({
               </span>
             </div>
             <p className="text-xs text-indigo-100 mt-0.5">
-              Zero-setup instant scheduler: live slot availability, conflict detection, Google Meet links, and WhatsApp client dispatch.
+              Zero-setup instant scheduler: live slot availability, conflict detection, and Google Meet integration.
             </p>
           </div>
         </div>
@@ -364,7 +361,7 @@ export const BookingWidget: React.FC<BookingWidgetProps> = ({
             </div>
             {(customerPhone || bookingSuccess.leadPhone) && (
               <div className="flex items-center justify-between">
-                <span className="text-slate-500 font-medium">Phone / WhatsApp:</span>
+                <span className="text-slate-500 font-medium">Direct Phone:</span>
                 <span className="font-mono text-slate-900 font-semibold">{customerPhone || bookingSuccess.leadPhone}</span>
               </div>
             )}
@@ -396,18 +393,20 @@ export const BookingWidget: React.FC<BookingWidgetProps> = ({
             )}
           </div>
 
-          {/* Action Buttons: Prominent WhatsApp Client Dispatch in Mobile View */}
+          {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
             <button
               type="button"
               onClick={() => {
-                setSelectedAppointmentForModal(bookingSuccess);
-                setShowWhatsAppModal(true);
+                const text = `Appointment Confirmed!\nService: ${selectedService.name}\nDate: ${new Date(selectedDate).toLocaleDateString()} at ${selectedSlot}\nAttendee: ${customerName}\n${bookingSuccess.meetLink ? `Meeting Link: ${bookingSuccess.meetLink}` : ''}`;
+                navigator.clipboard.writeText(text);
+                setCopiedConfirmation(true);
+                setTimeout(() => setCopiedConfirmation(false), 2500);
               }}
-              className="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-emerald-200/50 flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full sm:w-auto px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
             >
-              <MessageCircle className="w-4 h-4" />
-              <span>Send WhatsApp to Client (Mobile View)</span>
+              {copiedConfirmation ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+              <span>{copiedConfirmation ? 'Copied Details & Link!' : 'Copy Meeting Invite & Link'}</span>
             </button>
 
             {bookingSuccess.htmlLink && (
@@ -611,7 +610,7 @@ export const BookingWidget: React.FC<BookingWidgetProps> = ({
                     <Phone className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3" />
                     <input
                       type="tel"
-                      placeholder="Phone / WhatsApp"
+                      placeholder="Direct Phone Number"
                       value={customerPhone}
                       onChange={(e) => setCustomerPhone(e.target.value)}
                       className="w-full pl-8 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-xs outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
@@ -723,7 +722,7 @@ export const BookingWidget: React.FC<BookingWidgetProps> = ({
                     </p>
                     <ul className="text-[11px] text-slate-700 list-disc pl-4 space-y-1.5">
                       <li>Generates automated <strong>Google Meet video rooms</strong> for every confirmed booking.</li>
-                      <li>Includes instant <strong>WhatsApp Mobile-View Dispatch</strong> with pre-typed confirmation templates.</li>
+                      <li>Includes instant <strong>1-Click Meeting Invite & Confirmation Link</strong>.</li>
                       <li>Automatically logs appointments in your CRM and advances deals to <strong>Demo</strong> stage.</li>
                       <li>Provides 1-click <strong>Add to Calendar</strong> buttons for clients and hosts.</li>
                     </ul>
@@ -828,52 +827,23 @@ export const BookingWidget: React.FC<BookingWidgetProps> = ({
         <div className="p-4 bg-slate-50 border-t border-slate-200 text-xs">
           <div className="flex items-center justify-between mb-2">
             <span className="font-bold text-slate-700 uppercase tracking-wider text-[11px]">
-              Recent Scheduled Sessions ({scheduledList.length}) - Click to Send WhatsApp in Mobile View
+              Recent Scheduled Sessions ({scheduledList.length})
             </span>
           </div>
           <div className="flex flex-wrap gap-2">
             {scheduledList.slice(0, 4).map((app) => (
-              <button
+              <div
                 key={app.id}
-                type="button"
-                onClick={() => {
-                  setSelectedAppointmentForModal(app);
-                  setShowWhatsAppModal(true);
-                }}
-                className="px-3 py-1.5 rounded-xl bg-white hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 shadow-2xs flex items-center gap-2 text-slate-800 transition-colors cursor-pointer text-left"
-                title="Click to view details & send WhatsApp in mobile view"
+                className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 shadow-2xs flex items-center gap-2 text-slate-800 text-left"
               >
-                <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                <span className="w-2 h-2 rounded-full bg-indigo-500 shrink-0" />
                 <span className="font-bold">{app.customerName}</span>
                 <span className="text-slate-400">({app.timeSlot || app.appointmentDate})</span>
-                <MessageCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0 ml-1" />
-              </button>
+              </div>
             ))}
           </div>
         </div>
       )}
-
-      {/* Mobile-View WhatsApp Confirmation Modal */}
-      <AppointmentMobileWhatsAppModal
-        isOpen={showWhatsAppModal}
-        onClose={() => {
-          setShowWhatsAppModal(false);
-          setSelectedAppointmentForModal(null);
-        }}
-        appointment={selectedAppointmentForModal || (bookingSuccess ? {
-          ...bookingSuccess,
-          customerName: bookingSuccess.leadName || customerName,
-          customerEmail: bookingSuccess.leadEmail || customerEmail,
-          customerPhone: customerPhone || bookingSuccess.leadPhone,
-          appointmentDate: bookingSuccess.startTime || selectedDateObj.dateStr,
-          timeSlot: selectedSlot || new Date(bookingSuccess.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          serviceName: selectedService.name,
-          meetLink: bookingSuccess.meetLink,
-          notes: notes || bookingSuccess.notes
-        } : null)}
-        user={user}
-      />
-
     </div>
   );
 };

@@ -13,8 +13,8 @@ import Header from '../components/Header';
 
 const KANBAN_STAGES = [
   'New',
-  'WhatsApp Contacted',
-  'Replied / Awaiting Email',
+  'Email Contacted',
+  'Replied / In Discussion',
   'Email Verified & Captured',
   'Proposal Sent',
   'Closed Won'
@@ -312,13 +312,13 @@ const Analytics = () => {
               <div className="grid grid-cols-2 gap-3 pt-1">
                 <div className="p-3.5 rounded-md bg-slate-50 border border-slate-200 space-y-1">
                   <div className="flex items-center gap-2 text-slate-900 font-semibold text-xs font-delight">
-                    <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>WhatsApp Hook</span>
+                    <Mail className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Email Outreach Active</span>
                   </div>
                   <div className="text-2xl font-bold font-delight text-slate-900">
-                    {leads.filter(l => l.status === 'WhatsApp Contacted' || l.status === 'Replied / Awaiting Email').length}
+                    {leads.filter(l => l.status === 'Email Contacted' || l.status === 'Proposal Sent' || l.email_contacted).length}
                   </div>
-                  <p className="text-[11px] text-slate-500 font-sans">Organic Convenience Scripts Initiated</p>
+                  <p className="text-[11px] text-slate-500 font-sans">Prospects Engaged via Direct Campaigns</p>
                 </div>
 
                 <div className="p-3.5 rounded-md bg-slate-50 border border-slate-200 space-y-1">
@@ -390,9 +390,9 @@ const Analytics = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs pt-1">
               <div className="p-3 bg-slate-900 rounded-md border border-slate-800 space-y-1">
-                <strong className="text-blue-400 font-delight font-medium text-[11px] block">1. WhatsApp Lead Upgrades</strong>
+                <strong className="text-blue-400 font-delight font-medium text-[11px] block">1. High-Deliverability Email Outreach</strong>
                 <p className="text-slate-300 text-[11px] leading-relaxed font-sans">
-                  You have <span className="font-bold text-white font-delight">{phoneOnlyLeads} Phone-Only leads</span> ready. Use the <em>"Organic Convenience Framing"</em> script to collect their direct work email addresses.
+                  You have <span className="font-bold text-white font-delight">{leads.filter(l => l.email).length} Verified Email leads</span> ready. Launch a personalized, high-converting cold email campaign in the Outreach Studio.
                 </p>
               </div>
 

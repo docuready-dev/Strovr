@@ -131,7 +131,7 @@ const Header = ({ title }: HeaderProps) => {
   const quickNav = [
     { name: 'Dashboard', path: '/', hint: 'Command Center & Real-time Stream' },
     { name: 'CRM Pipeline', path: '/crm', hint: 'Kanban & Table Lead Pipeline' },
-    { name: 'Outreach Center', path: '/outreach', hint: 'Automated Email & WhatsApp Outreach' },
+    { name: 'Outreach Center', path: '/outreach', hint: 'Automated High-Deliverability Email Outreach' },
     ...(user?.role === 'SUPER_ADMIN' ? [{ name: 'Super Admin Panel', path: '/admin', hint: 'Platform metrics & user management' }] : [])
   ];
 

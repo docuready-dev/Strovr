@@ -329,11 +329,11 @@ Review the live cost-efficiency comparison below to see what your team could sav
         },
         {
           name: 'Multi-Channel Pro Suite',
-          category: 'Email + WhatsApp',
+          category: 'Executive Email Pro',
           price: '₹1,999 / mo',
           badge: 'Most Popular',
           imageUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&auto=format&fit=crop&q=80',
-          description: 'Autonomous direct-to-inbox dispatch with 10 structured WhatsApp scripts & zero rate limits.',
+          description: 'Autonomous direct-to-inbox dispatch with A/B split testing, 3-step follow-up sequences & zero rate limits.',
           ctaText: 'Select Plan',
           ctaUrl: 'https://www.strovr.space/checkout?plan=pro'
         },

@@ -48,7 +48,7 @@ const ROLES = [
   { 
     name: 'Account Executive', 
     badge: 'Deal Closer',
-    desc: 'Manages advanced pipeline deals, proposals, WhatsApp conversations, and closed revenue.' 
+    desc: 'Manages advanced pipeline deals, proposals, email campaigns, and closed revenue.' 
   },
   { 
     name: 'Marketing Analyst', 

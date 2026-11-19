@@ -101,7 +101,6 @@ const LOCAL_INTEGRATION_ICONS: Record<string, string> = {
   'snowflake': '/integrations/Snowflake.png',
   'stripe': '/integrations/Stripe.png',
   'trello': '/integrations/Trello.png',
-  'twilio': '/integrations/Twilio.png',
   'typeform': '/integrations/Typeform.png',
   'xero': '/integrations/Xero.png',
   'google workspace / gmail': '/integrations/Google%20Drive.png',
@@ -205,13 +204,6 @@ const getAppSteps = (app: IntegrationApp) => {
       'Save to enable high-volume batch campaign dispatch'
     ];
   }
-  if (id === 'whatsapp') {
-    return [
-      'Retrieve your Phone Number ID and Permanent System Token from Meta for Developers',
-      'Paste your Phone Number ID and Access Token below',
-      'Save to enable WhatsApp Click-to-Chat and automated multi-channel sequences'
-    ];
-  }
   if (id === 'google-calendar' || id === 'calendly') {
     return [
       'Enable Google Calendar API in Google Cloud Console and generate Service Account JSON or OAuth credentials',
@@ -238,13 +230,6 @@ const getAppSteps = (app: IntegrationApp) => {
       'Create an Incoming Webhook in your Slack workspace (api.slack.com/apps)',
       'Paste the Webhook URL below and specify your alert channel (e.g. #lead-alerts)',
       'Save to receive real-time campaign completion and lead reply alerts'
-    ];
-  }
-  if (id === 'twilio') {
-    return [
-      'Retrieve your Account SID and Auth Token from the Twilio Console',
-      'Paste your credentials and Twilio phone number below',
-      'Save to enable programmatic SMS outreach in Outreach Studio and Automations'
     ];
   }
   if (id === 'airtable') {
@@ -294,12 +279,6 @@ const INTEGRATION_PORTALS: Record<string, { authUrl: string; consoleUrl: string;
     consoleUrl: 'https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade',
     docsUrl: 'https://learn.microsoft.com/en-us/graph/auth-v2-user',
     portalLabel: 'Microsoft 365 & Azure OAuth Portal'
-  },
-  'twilio': {
-    authUrl: 'https://console.twilio.com/',
-    consoleUrl: 'https://console.twilio.com/us1/account/keys-credentials/api-keys',
-    docsUrl: 'https://www.twilio.com/docs/iam/keys/api-key',
-    portalLabel: 'Twilio Console & API Keys'
   },
   'resend': {
     authUrl: 'https://resend.com/api-keys',

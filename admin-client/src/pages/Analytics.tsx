@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import axios from 'axios';
 import { 
-  TrendingUp, Users, Mail, MessageCircle, 
+  TrendingUp, Users, Mail, 
   Target, ShieldCheck, ArrowUpRight,
   Sparkles, MapPin, Zap
 } from 'lucide-react';
@@ -12,7 +12,7 @@ import Header from '../components/Header';
 
 const KANBAN_STAGES = [
   'New',
-  'WhatsApp Contacted',
+  'Email Outreach Active',
   'Replied / Awaiting Email',
   'Email Verified & Captured',
   'Proposal Sent',
@@ -302,13 +302,13 @@ const Analytics = () => {
               <div className="grid grid-cols-2 gap-3 pt-1">
                 <div className="p-4 rounded-xl bg-emerald-50/70 border border-emerald-200 space-y-2">
                   <div className="flex items-center gap-2 text-emerald-800 font-bold text-xs">
-                    <MessageCircle className="w-4 h-4" />
-                    <span>WhatsApp Hook</span>
+                    <Mail className="w-4 h-4" />
+                    <span>Email Outreach Active</span>
                   </div>
                   <div className="text-2xl font-black text-emerald-900">
-                    {leads.filter(l => l.status === 'WhatsApp Contacted' || l.status === 'Replied / Awaiting Email').length}
+                    {leads.filter(l => l.status === 'Email Outreach Active' || l.status === 'Email Contacted' || l.status === 'Replied / Awaiting Email').length}
                   </div>
-                  <p className="text-[11px] text-emerald-700">Organic Convenience Scripts Initiated</p>
+                  <p className="text-[11px] text-emerald-700">High-Deliverability Email Dispatches</p>
                 </div>
 
                 <div className="p-4 rounded-xl bg-indigo-50/70 border border-indigo-200 space-y-2">
@@ -383,9 +383,9 @@ const Analytics = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs pt-1">
               <div className="p-4 bg-white/5 rounded-xl border border-white/10 space-y-1">
-                <strong className="text-accent font-extrabold block">1. WhatsApp Lead Upgrades</strong>
+                <strong className="text-accent font-extrabold block">1. High-Deliverability Outreach</strong>
                 <p className="text-gray-300 text-[11px] leading-relaxed">
-                  You have <span className="font-bold text-white">{phoneOnlyLeads} Phone-Only leads</span> ready. Use the <em>"Organic Convenience Framing"</em> script to collect their direct work email addresses.
+                  You have <span className="font-bold text-white">{phoneOnlyLeads} verified leads</span> in your pipeline. Deploy tailored A/B email campaigns to engage decision makers directly.
                 </p>
               </div>
 

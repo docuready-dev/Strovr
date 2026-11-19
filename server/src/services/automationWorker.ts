@@ -30,7 +30,7 @@ export interface AutomationEnrollment {
   status: 'active' | 'waiting_delay' | 'pending_task' | 'completed' | 'cancelled' | 'replied_exited';
   nextRunAt: string | null;
   pendingTask?: {
-    type: 'whatsapp';
+    type: 'manual_touch';
     title: string;
     message: string;
     targetPhone: string;
@@ -350,49 +350,49 @@ class AutomationWorkerService {
           enr.currentStepIndex++;
           enr.updatedAt = new Date().toISOString();
           executedSteps++;
-        } else if (step.type === 'whatsapp') {
-          // Action Queue Only: Generate 1-click wa.me task in CRM
+        } else if (step.type === 'manual_touch') {
+          // Action Queue: Generate follow-up task in CRM
           const cleanPhone = (enr.leadPhone || '').replace(/[^0-9]/g, '');
-          if (!cleanPhone) {
+          if (!cleanPhone && !enr.leadEmail) {
             enr.logs.push({
               stepId: step.id,
-              stepType: 'whatsapp',
-              title: step.title || 'WhatsApp Ping (Skipped)',
+              stepType: 'manual_touch',
+              title: step.title || 'Follow-up Task (Skipped)',
               status: 'skipped',
               executedAt: new Date().toISOString(),
-              details: 'Contact does not have a verified phone number on record.'
+              details: 'Contact does not have contact coordinates on record.'
             });
             enr.currentStepIndex++;
           } else {
             const rawMsg = this.interpolate(
-              step.config?.whatsappMessage || 'Hey {{name}}, wanted to check if you received my email regarding {{company}}!',
+              step.config?.emailBody || 'Hey {{name}}, wanted to check if you received our email regarding {{company}}!',
               enr
             );
-            const waLink = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(rawMsg)}`;
+            const actionLink = cleanPhone ? `tel:${cleanPhone}` : `mailto:${enr.leadEmail}`;
 
             enr.pendingTask = {
-              type: 'whatsapp',
-              title: step.title || 'Direct WhatsApp Follow-up',
+              type: 'manual_touch',
+              title: step.title || 'Direct Follow-up Touch',
               message: rawMsg,
               targetPhone: cleanPhone,
-              waLink,
+              waLink: actionLink,
               createdAt: new Date().toISOString()
             };
             enr.status = 'pending_task';
 
             enr.logs.push({
               stepId: step.id,
-              stepType: 'whatsapp',
-              title: step.title || 'WhatsApp Task Queued',
+              stepType: 'manual_touch',
+              title: step.title || 'Follow-up Task Queued',
               status: 'executed',
               executedAt: new Date().toISOString(),
-              details: `Ready for 1-click ping to +${cleanPhone}.`,
-              actionUrl: waLink
+              details: `Ready for direct follow-up touch.`,
+              actionUrl: actionLink
             });
 
             // Update lead tags to highlight pending task in CRM
             leadStore.updateLead(enr.leadId, {
-              tags: Array.from(new Set([...(liveLead?.tags || []), 'Pending WhatsApp Task']))
+              tags: Array.from(new Set([...(liveLead?.tags || []), 'Pending Follow-up Task']))
             });
 
             enr.currentStepIndex++;
@@ -464,7 +464,7 @@ class AutomationWorkerService {
   }
 
   /**
-   * Complete a pending WhatsApp task
+   * Complete a pending manual follow-up task
    */
   public completeTask(enrollmentId: string): boolean {
     const enr = this.enrollments.get(enrollmentId);
@@ -475,11 +475,11 @@ class AutomationWorkerService {
     enr.updatedAt = new Date().toISOString();
     enr.logs.push({
       stepId: 'task_done',
-      stepType: 'whatsapp',
-      title: 'WhatsApp Follow-up Confirmed Dispatched',
+      stepType: 'manual_touch',
+      title: 'Follow-up Confirmed Dispatched',
       status: 'executed',
       executedAt: new Date().toISOString(),
-      details: 'User completed the 1-click WhatsApp outreach.'
+      details: 'User completed the direct outreach follow-up.'
     });
 
     this.enrollments.set(enrollmentId, enr);

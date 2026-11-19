@@ -27,7 +27,7 @@ const mainNav: NavItem[] = [
     icon: Waypoints, 
     path: '/automations', 
     requiredPlan: 'pro',
-    lockMessage: 'Automations and autonomous sequence workflows are unavailable on Free and Basic tiers. Upgrade your workspace to Strovr Pro to unlock multi-step behavioral journeys, delays, and WhatsApp touchpoints.'
+    lockMessage: 'Automations and autonomous sequence workflows are unavailable on Free and Basic tiers. Upgrade your workspace to Strovr Pro to unlock multi-step behavioral journeys, delays, and smart email follow-up sequences.'
   },
   { name: 'Audience', icon: Users2, path: '/audience' },
 ];

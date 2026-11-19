@@ -14,14 +14,12 @@ import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import BookingWidget from '../components/BookingWidget';
-import AppointmentMobileWhatsAppModal from '../components/AppointmentMobileWhatsAppModal';
 import { confirmDialog } from '../components/AppConfirmModal';
 
 const Appointments = () => {
   const { user } = useStore();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'scheduler' | 'appointments' | 'pipeline'>('scheduler');
-  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
   const [selectedAppointmentForModal, setSelectedAppointmentForModal] = useState<any | null>(null);
   const [leads, setLeads] = useState<any[]>([]);
   const [appointmentsList, setAppointmentsList] = useState<any[]>([]);
@@ -102,13 +100,6 @@ const Appointments = () => {
     setCopiedLink(true);
     showToast('Copied Google Calendar booking link to clipboard');
     setTimeout(() => setCopiedLink(false), 2400);
-  };
-
-  const handleSendWhatsAppInvite = (lead: any) => {
-    const cleanPhone = (lead.phone || '').replace(/[^0-9]/g, '');
-    const message = `Hi ${lead.firstName || lead.businessName}! Let's lock in a brief walkthrough for ${lead.businessName}. You can pick any open Google Calendar slot right here: ${publicBookingUrl}`;
-    const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
-    window.open(url, '_blank');
   };
 
   const handleOpenEditModal = (app: any) => {
@@ -301,7 +292,7 @@ const Appointments = () => {
                 <div>
                   <h3 className="font-bold text-sm text-slate-900 tracking-tight">Confirmed Strovr Calendar Sessions</h3>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Real meetings scheduled with prospects and synchronized to your calendar. Click any session to preview and send via WhatsApp in Mobile View.
+                    Real meetings scheduled with prospects and synchronized to your calendar. Click any session to copy its calendar invite or join Google Meet.
                   </p>
                 </div>
               </div>
@@ -319,7 +310,7 @@ const Appointments = () => {
                         <th className="py-2.5 px-4">Contact</th>
                         <th className="py-2.5 px-4">Session Date &amp; Slot</th>
                         <th className="py-2.5 px-4">Meeting Room</th>
-                        <th className="py-2.5 px-4 text-center">WhatsApp Mobile View</th>
+                        <th className="py-2.5 px-4 text-center">Calendar Invite</th>
                         <th className="py-2.5 px-4 text-center">Status</th>
                         <th className="py-2.5 px-4 text-right">Actions</th>
                       </tr>
@@ -329,10 +320,10 @@ const Appointments = () => {
                         <tr 
                           key={app.id || idx} 
                           onClick={() => {
-                            setSelectedAppointmentForModal(app);
-                            setShowWhatsAppModal(true);
+                            navigator.clipboard.writeText(app.meetLink || publicBookingUrl);
+                            showToast(`Copied meeting invite for ${app.customerName || app.businessName}`);
                           }}
-                          className="hover:bg-emerald-50/40 transition-colors cursor-pointer group"
+                          className="hover:bg-indigo-50/40 transition-colors cursor-pointer group"
                         >
                           <td className="py-3 px-4 font-bold text-slate-900">
                             {app.customerName || app.businessName}
@@ -365,13 +356,13 @@ const Appointments = () => {
                             <button
                               type="button"
                               onClick={() => {
-                                setSelectedAppointmentForModal(app);
-                                setShowWhatsAppModal(true);
+                                navigator.clipboard.writeText(app.meetLink || publicBookingUrl);
+                                showToast(`Copied meeting invite for ${app.customerName || app.businessName}`);
                               }}
-                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold transition-all shadow-2xs cursor-pointer group-hover:scale-105"
+                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 text-xs font-bold transition-all shadow-2xs cursor-pointer group-hover:scale-105"
                             >
-                              <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
-                              <span>Send WhatsApp</span>
+                              <Copy className="w-3.5 h-3.5 text-indigo-600" />
+                              <span>Copy Invite</span>
                             </button>
                           </td>
                           <td className="py-3 px-4 text-center" onClick={(e) => e.stopPropagation()}>
@@ -464,30 +455,6 @@ const Appointments = () => {
                         </td>
                         <td className="py-3 px-4 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            {lead.phone && (
-                              <button
-                                onClick={() => {
-                                  setSelectedAppointmentForModal({
-                                    customerName: lead.firstName || lead.businessName,
-                                    customerEmail: lead.email,
-                                    customerPhone: lead.phone,
-                                    businessName: lead.businessName,
-                                    appointmentDate: new Date(Date.now() + 86400000).toISOString(),
-                                    timeSlot: '11:00 AM',
-                                    serviceName: '15-Min Strovr Walkthrough',
-                                    meetLink: 'https://meet.google.com/new',
-                                    notes: `Strovr walkthrough invitation for ${lead.businessName}`
-                                  });
-                                  setShowWhatsAppModal(true);
-                                }}
-                                className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
-                                title="Send booking link via WhatsApp in Mobile View"
-                              >
-                                <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
-                                <span>WhatsApp Invite</span>
-                              </button>
-                            )}
-
                             <button
                               onClick={() => {
                                 handleCopyLink();
@@ -520,17 +487,6 @@ const Appointments = () => {
           </div>
         </main>
       </div>
-
-      {/* Mobile-View WhatsApp Confirmation Modal */}
-      <AppointmentMobileWhatsAppModal
-        isOpen={showWhatsAppModal}
-        onClose={() => {
-          setShowWhatsAppModal(false);
-          setSelectedAppointmentForModal(null);
-        }}
-        appointment={selectedAppointmentForModal}
-        user={user}
-      />
 
       {/* Edit Booking Modal */}
       {isEditModalOpen && editingBooking && (
@@ -621,7 +577,7 @@ const Appointments = () => {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-slate-700">Phone / WhatsApp</label>
+                  <label className="text-[11px] font-bold text-slate-700">Direct Phone</label>
                   <input
                     type="tel"
                     value={editingBooking.customerPhone || ''}

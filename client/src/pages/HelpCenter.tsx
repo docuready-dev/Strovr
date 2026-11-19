@@ -59,9 +59,9 @@ const HELP_CATEGORIES: TopicCategory[] = [
         route: '/dashboard',
         routeLabel: 'Open Dashboard',
         summary:
-          'Strovr (Derived from "Strove" - striving for growth) is an enterprise B2B spatial lead harvesting, multi-channel outreach (Email + WhatsApp), and customizable Kanban CRM platform engineered by DocuReady. Unlike bloated legacy CRMs that charge $150+/seat, Strovr unifies real-time local business discovery and direct outreach into one high-velocity workspace.',
+          'Strovr (Derived from "Strove" - striving for growth) is an enterprise B2B spatial lead harvesting, high-deliverability email outreach studio, and customizable Kanban CRM platform engineered by DocuReady. Unlike bloated legacy CRMs that charge $150+/seat, Strovr unifies real-time local business discovery and direct outreach into one high-velocity workspace.',
         keyTakeaways: [
-          'Unified workflow: Scrape B2B prospects -> Enrich Email/WhatsApp -> Manage in Resizable Kanban -> Automate follow-ups.',
+          'Unified workflow: Scrape B2B prospects -> Enrich Verified Emails -> Manage in Resizable Kanban -> Automate follow-up drip cadences.',
           'Transparent contact accounting: 1 Token = 1 Scraped Contact across all tiers.',
           'Customizable workspace: Rearrange Dashboard widgets with 6 prebuilt layouts and resize Kanban stage boards with your mouse.'
         ],
@@ -82,7 +82,7 @@ const HELP_CATEGORIES: TopicCategory[] = [
             title: 'Run Your First Spatial Harvest & Launch Outreach',
             detail:
               'Open Lead Finder, enter a niche (e.g., "Dental Clinics" or "Solar Installers") and target city, and click Harvest. Verified leads flow directly into your CRM Pipeline.',
-            tip: 'Leads with phone-only coordinates automatically unlock the 1-Click WhatsApp Email Capture Bridge.'
+            tip: 'Harvested leads flow seamlessly with verified emails, phones, and location coordinates directly into your outreach studio.'
           }
         ],
         proTip:
@@ -92,8 +92,8 @@ const HELP_CATEGORIES: TopicCategory[] = [
                                                     │
          ┌──────────────────────────────────────────┴──────────────────────────────────────────┐
          ▼                                                                                     ▼
-[3A. Verified Email Found]                                                     [3B. Phone / WhatsApp Only]
-Dispatch AI Cold Email Sequence                                                1-Click WhatsApp Capture Bridge
+[3A. Verified Email Outreach]                                                   [3B. Direct Phone Prospecting]
+Dispatch AI Cold Email Cadence                                                  Direct Calls & Follow-up Tasks
          │                                                                                     │
          └──────────────────────────────────────────┬──────────────────────────────────────────┘
                                                     ▼
@@ -131,9 +131,9 @@ Dispatch AI Cold Email Sequence                                                1
               'Open CRM Pipeline. Drag stage headers to match your sales process, resize high-volume stage columns with your mouse, and inspect lead cards.'
           },
           {
-            title: 'Step 4: Dispatch Multi-Channel Outreach (Minutes 12-15)',
+            title: 'Step 4: Dispatch High-Deliverability Email Outreach (Minutes 12-15)',
             detail:
-              'Launch Outreach Studio to send personalized cold emails or trigger WhatsApp Web deep-links with dynamic {{businessName}} and {{location}} merge tags.'
+              'Launch Outreach Studio to compose high-deliverability cold emails, configure A/B split tests, and preview dynamic {{businessName}} and {{location}} merge tags.'
           }
         ],
         proTip:
@@ -204,7 +204,7 @@ const newCredits = Math.max(0, availableCredits - tokensUsed);`
           'DocuReady engineered Strovr pricing to deliver 80% lower TCO than legacy data brokers while providing enterprise-grade spatial scraping, multi-seat governance, and OAuth integrations.',
         keyTakeaways: [
           'Free Tier (₹0): 15 Contact Tokens / 4 days, 2 Operator Seats, Core Lead Finder & Kanban CRM.',
-          'Basic Tier (₹999/mo): 600 Bonus Tokens, 5 Team Seats, Email & WhatsApp Outreach Studio, CSV Export.',
+          'Basic Tier (₹999/mo): 600 Bonus Tokens, 5 Team Seats, High-Deliverability Email Outreach Studio, CSV Export.',
           'Pro Tier (₹1,999/mo): 1,500 Bonus Tokens, 10 Team Seats, Full Workflow Automations, Developer API & Inbound Webhooks.',
           'On-Demand Token Packs: Add +250 (₹199) or +1,000 (₹499) tokens anytime via PhonePe.'
         ],
@@ -317,10 +317,10 @@ const newCredits = Math.max(0, availableCredits - tokensUsed);`
         route: '/finder',
         routeLabel: 'Launch Lead Finder',
         summary:
-          'The Lead Finder engine combines spatial directory discovery with an asynchronous website crawler that inspects `/contact`, `/about`, and homepage DOM nodes to extract verified business emails and direct phone/WhatsApp coordinates.',
+          'The Lead Finder engine combines spatial directory discovery with an asynchronous website crawler that inspects `/contact`, `/about`, and homepage DOM nodes to extract verified business emails and direct phone coordinates.',
         keyTakeaways: [
           'High-precision targeting by business niche + city/region.',
-          'Automatic classification into "Verified Email" vs "Phone-Only / WhatsApp Ready".',
+          'Automatic classification into "Verified Email" vs "Direct Phone In Reach".',
           'Zero duplicate billing: Duplicate phones/websites within a batch are filtered before token deduction.'
         ],
         steps: [
@@ -350,7 +350,7 @@ const newCredits = Math.max(0, availableCredits - tokensUsed);`
     title: 'Resizable Kanban CRM Pipeline',
     tab: 'operator-guide',
     icon: Kanban,
-    description: 'Mouse-resizable Kanban boards, drag-to-reposition columns & WhatsApp email capture',
+    description: 'Mouse-resizable Kanban boards, drag-to-reposition columns & deal stage automation',
     articles: [
       {
         id: 'resizable-draggable-kanban',
@@ -390,41 +390,41 @@ const newCredits = Math.max(0, availableCredits - tokensUsed);`
           }
         ],
         proTip:
-          'Make your active working stage (such as "WhatsApp Contacted" or "Proposal Sent") wider (e.g., 420px) while keeping archived stages compact (220px)!'
+          'Make your active working stage (such as "Email Contacted" or "Proposal Sent") wider (e.g., 420px) while keeping archived stages compact (220px)!'
       },
       {
-        id: 'whatsapp-email-capture-bridge',
-        title: '1-Click WhatsApp Email Capture Bridge for Phone-Only Leads',
+        id: 'multi-step-cold-email-cadence',
+        title: 'Multi-Step Follow-Up Sequences & Deliverability Architecture',
         readingTime: '3 min read',
         lastUpdated: 'Updated Today',
         route: '/crm',
         routeLabel: 'Open CRM Pipeline',
         summary:
-          'Many local businesses list a mobile/WhatsApp number on Google Maps without publishing an email on their website. Strovr turns those phone-only records into verified email leads using a 1-click WhatsApp bridge script.',
+          'Convert cold prospects into booked discovery calls using automated 3-step follow-up sequences, A/B subject testing, and executive inbox placement tools.',
         keyTakeaways: [
-          'Automatically identifies "Phone Only / No Email Found" prospects.',
-          'Launches WhatsApp with a pre-filled, high-conversion script requesting the decision maker’s best email for a custom proposal.',
-          '1-click inline upgrade converts the record to "Email Verified & Captured" once they reply.'
+          'Automatically tracks contacted vs uncontacted prospects in Kanban.',
+          'Step-based cadences: Day 0 Cold Pitch -> Step 2 Gentle Bump -> Step 3 Final Value Break-up.',
+          'Deliverability Safeguards: Anti-spam jitter, missing variable fallback guards, and CAN-SPAM compliance.'
         ],
         steps: [
           {
-            title: 'Click a Phone-Only Lead Card in Kanban',
+            title: 'Filter Uncontacted Leads in Kanban',
             detail:
-              'Open any lead card badged with the amber "WA" indicator to view its detailed slide-over drawer.'
+              'Filter by leads with verified emails in your active working stage to review contact readiness.'
           },
           {
-            title: 'Trigger the WhatsApp Capture Script',
+            title: 'Configure Follow-Up Steps in Outreach Studio',
             detail:
-              'Click "Request Email via WhatsApp". Strovr opens WhatsApp with a tailored message addressed to the business.'
+              'Toggle on the 3-Step Follow-Up Sequence and customize Day 0 pitch, Step 2 bump, and Step 3 closing emails.'
           },
           {
-            title: 'Save the Captured Email Inline',
+            title: 'Automatic Pipeline Stage Progression',
             detail:
-              'Paste the prospect’s replied email into the inline capture box and click Save. The lead automatically advances to "Email Verified & Captured" and unlocks cold email sequences.'
+              'When an email batch is dispatched, Strovr automatically advances the leads to "Email Contacted" and records the timestamp.'
           }
         ],
         proTip:
-          'Prospects who reply with their email on WhatsApp have an 82%+ open rate on subsequent proposal emails.'
+          'Subject lines with 3 to 7 words combined with personalized location tags yield a 42%+ higher open rate.'
       }
     ]
   },
@@ -433,27 +433,27 @@ const newCredits = Math.max(0, availableCredits - tokensUsed);`
     title: 'Outreach Studio & Automations',
     tab: 'operator-guide',
     icon: Send,
-    description: 'AI email sequences, WhatsApp templates, Audience forms & trigger workflows',
+    description: 'AI email sequences, A/B split testing studio, Audience forms & trigger workflows',
     articles: [
       {
         id: 'multi-channel-outreach-studio',
-        title: 'Launching Personalized Email & WhatsApp Campaigns',
+        title: 'Launching High-Deliverability Email Outreach Campaigns',
         readingTime: '4 min read',
         lastUpdated: 'Updated Today',
         route: '/outreach',
         routeLabel: 'Open Outreach Studio',
         summary:
-          'Outreach Studio lets you craft dynamic, variable-injected campaigns across Email and WhatsApp with live recipient previewing-always grounded in your real harvested CRM leads.',
+          'Outreach Studio lets you craft dynamic, variable-injected email campaigns with A/B split testing, live recipient previewing, and automated 3-step sequences-always grounded in your real CRM leads.',
         keyTakeaways: [
-          'Dynamic merge variables: `{{businessName}}`, `{{category}}`, `{{location}}`, `{{rating}}`, and `{{website}}`.',
+          'Dynamic merge variables: `{{businessName}}`, `{{category}}`, `{{location}}`, `{{rating}}`, and `{{booking_link}}`.',
           'Live Recipient Preview: Preview exact rendered copy for each real prospect in your CRM before sending.',
-          'Built-in library of proven B2B cold outreach and follow-up templates.'
+          'A/B Split Testing & Pre-Flight Deliverability Inspector with spam score analysis.'
         ],
         steps: [
           {
-            title: 'Select Channel (Email or WhatsApp) & Template',
+            title: 'Configure Email Studio, Subject Line A/B Split Testing & Sequences',
             detail:
-              'Open Outreach Studio and pick a battle-tested B2B script or compose your own message with dynamic merge tags.'
+              'Open Outreach Studio and pick a battle-tested B2B script, configure Variant A and B subjects, or compose custom copy.'
           },
           {
             title: 'Filter Target Recipients from Your CRM',
@@ -463,7 +463,7 @@ const newCredits = Math.max(0, availableCredits - tokensUsed);`
           {
             title: 'Dispatch Campaign & Track Status',
             detail:
-              'Send your batch via your configured SMTP relay or step through 1-click WhatsApp dispatches with automatic CRM stage updates.'
+              'Send your batch via your configured SMTP / SendGrid relay with automatic CRM stage updates.'
           }
         ],
         proTip:
@@ -550,7 +550,7 @@ const newCredits = Math.max(0, availableCredits - tokensUsed);`
     "businessName": "Apex Industrial Systems",
     "category": "B2B Manufacturing",
     "location": "Bengaluru, KA",
-    "previousStage": "WhatsApp Contacted",
+    "previousStage": "Email Contacted",
     "newStage": "Proposal Sent"
   }
 }`

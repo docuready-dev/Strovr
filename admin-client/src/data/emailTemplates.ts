@@ -126,7 +126,7 @@ With LeadPulse, {{business_name}} gains direct access to an autonomous local pip
       headline: 'Choose How You Scale in {{field_of_work}}',
       body: `We’ve mapped out two distinct strategies to help {{business_name}} dominate your local market across {{location}}. Review both options below:`,
       col1Title: 'Option A: Inbound Automation',
-      col1Body: 'Set up autonomous email and WhatsApp triggers that respond to inquiries in under 60 seconds.',
+      col1Body: 'Set up autonomous email outreach triggers that respond to inquiries in under 60 seconds.',
       col1Cta: 'View Inbound Setup',
       col1CtaUrl: 'https://leadpulse.io/inbound',
       col2Title: 'Option B: Outbound Harvesting',
@@ -251,11 +251,11 @@ With LeadPulse, {{business_name}} gains direct access to an autonomous local pip
         },
         {
           name: 'Multi-Channel Pro Suite',
-          category: 'Email + WhatsApp',
+          category: 'Executive Email Pro',
           price: '₹1,999 / mo',
           badge: 'Most Popular',
           imageUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&auto=format&fit=crop&q=80',
-          description: 'Autonomous direct-to-inbox dispatch with 10 structured WhatsApp scripts & zero rate limits.',
+          description: 'Autonomous direct-to-inbox dispatch with A/B split testing, smart follow-up drips & zero rate limits.',
           ctaText: 'Select Plan',
           ctaUrl: 'https://leadpulse.io/checkout?plan=pro'
         },

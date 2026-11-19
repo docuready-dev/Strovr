@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import { 
-  Mail, MessageCircle, MessageSquare, Send, CheckCircle2, 
-  ChevronDown, Phone, Layout, Monitor, 
+  Mail, Send, CheckCircle2, 
+  ChevronDown, Layout, Monitor, 
   Smartphone, Sparkles, Sliders, Edit3, ArrowRight,
   ShieldCheck, Tag, Search, Check, Loader2, ExternalLink, Key,
   Plus, Trash2, Upload, Wand2
@@ -13,14 +13,12 @@ import DispatchTrackerModal from '../components/DispatchTrackerModal';
 import EmailProviderModal from '../components/EmailProviderModal';
 import { EMAIL_TEMPLATES } from '../data/emailTemplates';
 import type { TemplateId } from '../data/emailTemplates';
-import { WHATSAPP_TEMPLATES, EMAIL_CAPTURE_BRIDGE_SCRIPT } from '../data/whatsappTemplates';
-import type { WhatsAppTemplate } from '../data/whatsappTemplates';
 import { useStore } from '../store/useStore';
 import axios from 'axios';
 
 const OutreachCenter = () => {
   const { user } = useStore();
-  const [activeChannel, setActiveChannel] = useState<'email' | 'whatsapp' | 'sms'>('email');
+  
   
   // Template Studio State
   const [selectedTemplateId, setSelectedTemplateId] = useState<TemplateId>('one_column');
@@ -35,10 +33,7 @@ const OutreachCenter = () => {
   // Active Template Data State
   const [templateData, setTemplateData] = useState(EMAIL_TEMPLATES.one_column.defaultData);
 
-  // WhatsApp Studio State
-  const [selectedWhatsAppId, setSelectedWhatsAppId] = useState<string>('local_compliment');
-  const [whatsAppMessage, setWhatsAppMessage] = useState<string>(WHATSAPP_TEMPLATES[0].defaultMessage);
-  const [copiedWhatsApp, setCopiedWhatsApp] = useState(false);
+
 
   // Template Styling Layer Settings
   const [templateStyling, setTemplateStyling] = useState({
@@ -241,7 +236,7 @@ const OutreachCenter = () => {
         generated.col1Cta = 'View Managed Setup';
         generated.col1CtaUrl = 'https://leadpulse.io/managed';
         generated.col2Title = 'Option B: Self-Serve Suite';
-        generated.col2Body = `Use our autonomous lead harvester with email and WhatsApp triggers.`;
+        generated.col2Body = `Use our autonomous lead harvester with email outreach triggers.`;
         generated.col2Cta = 'Explore Software';
         generated.col2CtaUrl = 'https://leadpulse.io/software';
       } else if (selectedTemplateId === 'zig_zag') {
@@ -272,7 +267,7 @@ const OutreachCenter = () => {
           },
           {
             name: 'Pro Multi-Channel Suite',
-            category: 'Email + WhatsApp',
+            category: 'Executive Email Pro',
             price: '₹1,999 / mo',
             badge: 'Most Popular',
             imageUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&auto=format&fit=crop&q=80',
@@ -292,14 +287,10 @@ const OutreachCenter = () => {
   };
 
   const insertTag = (tag: string) => {
-    if (activeChannel === 'whatsapp') {
-      setWhatsAppMessage(prev => prev + ' ' + tag);
-    } else {
-      setTemplateData(prev => ({
-        ...prev,
-        body: prev.body + ' ' + tag
-      }));
-    }
+    setTemplateData(prev => ({
+      ...prev,
+      body: prev.body + ' ' + tag
+    }));
   };
 
   // Highlighting Renderer for text preview with merge tag styling
@@ -314,46 +305,6 @@ const OutreachCenter = () => {
     rendered = rendered.replace(/{{phone}}/g, `<span class="bg-gray-200 text-gray-900 font-bold px-1 rounded">${previewLead.phone}</span>`);
     rendered = rendered.replace(/{{rating}}/g, `<span class="bg-amber-100 text-amber-900 font-bold px-1 rounded">${previewLead.rating}</span>`);
     return rendered;
-  };
-
-  // WhatsApp Hook Selection Handler
-  const handleSelectWhatsAppTemplate = (tpl: WhatsAppTemplate) => {
-    setSelectedWhatsAppId(tpl.id);
-    setWhatsAppMessage(tpl.defaultMessage);
-  };
-
-  // Insert Email Capture Bridge Script
-  const handleInsertBridgeScript = () => {
-    setWhatsAppMessage(prev => prev + '\n\n' + EMAIL_CAPTURE_BRIDGE_SCRIPT);
-  };
-
-  // Format Text for External Copy / Dispatch
-  const getCompiledWhatsAppMessage = (lead: any) => {
-    let msg = whatsAppMessage;
-    msg = msg.replace(/{{business_name}}/g, lead.businessName);
-    msg = msg.replace(/{{location}}/g, lead.location);
-    msg = msg.replace(/{{field_of_work}}/g, lead.fieldOfWork || lead.category);
-    msg = msg.replace(/{{tag}}/g, lead.category || lead.fieldOfWork);
-    msg = msg.replace(/{{first_name}}/g, lead.firstName || lead.businessName);
-    msg = msg.replace(/{{phone}}/g, lead.phone);
-    msg = msg.replace(/{{rating}}/g, lead.rating || '4.8');
-    return msg;
-  };
-
-  // Open Direct in WhatsApp Web
-  const handleOpenWhatsAppWeb = (lead: any) => {
-    const rawText = getCompiledWhatsAppMessage(lead);
-    const cleanPhone = (lead.phone || '').replace(/[^0-9]/g, '');
-    const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(rawText)}`;
-    window.open(url, '_blank');
-  };
-
-  // Copy WhatsApp Script
-  const handleCopyWhatsApp = () => {
-    const rawText = getCompiledWhatsAppMessage(previewLead);
-    navigator.clipboard.writeText(rawText);
-    setCopiedWhatsApp(true);
-    setTimeout(() => setCopiedWhatsApp(false), 2500);
   };
 
   // Direct Single Email Test Dispatcher
@@ -394,7 +345,7 @@ const OutreachCenter = () => {
       <Sidebar />
 
       <div className="flex-1 flex flex-col min-w-0">
-        <Header title="Multi-Channel Outreach & Email Template Studio" />
+        <Header title="Email Outreach & Pitch Studio" />
 
         <div className="p-6 sm:p-8 flex flex-col gap-6 min-h-0">
           
@@ -439,42 +390,14 @@ const OutreachCenter = () => {
           {/* ======================================================== */}
           <div className="w-full xl:w-[50%] flex flex-col bg-white border border-[#E4E4E7] rounded-2xl shadow-xs overflow-hidden min-h-[750px]">
             
-            {/* Channel Tabs */}
+            {/* Email Studio Header */}
             <div className="flex border-b border-[#E4E4E7] bg-[#F4F4F5]/60 px-4 pt-3 gap-2">
-              <button 
-                onClick={() => setActiveChannel('email')}
-                className={`px-4 py-2.5 text-xs font-bold flex items-center gap-2 border-b-2 transition-all ${
-                  activeChannel === 'email' 
-                    ? 'border-accent text-accent bg-white rounded-t-xl shadow-xs' 
-                    : 'border-transparent text-gray-500 hover:text-charcoal'
-                }`}
-              >
-                <Mail className="w-3.5 h-3.5" /> Email Template Studio (8 Layouts)
-              </button>
-              <button 
-                onClick={() => setActiveChannel('whatsapp')}
-                className={`px-4 py-2.5 text-xs font-bold flex items-center gap-2 border-b-2 transition-all ${
-                  activeChannel === 'whatsapp' 
-                    ? 'border-emerald-600 text-emerald-700 bg-white rounded-t-xl shadow-xs' 
-                    : 'border-transparent text-gray-500 hover:text-charcoal'
-                }`}
-              >
-                <MessageCircle className="w-3.5 h-3.5" /> WhatsApp Business API
-              </button>
-              <button 
-                onClick={() => setActiveChannel('sms')}
-                className={`px-4 py-2.5 text-xs font-bold flex items-center gap-2 border-b-2 transition-all ${
-                  activeChannel === 'sms' 
-                    ? 'border-blue-600 text-blue-700 bg-white rounded-t-xl shadow-xs' 
-                    : 'border-transparent text-gray-500 hover:text-charcoal'
-                }`}
-              >
-                <MessageSquare className="w-3.5 h-3.5" /> SMS Pathways
-              </button>
+              <div className="px-4 py-2.5 text-xs font-bold flex items-center gap-2 border-b-2 border-accent text-accent bg-white rounded-t-xl shadow-xs">
+                <Mail className="w-3.5 h-3.5" /> Email Template Studio
+              </div>
             </div>
 
             {/* Email Template Selector Bar */}
-            {activeChannel === 'email' && (
               <div className="px-6 py-3.5 border-b border-[#E4E4E7] bg-[#FAFAFA] flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5">
                   <span className="text-xs font-extrabold text-gray-500 uppercase tracking-wider">Layout:</span>
@@ -525,169 +448,12 @@ const OutreachCenter = () => {
                   </div>
                 </div>
               </div>
-            )}
-
-            {/* WhatsApp Template Selector Bar */}
-            {activeChannel === 'whatsapp' && (
-              <div className="px-6 py-3.5 border-b border-[#E4E4E7] bg-emerald-50/50 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-2.5">
-                  <span className="text-xs font-extrabold text-emerald-800 uppercase tracking-wider">Hook:</span>
-                  <div className="flex items-center gap-1.5 px-3 py-1 bg-white border border-emerald-200 rounded-xl text-xs font-bold text-emerald-950">
-                    <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>{WHATSAPP_TEMPLATES.find(t => t.id === selectedWhatsAppId)?.name || '1. The Local Compliment Hook'}</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={handleCopyWhatsApp}
-                    className="bg-white border border-emerald-200 hover:bg-emerald-50 text-emerald-900 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer"
-                  >
-                    {copiedWhatsApp ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <ExternalLink className="w-3.5 h-3.5 text-emerald-600" />}
-                    <span>{copiedWhatsApp ? 'Copied Script!' : 'Copy Script'}</span>
-                  </button>
-
-                  <button
-                    onClick={() => handleOpenWhatsAppWeb(previewLead)}
-                    className="bg-emerald-600 text-white px-3.5 py-1.5 rounded-xl text-xs font-extrabold hover:bg-emerald-700 transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                    <span>Open in WhatsApp Web</span>
-                  </button>
-                </div>
-              </div>
-            )}
+            
 
             {/* Editor Body */}
             <div className="p-6 flex-1 overflow-y-auto custom-scrollbar flex flex-col space-y-5">
               
-              {/* WHATSAPP TAB VIEW */}
-              {activeChannel === 'whatsapp' && (
-                <div className="space-y-4">
-                  {/* 10 Structured WhatsApp Hook Selector Pills */}
-                  <div>
-                    <label className="block text-xs font-extrabold text-gray-700 uppercase tracking-wider mb-2">
-                      Select Hook Script (10 Conversational Frameworks)
-                    </label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
-                      {WHATSAPP_TEMPLATES.map((tpl) => (
-                        <button
-                          key={tpl.id}
-                          type="button"
-                          onClick={() => handleSelectWhatsAppTemplate(tpl)}
-                          className={`text-left p-2.5 rounded-xl border text-xs transition-all flex flex-col justify-between cursor-pointer ${
-                            selectedWhatsAppId === tpl.id 
-                              ? 'bg-emerald-50 border-emerald-500 ring-1 ring-emerald-500 shadow-xs' 
-                              : 'bg-white border-[#E4E4E7] hover:border-emerald-300'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between w-full mb-1">
-                            <span className="font-bold text-[#09090B] truncate">{tpl.name}</span>
-                            <span className="text-[9px] font-extrabold bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded-md shrink-0 ml-1">
-                              {tpl.badge}
-                            </span>
-                          </div>
-                          <span className="text-[11px] text-gray-500 line-clamp-1">{tpl.hookType}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Active Hook Context Card */}
-                  {(() => {
-                    const activeTpl = WHATSAPP_TEMPLATES.find(t => t.id === selectedWhatsAppId) || WHATSAPP_TEMPLATES[0];
-                    return (
-                      <div className="bg-emerald-50/70 border border-emerald-200 rounded-xl p-3.5 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-950">
-                            <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-                            <span>Hook Strategy: {activeTpl.hookType}</span>
-                          </div>
-                          <span className="text-[10px] font-bold bg-white text-emerald-800 px-2 py-0.5 rounded-md border border-emerald-200">
-                            {activeTpl.badge}
-                          </span>
-                        </div>
-                        <p className="text-xs text-emerald-900 leading-relaxed">
-                          {activeTpl.description}
-                        </p>
-                      </div>
-                    );
-                  })()}
-
-                  {/* Merge Tags Insertion Toolbar */}
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <label className="text-xs font-bold text-charcoal">WhatsApp Message Body</label>
-                      <div className="flex items-center gap-1 flex-wrap justify-end">
-                        {mergeTags.map((tag) => (
-                          <button
-                            key={tag}
-                            type="button"
-                            onClick={() => insertTag(tag)}
-                            className="text-[10px] font-bold bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-0.5 rounded-md transition-colors cursor-pointer"
-                          >
-                            + {tag}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <textarea 
-                      rows={6}
-                      value={whatsAppMessage}
-                      onChange={(e) => setWhatsAppMessage(e.target.value)}
-                      className="w-full border border-[#E4E4E7] rounded-xl p-3.5 text-xs font-medium focus:ring-2 focus:ring-emerald-500 outline-none leading-relaxed"
-                    />
-                  </div>
-
-                  {/* Organic Email-Capture Bridge Feature */}
-                  <div className="bg-gradient-to-r from-amber-50 to-emerald-50 border border-amber-200/80 rounded-xl p-3.5 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 text-xs font-bold text-amber-950">
-                        <Tag className="w-3.5 h-3.5 text-amber-600" />
-                        <span>Organic Email-Capture Bridge</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={handleInsertBridgeScript}
-                        className="bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-bold px-2.5 py-1 rounded-lg transition-colors shadow-xs cursor-pointer flex items-center gap-1"
-                      >
-                        + Insert Email Bridge Hook
-                      </button>
-                    </div>
-                    <p className="text-[11px] text-amber-900 italic bg-white/70 p-2 rounded-lg border border-amber-200/50">
-                      "{EMAIL_CAPTURE_BRIDGE_SCRIPT}"
-                    </p>
-                    <p className="text-[10px] text-gray-500">
-                      Framed with convenience to effortlessly upgrade phone-only leads into verified email contacts.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* SMS TAB VIEW */}
-              {activeChannel === 'sms' && (
-                <div className="space-y-4">
-                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-xs text-blue-900 flex items-center gap-2">
-                    <Phone className="w-4 h-4 text-blue-600 shrink-0" />
-                    <span>DLT registered SMS gateway enabled (160 characters per segment).</span>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-charcoal mb-1">SMS Content</label>
-                    <textarea 
-                      rows={6}
-                      value={templateData.body}
-                      onChange={(e) => setTemplateData({ ...templateData, body: e.target.value })}
-                      className="w-full border border-[#E4E4E7] rounded-xl p-4 text-xs font-medium focus:ring-2 focus:ring-blue-500 outline-none"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* EMAIL CHANNEL VIEW */}
-              {activeChannel === 'email' && (
-                <>
-                  {/* ======================================================== */}
+              {/* ======================================================== */}
                   {/* LAYER 1: CONTENT LAYER (Rich-Text & Merge Tags)          */}
                   {/* ======================================================== */}
                   {editorLayer === 'content' && (
@@ -1444,66 +1210,45 @@ const OutreachCenter = () => {
                       </div>
                     </div>
                   )}
-                </>
-              )}
-
-            </div>
+                </div>
+              
 
             {/* Bottom Actions */}
             <div className="p-4 border-t border-[#E4E4E7] bg-[#FAFAFA] flex flex-col sm:flex-row items-center justify-between gap-3">
               <div className="flex items-center gap-2">
-                <span className={`w-2 h-2 rounded-full ${activeChannel === 'whatsapp' ? 'bg-emerald-500' : 'bg-accent'} animate-pulse`}></span>
+                <span className="w-2 h-2 rounded-full bg-accent animate-pulse"></span>
                 <span className="text-xs text-gray-500 font-medium">
-                  {activeChannel === 'whatsapp' ? 'Direct WhatsApp Web / wa.me API Ready' : 'Direct-to-Inbox Transport Ready'}
+                  Direct-to-Inbox Transport Ready
                 </span>
               </div>
               
-              {activeChannel === 'whatsapp' ? (
-                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                  <button 
-                    onClick={handleCopyWhatsApp}
-                    className="bg-white border border-[#E4E4E7] hover:bg-gray-100 px-4 py-2.5 rounded-xl text-xs font-bold text-gray-700 transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
-                  >
-                    {copiedWhatsApp ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <ExternalLink className="w-3.5 h-3.5 text-gray-500" />}
-                    <span>{copiedWhatsApp ? 'Copied to Clipboard!' : 'Copy Script'}</span>
-                  </button>
-                  <button 
-                    onClick={() => handleOpenWhatsAppWeb(previewLead)}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-xs font-extrabold transition-all shadow-md hover:shadow-lg flex items-center gap-2 cursor-pointer"
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                    <span>Open in WhatsApp Web</span>
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                  <button 
-                    onClick={handleSendSingleTest}
-                    disabled={isSendingSingle}
-                    className="bg-white border border-[#E4E4E7] hover:bg-gray-100 disabled:opacity-50 px-4 py-2.5 rounded-xl text-xs font-bold text-gray-700 transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
-                    title={`Dispatches an individualized test email directly to ${previewLead.businessName}`}
-                  >
-                    {isSendingSingle ? (
-                      <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin text-accent" />
-                        <span>Dispatching...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Send className="w-3.5 h-3.5 text-gray-500" />
-                        <span>Send Single Test</span>
-                      </>
-                    )}
-                  </button>
-                  <button 
-                    onClick={() => setIsDispatchModalOpen(true)}
-                    className="bg-accent hover:bg-accent-dark text-white px-5 py-2.5 rounded-xl text-xs font-extrabold transition-all shadow-md hover:shadow-lg flex items-center gap-2 cursor-pointer"
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                    <span>Launch Outreach Batch</span>
-                  </button>
-                </div>
-              )}
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                <button 
+                  onClick={handleSendSingleTest}
+                  disabled={isSendingSingle}
+                  className="bg-white border border-[#E4E4E7] hover:bg-gray-100 disabled:opacity-50 px-4 py-2.5 rounded-xl text-xs font-bold text-gray-700 transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
+                  title={`Dispatches an individualized test email directly to ${previewLead.businessName}`}
+                >
+                  {isSendingSingle ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-accent" />
+                      <span>Dispatching...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-3.5 h-3.5 text-gray-500" />
+                      <span>Send Single Test</span>
+                    </>
+                  )}
+                </button>
+                <button 
+                  onClick={() => setIsDispatchModalOpen(true)}
+                  className="bg-accent hover:bg-accent-dark text-white px-5 py-2.5 rounded-xl text-xs font-extrabold transition-all shadow-md hover:shadow-lg flex items-center gap-2 cursor-pointer"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>Launch Outreach Batch</span>
+                </button>
+              </div>
             </div>
 
           </div>
@@ -1629,7 +1374,7 @@ const OutreachCenter = () => {
               {/* ======================================================== */}
               {/* EMAIL CLIENT CONTAINER                                   */}
               {/* ======================================================== */}
-              {activeChannel === 'email' && (
+              
                 <div 
                   className={`bg-white rounded-2xl shadow-lg border border-[#E4E4E7] overflow-hidden transition-all duration-200 ${
                     previewViewport === 'mobile' ? 'w-[375px]' : 'w-full max-w-[620px]'
@@ -2185,62 +1930,17 @@ const OutreachCenter = () => {
                   )}
 
                 </div>
-              )}
-
-              {/* WHATSAPP PHONE MOCKUP PREVIEW */}
-              {activeChannel === 'whatsapp' && (
-                <div className="w-[340px] bg-white rounded-[36px] shadow-xl border-[6px] border-[#E4E4E7] overflow-hidden flex flex-col">
-                  <div className="bg-[#075E54] text-white p-3.5 flex items-center gap-2.5 shrink-0">
-                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center font-bold text-xs">
-                      LP
-                    </div>
-                    <div>
-                      <div className="font-bold text-xs">{previewLead.businessName}</div>
-                      <div className="text-[10px] text-emerald-200">Official Business Account</div>
-                    </div>
-                  </div>
-                  <div className="flex-1 bg-[#E5DDD5] p-3 overflow-y-auto flex flex-col">
-                    <div 
-                      className="bg-[#DCF8C6] p-3 rounded-lg rounded-tr-none self-end max-w-[88%] text-xs text-gray-800 shadow-xs whitespace-pre-wrap mb-1"
-                      dangerouslySetInnerHTML={{ __html: renderPreviewHtml(whatsAppMessage) }}
-                    />
-                    <div className="text-[9px] text-gray-500 self-end mr-1 flex items-center gap-1">
-                      10:42 AM <CheckCircle2 className="w-3 h-3 text-blue-500" />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* SMS PHONE MOCKUP PREVIEW */}
-              {activeChannel === 'sms' && (
-                <div className="w-[320px] bg-white rounded-[36px] shadow-xl border-[6px] border-[#E4E4E7] overflow-hidden flex flex-col">
-                  <div className="bg-gray-100 p-3 flex flex-col items-center justify-center border-b border-gray-200 shrink-0">
-                    <div className="w-9 h-9 rounded-full bg-gray-300 flex items-center justify-center text-gray-500 font-bold mb-1">
-                      <Phone className="w-4 h-4" />
-                    </div>
-                    <div className="text-xs font-bold text-gray-800">{previewLead.phone}</div>
-                  </div>
-                  <div className="flex-1 bg-white p-3.5 overflow-y-auto flex flex-col">
-                    <div 
-                      className="bg-blue-500 text-white p-3 rounded-2xl rounded-br-none self-end max-w-[88%] text-xs shadow-xs whitespace-pre-wrap mb-1"
-                      dangerouslySetInnerHTML={{ __html: renderPreviewHtml(templateData.body) }}
-                    />
-                    <div className="text-[9px] text-gray-400 self-end mr-2">Delivered</div>
-                  </div>
-                </div>
-              )}
-
+              </div>
             </div>
           </div>
 
-          </div>
         </div>
       </div>
 
       {/* ============================================================ */}
-      {/* TEMPLATE GALLERY MODAL (8 INDUSTRY LAYOUTS)                  */}
+      {/* 8-LAYOUT PREVIEW & SWITCHING GALLERY MODAL                   */}
       {/* ============================================================ */}
-      <TemplateGalleryModal 
+      <TemplateGalleryModal
         isOpen={isGalleryOpen}
         onClose={() => setIsGalleryOpen(false)}
         selectedTemplateId={selectedTemplateId}
@@ -2262,7 +1962,7 @@ const OutreachCenter = () => {
         user={user}
         onCampaignDispatched={() => {
           setDispatchNotification({
-            message: `Outreach campaign successfully dispatched to active lead recipients! Status updated to 'Contacted'.`
+            message: "Outreach campaign successfully dispatched to active lead recipients! Status updated to 'Contacted'."
           });
         }}
       />

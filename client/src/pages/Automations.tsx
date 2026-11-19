@@ -14,7 +14,7 @@ import API_URL from '../config/api';
 
 interface JourneyStep {
   id: string;
-  type: 'trigger' | 'delay' | 'email' | 'whatsapp' | 'condition' | 'crm_update' | 'integration';
+  type: 'trigger' | 'delay' | 'email' | 'condition' | 'crm_update' | 'integration';
   title: string;
   description: string;
   config: {
@@ -22,7 +22,6 @@ interface JourneyStep {
     delayHours?: number;
     emailSubject?: string;
     emailBody?: string;
-    whatsappMessage?: string;
     targetStage?: string;
     conditionType?: string;
     integrationId?: string;
@@ -45,7 +44,7 @@ const TEMPLATE_PRESETS = [
   {
     name: 'Instant Inbound Lead Engagement',
     trigger: 'Inbound Form Submitted',
-    desc: 'Immediately send welcome email and schedule automated WhatsApp follow-up.',
+    desc: 'Immediately send welcome email and schedule automated email follow-up sequence.',
     steps: [
       {
         id: 's1',
@@ -73,11 +72,12 @@ const TEMPLATE_PRESETS = [
       },
       {
         id: 's4',
-        type: 'whatsapp' as const,
-        title: 'Direct WhatsApp Intro',
-        description: 'Send friendly message to verified phone.',
+        type: 'email' as const,
+        title: 'Follow-Up Case Study & Benchmark',
+        description: 'Send benchmark results to verified corporate email.',
         config: {
-          whatsappMessage: 'Hi {{name}}, wanted to check if you had questions on the deck we emailed yesterday!'
+          emailSubject: 'Quick follow-up on your Strovr access deck',
+          emailBody: 'Hi {{name}}, wanted to check if you had questions on the deck we emailed yesterday!'
         }
       }
     ]
@@ -144,11 +144,12 @@ const TEMPLATE_PRESETS = [
       },
       {
         id: 's3',
-        type: 'whatsapp' as const,
-        title: 'WhatsApp Check-in',
-        description: 'Direct ping to champion.',
+        type: 'email' as const,
+        title: 'Executive Check-in Email',
+        description: 'Direct check-in with decision-maker.',
         config: {
-          whatsappMessage: 'Hi {{name}}, quick check-in on the proposal - happy to jump on a 5-min call to clarify anything.'
+          emailSubject: 'Quick check-in regarding the proposal for {{company}}',
+          emailBody: 'Hi {{name}}, quick check-in on the proposal - happy to jump on a 5-min call to clarify anything.'
         }
       }
     ]
@@ -167,7 +168,7 @@ const Automations = () => {
   const handleLockedAction = async () => {
     await alertDialog({
       title: `Automations is Locked on ${currentPlan.toUpperCase()} Tier`,
-      message: 'Automations and autonomous sequence workflows are unavailable on Free and Basic tiers. Upgrade your workspace to Strovr Pro to unlock multi-step behavioral journeys, delays, and WhatsApp touchpoints.',
+      message: 'Automations and autonomous sequence workflows are unavailable on Free and Basic tiers. Upgrade your workspace to Strovr Pro to unlock multi-step behavioral journeys, delays, and automated email cadences.',
       variant: 'info'
     });
     setUpgradeTab('plans');
@@ -273,14 +274,15 @@ const Automations = () => {
     }
   };
 
-  const handleCompleteWhatsAppTask = async (enr: any) => {
-    if (!enr.pendingTask?.waLink) return;
-    window.open(enr.pendingTask.waLink, '_blank');
+  const handleCompleteTask = async (enr: any) => {
+    if (enr.pendingTask?.waLink) {
+      window.open(enr.pendingTask.waLink, '_blank');
+    }
     try {
       await axios.post(`${apiBase}/api/automations/queue/${enr._id}/complete-task`, {}, {
         headers: { userid: user?._id }
       });
-      showToast(`WhatsApp outreach recorded for ${enr.leadName}!`);
+      showToast(`Touchpoint task recorded for ${enr.leadName}!`);
       fetchQueue();
     } catch (err) {
       console.error('Failed to complete task:', err);
@@ -476,13 +478,13 @@ const Automations = () => {
       type,
       title: type === 'integration' && integrationApp
         ? `Push / Notify ${integrationApp.name}`
-        : type === 'email' ? 'Follow-up Email' : type === 'whatsapp' ? 'WhatsApp Message' : type === 'delay' ? 'Wait 2 Days' : 'Advance CRM Stage',
+        : type === 'email' ? 'Follow-up Email' : type === 'delay' ? 'Wait 2 Days' : 'Advance CRM Stage',
       description: type === 'integration' && integrationApp
         ? `Automatically dispatch JSON payload to connected ${integrationApp.name} integration.`
-        : type === 'email' ? 'Send follow-up template.' : type === 'whatsapp' ? 'Direct mobile outreach.' : type === 'delay' ? 'Wait interval before next step.' : 'Update deal stage.',
+        : type === 'email' ? 'Send follow-up template.' : type === 'delay' ? 'Wait interval before next step.' : 'Update deal stage.',
       config: type === 'integration' && integrationApp
         ? { integrationId: integrationApp.id, integrationName: integrationApp.name }
-        : type === 'delay' ? { delayDays: 2 } : type === 'email' ? { emailSubject: 'Quick update', emailBody: 'Hi {{name}}, wanted to check in.' } : type === 'whatsapp' ? { whatsappMessage: 'Hey {{name}}, following up!' } : { targetStage: 'Proposal Sent' }
+        : type === 'delay' ? { delayDays: 2 } : type === 'email' ? { emailSubject: 'Quick update', emailBody: 'Hi {{name}}, wanted to check in.' } : { targetStage: 'Proposal Sent' }
     };
 
     const updatedSteps = [...activeJourney.steps, newStep];
@@ -601,7 +603,7 @@ const Automations = () => {
                     Automations &amp; Behavioral Journeys are Locked on {currentPlan.toUpperCase()} Tier
                   </h2>
                   <p className="text-xs sm:text-sm font-delight text-slate-600 mt-2 leading-relaxed">
-                    Automations is an advanced autonomous engine unavailable on your current <strong>{currentPlan.toUpperCase()}</strong> tier. Upgrade your workspace to Strovr Pro to build multi-step email drip sequences, delay timers, WhatsApp touchpoints, and auto-CRM sync.
+                    Automations is an advanced autonomous engine unavailable on your current <strong>{currentPlan.toUpperCase()}</strong> tier. Upgrade your workspace to Strovr Pro to build multi-step email drip sequences, delay timers, deliverability optimization, and auto-CRM sync.
                   </p>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4 text-xs font-delight text-slate-700">
@@ -615,7 +617,7 @@ const Automations = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>Direct WhatsApp follow-up bridge</span>
+                      <span>Automated multi-step email drip cadences</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -852,9 +854,9 @@ const Automations = () => {
                 </div>
 
                 <div className="bg-white border border-slate-200 rounded-md p-3">
-                  <p className="text-[10px] font-delight font-semibold text-emerald-600 uppercase tracking-wider">WhatsApp Tasks Ready</p>
+                  <p className="text-[10px] font-delight font-semibold text-emerald-600 uppercase tracking-wider">Follow-Up Tasks Ready</p>
                   <h3 className="text-lg font-delight font-bold text-emerald-700 mt-0.5 flex items-center gap-1.5">
-                    <MessageSquare className="w-4 h-4 text-emerald-600" />
+                    <Mail className="w-4 h-4 text-emerald-600" />
                     <span>{queueData.stats.pendingTasks}</span>
                   </h3>
                 </div>
@@ -939,7 +941,7 @@ const Automations = () => {
                                 <td className="px-4 py-3">
                                   {enr.status === 'pending_task' ? (
                                     <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 animate-pulse">
-                                      <MessageSquare className="w-2.5 h-2.5" /> WhatsApp Task Ready
+                                      <Mail className="w-2.5 h-2.5" /> Follow-Up Task Ready
                                     </span>
                                   ) : enr.status === 'waiting_delay' ? (
                                     <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-800 border border-amber-200">
@@ -977,12 +979,12 @@ const Automations = () => {
                                   <div className="flex items-center justify-end gap-1.5">
                                     {enr.status === 'pending_task' && enr.pendingTask && (
                                       <button
-                                        onClick={() => handleCompleteWhatsAppTask(enr)}
+                                        onClick={() => handleCompleteTask(enr)}
                                         className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-medium flex items-center gap-1 shadow-2xs cursor-pointer"
-                                        title="Open WhatsApp web/app with pre-filled outreach message"
+                                        title="Trigger pre-configured follow-up action"
                                       >
-                                        <MessageSquare className="w-3 h-3" />
-                                        <span>1-Click Ping</span>
+                                        <Mail className="w-3 h-3" />
+                                        <span>1-Click Dispatch</span>
                                       </button>
                                     )}
                                     <button
@@ -1108,12 +1110,6 @@ const Automations = () => {
                         </div>
                       )}
 
-                      {step.config.whatsappMessage && (
-                        <div className="p-2.5 bg-emerald-50/60 rounded-md border border-emerald-200 text-[11px] font-delight font-medium text-emerald-900">
-                          {step.config.whatsappMessage}
-                        </div>
-                      )}
-
                       {step.config.delayDays && (
                         <div className="text-[10px] font-delight font-medium text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-sm w-max">
                           Waits {step.config.delayDays} day(s) before advancing
@@ -1147,12 +1143,6 @@ const Automations = () => {
                       className="px-2.5 py-1 bg-white border border-slate-200 rounded-md text-xs font-delight font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-1 cursor-pointer"
                     >
                       <Clock className="w-3 h-3 text-blue-600" /> + Delay
-                    </button>
-                    <button 
-                      onClick={() => handleAddStep('whatsapp')}
-                      className="px-2.5 py-1 bg-white border border-slate-200 rounded-md text-xs font-delight font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-1 cursor-pointer"
-                    >
-                      <MessageSquare className="w-3 h-3 text-emerald-600" /> + WhatsApp
                     </button>
                     <button 
                       onClick={() => handleAddStep('crm_update')}
@@ -1380,9 +1370,8 @@ const Automations = () => {
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 hover:text-emerald-700 mt-1"
                     >
-                      <MessageSquare className="w-2.5 h-2.5" />
-                      <span>Open Pre-filled WhatsApp Chat</span>
                       <ExternalLink className="w-2.5 h-2.5" />
+                      <span>Open Target Link</span>
                     </a>
                   )}
                 </div>

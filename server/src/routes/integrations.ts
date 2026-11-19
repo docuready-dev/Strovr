@@ -152,27 +152,7 @@ export const DEFAULT_APPS: IntegrationApp[] = [
     linkedTitle: 'Batch Campaign Dispatcher',
     linkedRoute: '/outreach'
   },
-  // 4. WhatsApp Cloud API
-  {
-    id: 'whatsapp',
-    name: 'WhatsApp Cloud API',
-    category: 'Communication',
-    connected: false,
-    logo: '/integrations/WhatsApp.png',
-    description: 'Official Meta WhatsApp Cloud API for conversational B2B messaging, click-to-chat links, and automated WhatsApp follow-ups.',
-    config: { phoneNumberId: '', accessToken: '', businessAccountId: '' },
-    configFields: [
-      { key: 'phoneNumberId', label: 'Phone Number ID', type: 'text', placeholder: '1029384756...', required: true },
-      { key: 'accessToken', label: 'Permanent System Access Token', type: 'password', placeholder: 'EAAB...', required: true },
-      { key: 'businessAccountId', label: 'WhatsApp Business Account ID', type: 'text', placeholder: '789101112...' }
-    ],
-    lastSync: null,
-    badge: 'Mobile Outreach',
-    linkedModule: 'outreach',
-    linkedTitle: 'WhatsApp Studio & Multi-Channel Journeys',
-    linkedRoute: '/outreach'
-  },
-  // 5. Google Calendar Booking & Meet
+  // 4. Google Calendar Booking & Meet
   {
     id: 'google-calendar',
     name: 'Google Calendar & Meet',
@@ -250,27 +230,7 @@ export const DEFAULT_APPS: IntegrationApp[] = [
     linkedTitle: 'Automated Journey Alerts',
     linkedRoute: '/automations'
   },
-  // 9. Twilio
-  {
-    id: 'twilio',
-    name: 'Twilio',
-    category: 'Communication',
-    connected: false,
-    logo: '/integrations/Twilio.png',
-    description: 'Carrier-grade SMS messaging and phone number verification. Dispatch automated SMS outreach and mobile engagement sequences.',
-    config: { accountSid: '', authToken: '', fromPhone: '' },
-    configFields: [
-      { key: 'accountSid', label: 'Twilio Account SID', type: 'text', placeholder: 'ACxxxxxxxx...', required: true },
-      { key: 'authToken', label: 'Twilio Auth Token', type: 'password', placeholder: 'xxxxxxxx...', required: true },
-      { key: 'fromPhone', label: 'Sender Phone Number', type: 'text', placeholder: '+15551234567', required: true }
-    ],
-    lastSync: null,
-    badge: 'Direct SMS',
-    linkedModule: 'outreach',
-    linkedTitle: 'SMS Studio & Follow-Up Sequences',
-    linkedRoute: '/outreach'
-  },
-  // 10. Airtable
+  // 8. Airtable
   {
     id: 'airtable',
     name: 'Airtable',
@@ -582,7 +542,7 @@ router.post('/connect', async (req, res) => {
                       [
                         'Business Name',
                         'Category',
-                        'Phone / WhatsApp',
+                        'Direct Phone',
                         'Email',
                         'Pipeline Stage',
                         'Rating',
@@ -1173,7 +1133,7 @@ router.post('/sync-leads', async (req, res) => {
     const headers = [
       'Business Name',
       'Category',
-      'Phone / WhatsApp',
+      'Direct Phone',
       'Email',
       'Pipeline Stage',
       'Rating',

@@ -51,15 +51,15 @@ const benchmarkProfiles = {
       },
       {
         id: '02',
-        title: 'AI Cold Email Studio, A/B Testing & Multi-Channel',
+        title: 'AI Cold Email Studio, A/B Testing & Deliverability Engine',
         replaces: 'Instantly / Lemlist',
-        scenario: 'Synthesizing personalized outreach copy per lead, 50/50 A/B split tests, and inbox + WhatsApp dispatch.',
+        scenario: 'Synthesizing personalized outreach copy per lead, 50/50 A/B split tests, and high-deliverability inbox placement.',
         marketPrice: '₹3,100 / mo',
         marketSub: '$37/mo for email sender only (0 leads)',
-        marketFlaw: 'Separate subscription + no WhatsApp bridge',
+        marketFlaw: 'Separate subscription + third-party tool hopping',
         ourPrice: '₹0 Extra',
         ourBadge: 'Built Native',
-        ourSub: 'AI Copilot + 8 Templates + SMTP & WhatsApp',
+        ourSub: 'AI Copilot + 10 Templates + SMTP & SendGrid',
         ourAdvantage: 'Zero add-on fee inside your workspace',
         savingsTag: 'Save ₹3,100/mo',
         barPct: 4,
@@ -111,9 +111,9 @@ const benchmarkProfiles = {
       },
       {
         id: '02',
-        title: 'AI Cold Email Studio, A/B Testing & Multi-Channel',
+        title: 'AI Cold Email Studio, A/B Testing & Deliverability Engine',
         replaces: 'Instantly / Lemlist',
-        scenario: 'Running multi-client AI outreach campaigns with 50/50 A/B split testing across Gmail, Resend, SMTP & WhatsApp.',
+        scenario: 'Running multi-client AI outreach campaigns with 50/50 A/B split testing across Gmail, Resend, SendGrid & SMTP.',
         marketPrice: '₹6,000 / mo',
         marketSub: '$72/mo agency sender tier (zero leads)',
         marketFlaw: 'Manual CSV uploads between scraper & sender',
@@ -171,9 +171,9 @@ const benchmarkProfiles = {
       },
       {
         id: '02',
-        title: 'AI Cold Email Studio, A/B Testing & Multi-Channel',
+        title: 'AI Cold Email Studio, A/B Testing & Deliverability Engine',
         replaces: 'Instantly / Lemlist',
-        scenario: 'Full-scale A/B split testing, custom HTML & attachment dispatch, and direct WhatsApp bridge across 10 reps.',
+        scenario: 'Full-scale A/B split testing, custom HTML & attachment dispatch, and deliverability jitter engine across 10 reps.',
         marketPrice: '₹7,900 / mo',
         marketSub: '$97/mo pro outreach automation tier',
         marketFlaw: 'Disconnected from CRM stage transitions',
@@ -490,7 +490,7 @@ const Landing = ({ onLogin }: { onLogin: () => void }) => {
             Three core engines. One integrated workspace.
           </h2>
           <p className="text-sm md:text-[15px] text-[#57524B] font-normal leading-relaxed">
-            Eliminate fragmented tools. Strovr connects precision prospect harvesting, generative AI email &amp; WhatsApp delivery, and visual CRM pipeline automation into an interconnected ledger.
+            Eliminate fragmented tools. Strovr connects precision prospect harvesting, generative AI email delivery, and visual CRM pipeline automation into an interconnected ledger.
           </p>
         </motion.div>
 
@@ -537,11 +537,11 @@ const Landing = ({ onLogin }: { onLogin: () => void }) => {
                 Outreach Studio &amp; AI Copilot
               </h3>
               <p className="text-[13px] text-[#57524B] leading-relaxed">
-                Generate high-converting personalized pitches via AI hook strategies. Dispatch production-grade cold emails via custom SMTP relays or initiate 1-click WhatsApp web conversations.
+                Generate high-converting personalized pitches via AI hook strategies. Dispatch production-grade cold emails via custom SMTP / SendGrid relays with 50/50 A/B testing and 3-step follow-ups.
               </p>
             </div>
             <div className="pt-4 border-t border-[#E5E0D5] flex items-center justify-between text-xs font-delight font-semibold text-[#78716A]">
-              <span>Email &amp; WhatsApp Relays</span>
+              <span>High-Deliverability Relays</span>
               <button
                 onClick={onLogin}
                 className="text-[#191716] hover:text-[#C85A32] flex items-center gap-1 font-delight font-bold text-xs cursor-pointer transition-colors"
@@ -677,9 +677,9 @@ const Landing = ({ onLogin }: { onLogin: () => void }) => {
             className="bg-[#F5F2EB] border border-[#E5E0D5] rounded-lg p-8 relative overflow-hidden flex flex-col justify-between hover:border-[#D6CFC2] transition-colors"
           >
             <div>
-              <h3 className="text-xl font-extrabold text-[#191716] mb-2 tracking-tight">Multi-Channel Delivery</h3>
+              <h3 className="text-xl font-extrabold text-[#191716] mb-2 tracking-tight">High-Deliverability Engine</h3>
               <p className="text-[13px] text-[#57524B] leading-relaxed">
-                Reach decision-makers via verified corporate email relays and direct WhatsApp conversational frameworks.
+                Reach primary inboxes via verified corporate email relays, anti-spam jitter, and 1x1 engagement tracking.
               </p>
             </div>
 
@@ -691,9 +691,9 @@ const Landing = ({ onLogin }: { onLogin: () => void }) => {
                 </span>
               </div>
               <div className="px-3.5 py-2.5 flex items-center justify-between">
-                <span className="text-[#57524B]">WhatsApp Direct Bridge</span>
+                <span className="text-[#57524B]">Deliverability &amp; Jitter</span>
                 <span className="inline-flex items-center gap-1.5 font-semibold text-[#C85A32]">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#C85A32]"></span> Instant Sync
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#C85A32]"></span> 99.4% Placement
                 </span>
               </div>
             </div>
@@ -854,7 +854,7 @@ const Landing = ({ onLogin }: { onLogin: () => void }) => {
                 </li>
                 <li className="flex items-start gap-2.5">
                   <Check className="w-3.5 h-3.5 text-[#C85A32] shrink-0 mt-0.5" />
-                  <span><strong>WhatsApp Direct Bridge &amp; Behavioral Journeys:</strong> Trigger multi-step follow-ups and 1-click WhatsApp conversations alongside email.</span>
+                  <span><strong>Smart Follow-up Sequences &amp; Behavioral Journeys:</strong> Trigger multi-step email drip cadences, automated delays, and CRM auto-advancement.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <Check className="w-3.5 h-3.5 text-[#C85A32] shrink-0 mt-0.5" />
@@ -1315,7 +1315,7 @@ const Landing = ({ onLogin }: { onLogin: () => void }) => {
                   </li>
                   <li className="flex items-start gap-2">
                     <Check className="w-3.5 h-3.5 text-[#E07A5F] shrink-0 mt-0.5" />
-                    <span><strong className="font-medium">Multi-Step Behavioral Journeys</strong> (Email + WhatsApp bridge)</span>
+                    <span><strong className="font-medium">Multi-Step Behavioral Journeys</strong> (Automated Email Drips &amp; Delays)</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <Check className="w-3.5 h-3.5 text-[#E07A5F] shrink-0 mt-0.5" />
@@ -1484,7 +1484,7 @@ const Landing = ({ onLogin }: { onLogin: () => void }) => {
                   <td className="py-3 px-5 font-medium text-[#191716]">Automated Sequence Depth</td>
                   <td className="py-3 px-4 text-center text-[#57524B] font-normal">Single one-off blast</td>
                   <td className="py-3 px-4 text-center font-medium text-[#C85A32] bg-[#C85A32]/5">2-Step Sequence (Initial + Follow-up)</td>
-                  <td className="py-3 px-4 text-center font-medium text-[#191716]">Multi-Step Journeys + WhatsApp Bridge</td>
+                  <td className="py-3 px-4 text-center font-medium text-[#191716]">Multi-Step Journeys + Automated Drip Cadence</td>
                   <td className="py-3 px-4 text-center text-slate-400 font-normal line-through">₹3,500+/mo</td>
                 </tr>
                 <tr className="hover:bg-[#FAF8F5]/80 transition-colors">

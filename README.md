@@ -15,7 +15,7 @@
 
 </div>
 
-**Strovr** is a full-stack, enterprise-grade B2B customer acquisition platform that unifies real-time geo-targeted lead discovery, an intelligent audience CRM, executive AI copywriting, and high-deliverability multi-channel outreach (Email, WhatsApp, and Webhooks) into a single high-performance workspace.
+**Strovr** is a full-stack, enterprise-grade B2B customer acquisition platform that unifies real-time geo-targeted lead discovery, an intelligent audience CRM, executive AI copywriting, and high-deliverability email outreach with A/B split testing and multi-step sequence cadences into a single high-performance workspace.
 
 ---
 
@@ -25,7 +25,7 @@
 - [Interactive Email Frameworks](#interactive-email-frameworks)
 - [Universal Email Attachments Engine](#universal-email-attachments-engine)
 - [Executive AI Co-Pilot](#executive-ai-co-pilot)
-- [Multi-Channel Outbox Architecture](#multi-channel-outbox-architecture)
+- [Email Studio & Deliverability Architecture](#email-studio--deliverability-architecture)
 - [System Architecture & Data Flow](#system-architecture--data-flow)
 - [Tech Stack](#tech-stack)
 - [Project Directory Structure](#project-directory-structure)
@@ -46,13 +46,14 @@
 ### 2. Centralized Audience CRM & Cross-Device Database
 - **Unified Lead Reservoir**: Every harvested prospect and manual contact aggregates into an active database accessible across mobile and desktop sessions.
 - **Multi-Dimensional Sorting & Filtering**: Sort audiences instantly by harvest date, city, niche, engagement status, or rating.
-- **Lifecycle Pipeline Tracking**: Automatically updates prospect status from `New` to `Contacted`, `Replied`, or `Closed` upon live dispatch.
+- **Lifecycle Pipeline Tracking**: Automatically updates prospect status from `New` to `Email Contacted`, `Phone Contacted`, `Replied`, or `Closed` upon live dispatch.
 - **Export & Import**: Instant CSV and Excel exports formatted for seamless import into external CRMs.
 
-### 3. Multi-Channel Outreach Engine (Email + WhatsApp)
-- **Direct-to-Inbox Emailing**: Dispatches compiled HTML templates with live merge tags directly into recipient inboxes.
-- **1-Click WhatsApp Web Bridge**: Generates pre-formatted WhatsApp chat deep-links (`wa.me`) injected with recipient-specific variables and collateral links.
-- **50/50 A/B Split Testing**: Run concurrent variant testing across subjects, copy angles, and CTA configurations to optimize open and click-through rates.
+### 3. High-Deliverability Email Studio & Sequencing Engine
+- **Direct-to-Inbox Emailing**: Dispatches compiled HTML templates with live merge tags directly into recipient inboxes via SendGrid Web API or custom SMTP.
+- **Subject Line 50/50 A/B Split Testing**: Run concurrent variant testing across subjects with live preview toggling to maximize open rates.
+- **Smart 3-Step Follow-Up Sequence**: Automated multi-step cadences (Day 0 Pitch, Step 2 Gentle Bump, Step 3 Final Value Break-up).
+- **Deliverability & Spam Inspector**: Anti-spam jitter, real-time spam trigger keyword scanner, and executive email signature builder.
 
 ---
 

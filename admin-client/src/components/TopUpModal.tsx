@@ -336,7 +336,7 @@ const TopUpModal = () => {
                     </li>
                     <li className="flex items-center gap-2 text-gray-800 font-medium">
                       <Check className="w-4 h-4 text-purple-600 shrink-0" />
-                      <span><strong>WhatsApp & SMS</strong> template pathways</span>
+                      <span><strong>Automated Follow-up Drip</strong> sequences</span>
                     </li>
                     <li className="flex items-center gap-2 text-gray-800 font-medium">
                       <Check className="w-4 h-4 text-purple-600 shrink-0" />
@@ -428,10 +428,10 @@ const TopUpModal = () => {
                       <td className="p-3.5 text-center text-emerald-600 font-bold">✔ Advanced Sequences</td>
                     </tr>
                     <tr>
-                      <td className="p-3.5 pl-5 font-semibold text-gray-800">WhatsApp & SMS Integration</td>
+                      <td className="p-3.5 pl-5 font-semibold text-gray-800">Email Drip & Sequence Engine</td>
                       <td className="p-3.5 text-center text-red-500 font-bold">❌ Locked</td>
                       <td className="p-3.5 text-center text-gray-400">Standard Pathways</td>
-                      <td className="p-3.5 text-center text-purple-700 font-bold">✔ Official WhatsApp API</td>
+                      <td className="p-3.5 text-center text-purple-700 font-bold">✔ Unlimited Drip Sequences</td>
                     </tr>
                     <tr>
                       <td className="p-3.5 pl-5 font-semibold text-gray-800">Dedicated Worker Priority (No Queuing)</td>

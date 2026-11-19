@@ -450,7 +450,7 @@ const LeadFinder = () => {
     const findCol = (keywords: string[]) => rawHeaders.findIndex(h => keywords.some(k => h.includes(k)));
 
     const nameIdx = findCol(['business', 'company', 'name', 'title', 'brand', 'org', 'listing']);
-    const phoneIdx = findCol(['phone', 'mobile', 'cell', 'tel', 'whatsapp', 'number', 'contact']);
+    const phoneIdx = findCol(['phone', 'mobile', 'cell', 'tel', 'phone_number', 'number', 'contact']);
     const emailIdx = findCol(['email', 'mail']);
     const locIdx = findCol(['location', 'address', 'city', 'state', 'place', 'area']);
     const catIdx = findCol(['category', 'field', 'industry', 'type', 'niche', 'work']);
@@ -792,7 +792,7 @@ const LeadFinder = () => {
                     <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-medium text-slate-500 uppercase tracking-wider font-delight">
                       <tr>
                         <th className="py-4 px-6 min-w-[320px] max-w-[460px] font-medium">Business Name, Website &amp; Email</th>
-                        <th className="py-4 px-5 font-medium">Direct Phone / WhatsApp</th>
+                        <th className="py-4 px-5 font-medium">Direct Phone</th>
                         <th className="py-4 px-5 font-medium">Category</th>
                         <th className="py-4 px-5 font-medium">Location</th>
                         <th className="py-4 px-5 font-medium">Rating</th>
@@ -1107,7 +1107,7 @@ const LeadFinder = () => {
 
               <div className="grid grid-cols-2 gap-2.5">
                 <div>
-                  <label className="block text-[11px] font-delight font-semibold text-slate-600 mb-1">Phone / WhatsApp</label>
+                  <label className="block text-[11px] font-delight font-semibold text-slate-600 mb-1">Direct Phone</label>
                   <input 
                     type="text"
                     value={editingLead.phone || ''}
@@ -1167,9 +1167,9 @@ const LeadFinder = () => {
                   className="w-full h-8 px-2.5 border border-slate-200 rounded-md text-xs font-delight font-medium outline-none focus:border-slate-400 bg-white cursor-pointer"
                 >
                   <option value="New">New</option>
-                  <option value="WhatsApp Contacted">WhatsApp Contacted</option>
-                  <option value="Replied / Awaiting Email">Replied / Awaiting Email</option>
-                  <option value="Email Verified & Captured">Email Verified & Captured</option>
+                  <option value="Email Contacted">Email Contacted</option>
+                  <option value="Phone Contacted">Phone Contacted</option>
+                  <option value="Replied / In Discussion">Replied / In Discussion</option>
                   <option value="Proposal Sent">Proposal Sent</option>
                   <option value="Closed Won">Closed Won</option>
                 </select>

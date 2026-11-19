@@ -25,11 +25,9 @@ export interface LeadRecord {
   createdAt: string;
   updatedAt: string;
   // Contact Channels Tracking Flags
-  whatsapp_contacted?: boolean;
   email_contacted?: boolean;
   phone_contacted?: boolean;
   // Aliases for polymorphic client compatibility
-  whatsappContacted?: boolean;
   emailContacted?: boolean;
   phoneContacted?: boolean;
   telephonic_contacted?: boolean;
@@ -104,7 +102,6 @@ class LeadStore {
               if (!PERMANENT_BANNED_LEAD_NAMES.has(normName)) {
                 this.leads.set(item._id, {
                   ...item,
-                  whatsapp_contacted: Boolean(item.whatsapp_contacted || item.whatsappContacted),
                   email_contacted: Boolean(item.email_contacted || item.emailContacted),
                   phone_contacted: Boolean(item.phone_contacted || item.telephonic_contacted || item.phoneContacted)
                 });
@@ -167,7 +164,7 @@ class LeadStore {
   }
 
   private writeCsvFile(targetPath: string, leads: LeadRecord[]) {
-    const headers = ['Business Name', 'Category', 'Phone', 'Email', 'Email Status', 'Website', 'Rating', 'Location', 'City', 'Status', 'WhatsApp Contacted', 'Email Contacted', 'Phone Contacted', 'Tags', 'Source', 'Harvested At'];
+    const headers = ['Business Name', 'Category', 'Phone', 'Email', 'Email Status', 'Website', 'Rating', 'Location', 'City', 'Status', 'Email Contacted', 'Phone Contacted', 'Tags', 'Source', 'Harvested At'];
     const rows = leads.map(l => [
       `"${(l.businessName || '').replace(/"/g, '""')}"`,
       `"${(l.category || '').replace(/"/g, '""')}"`,
@@ -179,7 +176,6 @@ class LeadStore {
       `"${(l.location || '').replace(/"/g, '""')}"`,
       `"${(l.city || '').replace(/"/g, '""')}"`,
       `"${(l.status || 'New').replace(/"/g, '""')}"`,
-      `"${l.whatsapp_contacted ? 'Yes' : 'No'}"`,
       `"${l.email_contacted ? 'Yes' : 'No'}"`,
       `"${l.phone_contacted ? 'Yes' : 'No'}"`,
       `"${(Array.isArray(l.tags) ? l.tags.join('; ') : '').replace(/"/g, '""')}"`,
@@ -282,7 +278,6 @@ class LeadStore {
               ...lead,
               _id: existingId,
               userId: existing.userId,
-              whatsapp_contacted: lead.whatsapp_contacted !== undefined ? Boolean(lead.whatsapp_contacted) : existing.whatsapp_contacted,
               email_contacted: lead.email_contacted !== undefined ? Boolean(lead.email_contacted) : existing.email_contacted,
               phone_contacted: lead.phone_contacted !== undefined ? Boolean(lead.phone_contacted) : (lead.telephonic_contacted !== undefined ? Boolean(lead.telephonic_contacted) : existing.phone_contacted),
               updatedAt: new Date().toISOString()
@@ -322,7 +317,6 @@ class LeadStore {
       harvestedAt: harvestedAt,
       createdAt: lead.createdAt || harvestedAt,
       updatedAt: lead.updatedAt || nowIso,
-      whatsapp_contacted: Boolean(lead.whatsapp_contacted ?? lead.whatsappContacted ?? false),
       email_contacted: Boolean(lead.email_contacted ?? lead.emailContacted ?? false),
       phone_contacted: Boolean(lead.phone_contacted ?? lead.telephonic_contacted ?? lead.phoneContacted ?? false),
       harvestJobId: lead.harvestJobId || ''
@@ -372,7 +366,6 @@ class LeadStore {
         harvestedAt: harvestedAt,
         createdAt: l.createdAt || harvestedAt,
         updatedAt: nowIso,
-        whatsapp_contacted: Boolean(l.whatsapp_contacted ?? l.whatsappContacted ?? false),
         email_contacted: Boolean(l.email_contacted ?? l.emailContacted ?? false),
         phone_contacted: Boolean(l.phone_contacted ?? l.telephonic_contacted ?? l.phoneContacted ?? false),
         harvestJobId: l.harvestJobId || ''
@@ -438,7 +431,6 @@ class LeadStore {
         if (assignedCity && !existing.city) existing.city = assignedCity;
         if (l.location && !existing.location) existing.location = l.location;
         if (l.status) existing.status = l.status;
-        if (l.whatsapp_contacted !== undefined) existing.whatsapp_contacted = Boolean(l.whatsapp_contacted);
         if (l.email_contacted !== undefined) existing.email_contacted = Boolean(l.email_contacted);
         if (l.phone_contacted !== undefined) existing.phone_contacted = Boolean(l.phone_contacted);
         if (Array.isArray(l.tags) && l.tags.length > 0) {
@@ -474,7 +466,6 @@ class LeadStore {
           harvestedAt: assignedHarvestedAt,
           createdAt: l.createdAt || assignedHarvestedAt,
           updatedAt: nowIso,
-          whatsapp_contacted: Boolean(l.whatsapp_contacted ?? l.whatsappContacted ?? false),
           email_contacted: Boolean(l.email_contacted ?? l.emailContacted ?? false),
           phone_contacted: Boolean(l.phone_contacted ?? l.telephonic_contacted ?? l.phoneContacted ?? false),
           harvestJobId: l.harvestJobId || ''
@@ -494,10 +485,6 @@ class LeadStore {
     const existing = this.leads.get(id);
     if (!existing) return null;
 
-    const resolvedWa = updates.whatsapp_contacted !== undefined 
-      ? Boolean(updates.whatsapp_contacted) 
-      : (updates.whatsappContacted !== undefined ? Boolean(updates.whatsappContacted) : existing.whatsapp_contacted);
-
     const resolvedEmail = updates.email_contacted !== undefined 
       ? Boolean(updates.email_contacted) 
       : (updates.emailContacted !== undefined ? Boolean(updates.emailContacted) : existing.email_contacted);
@@ -513,7 +500,6 @@ class LeadStore {
       ...updates,
       _id: id, // Immutable ID
       userId: existing.userId, // Immutable owner
-      whatsapp_contacted: resolvedWa,
       email_contacted: resolvedEmail,
       phone_contacted: resolvedPhone,
       updatedAt: new Date().toISOString()

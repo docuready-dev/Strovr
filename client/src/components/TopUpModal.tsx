@@ -427,7 +427,7 @@ const TopUpModal = () => {
                     </li>
                     <li className="flex items-center gap-2 text-slate-800">
                       <Check className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                      <span><strong className="font-medium">Multi-Step Behavioral Journeys</strong> (WhatsApp bridge)</span>
+                      <span><strong className="font-medium">Multi-Step Behavioral Journeys</strong> (Automated email drip)</span>
                     </li>
                     <li className="flex items-center gap-2 text-slate-800">
                       <Check className="w-3.5 h-3.5 text-purple-600 shrink-0" />
@@ -539,7 +539,7 @@ const TopUpModal = () => {
                       <td className="p-3 pl-4 font-medium text-slate-800">Automated Sequence Depth</td>
                       <td className="p-3 text-center font-normal text-slate-600">Single one-off blast</td>
                       <td className="p-3 text-center font-medium text-slate-800 bg-[#C85A32]/5">2-Step (Initial + Follow-up)</td>
-                      <td className="p-3 text-center font-medium text-purple-900">Multi-Step Behavioral + WhatsApp</td>
+                      <td className="p-3 text-center font-medium text-purple-900">Multi-Step Behavioral + Drip</td>
                     </tr>
                     <tr className="hover:bg-slate-50/70 transition-colors">
                       <td className="p-3 pl-4 font-medium text-slate-800">Team Workspace Seats</td>

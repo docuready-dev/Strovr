@@ -45,19 +45,20 @@ const DEFAULT_STARTER_JOURNEYS = [
       },
       {
         id: 'step_5',
-        type: 'whatsapp',
-        title: 'Step 2: WhatsApp Courtesy Ping',
-        description: 'Direct follow-up if mobile phone number is verified.',
+        type: 'email',
+        title: 'Step 2: Gentle Follow-up Bump',
+        description: 'Direct follow-up to inbox after 3-day window.',
         config: {
-          whatsappMessage: 'Hey {{name}}, sent an email earlier this week regarding {{company}} - wanted to ensure you received it!'
+          emailSubject: 'Quick follow-up regarding {{company}}',
+          emailBody: 'Hey {{name}}, sent an email earlier this week regarding {{company}} - wanted to ensure you received it!'
         }
       },
       {
         id: 'step_6',
         type: 'crm_update',
-        title: 'Advance Stage: WhatsApp Contacted',
+        title: 'Advance Stage: Email Contacted',
         description: 'Move prospect card to active engagement column in CRM.',
-        config: { targetStage: 'WhatsApp Contacted' }
+        config: { targetStage: 'Email Contacted' }
       }
     ]
   },
@@ -95,8 +96,8 @@ const DEFAULT_STARTER_JOURNEYS = [
     ]
   },
   {
-    name: 'Cold Outreach Multi-Channel Blitz',
-    trigger: 'Segment: Verified Emails & WhatsApp Ready',
+    name: 'Cold Outreach Email Cadence Blitz',
+    trigger: 'Segment: Verified Emails Ready',
     status: 'paused',
     totalEnrolled: 85,
     conversions: 14,
@@ -314,7 +315,7 @@ router.post('/queue/:id/cancel', async (req, res) => {
   res.json({ success: ok });
 });
 
-// POST /api/automations/queue/:id/complete-task - Complete a pending WhatsApp task
+// POST /api/automations/queue/:id/complete-task - Complete a pending follow-up task
 router.post('/queue/:id/complete-task', async (req, res) => {
   const userId = req.headers.userid as string;
   if (!userId) return res.status(401).json({ error: 'Unauthorized' });

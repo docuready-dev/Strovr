@@ -165,7 +165,7 @@ const Audience = () => {
   // Custom Segments
   const [customSegments, setCustomSegments] = useState<{ title: string; desc: string; filterKey: string }[]>([
     { title: 'Verified Emails', desc: 'Contacts with confirmed deliverable email addresses.', filterKey: 'has_email' },
-    { title: 'WhatsApp Outreach Ready', desc: 'Contacts with mobile numbers ready for direct WhatsApp dispatch.', filterKey: 'has_phone' },
+    { title: 'Direct Phone Verified', desc: 'Contacts with direct phone numbers ready for telephonic outreach.', filterKey: 'has_phone' },
     { title: 'Hot Pipeline Opportunities', desc: 'Prospects with proposals sent or closed won status.', filterKey: 'hot_leads' },
     { title: 'Fresh Harvests', desc: 'New uncontacted leads recently generated from the database.', filterKey: 'new_leads' }
   ]);
@@ -367,7 +367,6 @@ const Audience = () => {
     if (stageFilter === 'All') return true;
     if (stageFilter === 'has_email') return Boolean(lead.email);
     if (stageFilter === 'has_phone') return Boolean(lead.phone);
-    if (stageFilter === 'wa_contacted') return Boolean(lead.whatsapp_contacted || lead.whatsappContacted);
     if (stageFilter === 'email_contacted') return Boolean(lead.email_contacted || lead.emailContacted);
     if (stageFilter === 'phone_contacted') return Boolean(lead.phone_contacted || lead.telephonic_contacted || lead.phoneContacted);
     if (stageFilter === 'hot_leads') return lead.status === 'Proposal Sent' || lead.status === 'Closed Won';
@@ -514,7 +513,6 @@ const Audience = () => {
         location: editingContact.location || '',
         city: editingContact.city || (editingContact.location ? editingContact.location.split(',')[0].trim() : ''),
         status: editingContact.status || 'New',
-        whatsapp_contacted: Boolean(editingContact.whatsapp_contacted || editingContact.whatsappContacted),
         email_contacted: Boolean(editingContact.email_contacted || editingContact.emailContacted),
         phone_contacted: Boolean(editingContact.phone_contacted || editingContact.telephonic_contacted || editingContact.phoneContacted)
       };
@@ -617,16 +615,15 @@ const Audience = () => {
     }
   };
 
-  // Toggle contact channels (WhatsApp, Email, Telephonic/Call)
+  // Toggle contact channels (Email, Telephonic/Call)
   const handleToggleContactChannel = async (
     lead: any, 
-    channel: 'whatsapp' | 'email' | 'phone', 
+    channel: 'email' | 'phone', 
     e?: React.MouseEvent
   ) => {
     if (e) e.stopPropagation();
     const leadId = lead._id;
     const currentStatus = 
-      channel === 'whatsapp' ? Boolean(lead.whatsapp_contacted || lead.whatsappContacted) :
       channel === 'email' ? Boolean(lead.email_contacted || lead.emailContacted) :
       Boolean(lead.phone_contacted || lead.telephonic_contacted || lead.phoneContacted);
     const newStatus = !currentStatus;
@@ -634,9 +631,6 @@ const Audience = () => {
     // Optimistic UI update
     const updated = leads.map(l => {
       if (l._id !== leadId) return l;
-      if (channel === 'whatsapp') {
-        return { ...l, whatsapp_contacted: newStatus, whatsappContacted: newStatus };
-      }
       if (channel === 'email') {
         return { ...l, email_contacted: newStatus, emailContacted: newStatus };
       }
@@ -647,7 +641,6 @@ const Audience = () => {
 
     try {
       const payload: any = {};
-      if (channel === 'whatsapp') payload.whatsapp_contacted = newStatus;
       if (channel === 'email') payload.email_contacted = newStatus;
       if (channel === 'phone') payload.phone_contacted = newStatus;
 
@@ -732,7 +725,7 @@ const Audience = () => {
     const findCol = (keywords: string[]) => rawHeaders.findIndex(h => keywords.some(k => h.includes(k)));
 
     const nameIdx = findCol(['business', 'company', 'name', 'title', 'brand', 'org', 'listing']);
-    const phoneIdx = findCol(['phone', 'mobile', 'cell', 'tel', 'whatsapp', 'number', 'contact']);
+    const phoneIdx = findCol(['phone', 'mobile', 'cell', 'tel', 'number', 'contact']);
     const emailIdx = findCol(['email', 'mail']);
     const locIdx = findCol(['location', 'address', 'city', 'state', 'place', 'area']);
     const catIdx = findCol(['category', 'field', 'industry', 'type', 'niche', 'work']);
@@ -979,7 +972,7 @@ const Audience = () => {
   <form onsubmit="event.preventDefault(); var b=this.querySelector('button'); b.disabled=true; b.innerText='Submitting...'; fetch('${endpoint}', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name:this.name.value, email:this.email.value, company:this.company.value, phone:this.phone.value, formId:'${form.id}'})}).then(function(r){return r.json()}).then(function(d){document.getElementById('lp-capture-container').innerHTML='<div style=\\'text-align:center;padding:24px;color:#16a34a;font-weight:600;\\'>&#10004; Thank you! Your request has been received.</div>'}).catch(function(){b.disabled=false; b.innerText='${form.buttonText}'; alert('Submission failed. Please try again.');});" style="display: flex; flex-direction: column; gap: 12px;">
     <input type="text" name="name" placeholder="Full Name" required style="padding: 10px 14px; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 14px; outline: none;" />
     <input type="email" name="email" placeholder="Work Email" required style="padding: 10px 14px; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 14px; outline: none;" />
-    <input type="tel" name="phone" placeholder="Phone or WhatsApp (Optional)" style="padding: 10px 14px; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 14px; outline: none;" />
+    <input type="tel" name="phone" placeholder="Phone Number (Optional)" style="padding: 10px 14px; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 14px; outline: none;" />
     <input type="text" name="company" placeholder="Company Name" style="padding: 10px 14px; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 14px; outline: none;" />
     <button type="submit" style="padding: 12px; background: ${form.themeColor}; color: #ffffff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: opacity 0.2s;">
       ${form.buttonText}
@@ -1171,7 +1164,7 @@ const Audience = () => {
 
               <div className="p-3.5 flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] font-delight font-semibold text-slate-500 uppercase tracking-wider">WhatsApp Ready</p>
+                  <p className="text-[10px] font-delight font-semibold text-slate-500 uppercase tracking-wider">Phone Verified</p>
                   <h3 className="text-xl font-delight font-bold text-slate-900 mt-1 tracking-tight tabular-nums">{phoneContacts}</h3>
                 </div>
               </div>
@@ -1270,13 +1263,12 @@ const Audience = () => {
                       >
                         <option value="All">All Stages</option>
                         <option value="New">Stage: New</option>
-                        <option value="WhatsApp Contacted">Stage: WhatsApp Contacted</option>
+                        <option value="Email Contacted">Stage: Email Contacted</option>
                         <option value="Email Verified & Captured">Stage: Email Captured</option>
                         <option value="Proposal Sent">Stage: Proposal Sent</option>
                         <option value="Closed Won">Stage: Closed Won</option>
                         <option value="has_email">Filter: Has Email</option>
                         <option value="has_phone">Filter: Has Phone</option>
-                        <option value="wa_contacted">Filter: WhatsApp Contacted</option>
                         <option value="email_contacted">Filter: Email Contacted</option>
                         <option value="phone_contacted">Filter: Telephonic Contacted</option>
                       </select>
@@ -1506,7 +1498,7 @@ const Audience = () => {
                                 <span className={`inline-block px-2 py-0.5 rounded-sm text-[10px] font-delight font-medium border ${
                                   lead.status === 'Closed Won' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
                                   lead.status === 'Proposal Sent' ? 'bg-purple-50 text-purple-700 border-purple-200' :
-                                  lead.status === 'WhatsApp Contacted' ? 'bg-green-50 text-green-700 border-green-200' :
+                                  lead.status === 'Email Contacted' ? 'bg-green-50 text-green-700 border-green-200' :
                                   lead.status === 'Email Verified & Captured' ? 'bg-blue-50 text-blue-700 border-blue-200' :
                                   'bg-slate-100 text-slate-700 border-slate-200'
                                 }`}>
@@ -1528,21 +1520,6 @@ const Audience = () => {
                             {/* Channels Contacted */}
                             <td className="py-5 px-5 font-delight font-medium align-middle">
                               <div className="flex items-center gap-1.5 flex-wrap">
-                                {/* WhatsApp */}
-                                <button
-                                  type="button"
-                                  onClick={(e) => handleToggleContactChannel(lead, 'whatsapp', e)}
-                                  className={`px-2 py-1 rounded-sm text-[10px] font-delight border flex items-center gap-1 cursor-pointer transition-colors ${
-                                    (lead.whatsapp_contacted || lead.whatsappContacted)
-                                      ? 'bg-emerald-50 text-emerald-700 border-emerald-300 font-bold'
-                                      : 'bg-white text-slate-400 border-slate-200 hover:text-slate-600 font-medium'
-                                  }`}
-                                  title={(lead.whatsapp_contacted || lead.whatsappContacted) ? 'WhatsApp: Contacted (Click to toggle)' : 'WhatsApp: Not Contacted (Click to toggle)'}
-                                >
-                                  <MessageCircle className={`w-3 h-3 ${(lead.whatsapp_contacted || lead.whatsappContacted) ? 'text-emerald-600' : 'text-slate-400'}`} />
-                                  <span>{(lead.whatsapp_contacted || lead.whatsappContacted) ? 'WA ✓' : 'WA ✕'}</span>
-                                </button>
-
                                 {/* Email */}
                                 <button
                                   type="button"
@@ -1883,7 +1860,7 @@ const Audience = () => {
                     className="w-full h-8 px-2.5 border border-slate-200 rounded-md text-xs font-delight font-medium focus:border-slate-400 outline-none bg-white cursor-pointer"
                   >
                     <option value="New">New</option>
-                    <option value="WhatsApp Contacted">WhatsApp Contacted</option>
+                    <option value="Email Contacted">Email Contacted</option>
                     <option value="Email Verified & Captured">Email Verified</option>
                     <option value="Proposal Sent">Proposal Sent</option>
                     <option value="Closed Won">Closed Won</option>
@@ -2268,7 +2245,7 @@ const Audience = () => {
 
               <div className="grid grid-cols-2 gap-2.5">
                 <div>
-                  <label className="block text-[11px] font-delight font-semibold text-slate-600 mb-1">Phone / WhatsApp</label>
+                  <label className="block text-[11px] font-delight font-semibold text-slate-600 mb-1">Direct Phone</label>
                   <input 
                     type="text"
                     value={editingContact.phone || ''}
@@ -2316,7 +2293,7 @@ const Audience = () => {
                     className="w-full h-8 px-2.5 border border-slate-200 rounded-md text-xs font-delight font-medium outline-none focus:border-slate-400 bg-white cursor-pointer"
                   >
                     <option value="New">New</option>
-                    <option value="WhatsApp Contacted">WhatsApp Contacted</option>
+                    <option value="Email Contacted">Email Contacted</option>
                     <option value="Replied / Awaiting Email">Replied / Awaiting Email</option>
                     <option value="Email Verified & Captured">Email Verified & Captured</option>
                     <option value="Proposal Sent">Proposal Sent</option>
@@ -2327,21 +2304,8 @@ const Audience = () => {
 
               {/* Multichannel Contact Status */}
               <div className="pt-2 border-t border-slate-100">
-                <label className="block text-[11px] font-delight font-semibold text-slate-700 mb-2">Multichannel Contact Status</label>
-                <div className="grid grid-cols-3 gap-2">
-                  <label className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-md cursor-pointer text-xs font-delight text-slate-700 hover:bg-emerald-50/50">
-                    <input
-                      type="checkbox"
-                      checked={Boolean(editingContact.whatsapp_contacted || editingContact.whatsappContacted)}
-                      onChange={(e) => setEditingContact({
-                        ...editingContact,
-                        whatsapp_contacted: e.target.checked,
-                        whatsappContacted: e.target.checked
-                      })}
-                      className="w-3.5 h-3.5 rounded text-emerald-600 cursor-pointer"
-                    />
-                    <span className="font-medium">WhatsApp</span>
-                  </label>
+                <label className="block text-[11px] font-delight font-semibold text-slate-700 mb-2">Contact Channels Status</label>
+                <div className="grid grid-cols-2 gap-2">
                   <label className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-md cursor-pointer text-xs font-delight text-slate-700 hover:bg-blue-50/50">
                     <input
                       type="checkbox"
@@ -2353,7 +2317,7 @@ const Audience = () => {
                       })}
                       className="w-3.5 h-3.5 rounded text-blue-600 cursor-pointer"
                     />
-                    <span className="font-medium">Email</span>
+                    <span className="font-medium">Email Contacted</span>
                   </label>
                   <label className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-md cursor-pointer text-xs font-delight text-slate-700 hover:bg-amber-50/50">
                     <input

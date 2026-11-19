@@ -36,7 +36,7 @@ This directory contains high-resolution screenshots capturing every panel, page,
 
 ## 5. Outreach Studio & Multi-Channel Center (`screenshots/05-outreach-center/`)
 - [`01-outreach-email-studio.png`](file:///C:/Users/Ashley/.gemini/antigravity/scratch/LeadPulse/screenshots/05-outreach-center/01-outreach-email-studio.png): Email outreach studio with Brevo API status, dynamic variable previewing, sending limits, and mandatory unsubscribe compliance.
-- [`02-outreach-whatsapp-studio.png`](file:///C:/Users/Ashley/.gemini/antigravity/scratch/LeadPulse/screenshots/05-outreach-center/02-outreach-whatsapp-studio.png): WhatsApp outreach studio featuring the **image and PDF file attachment layout** for sending professional documents alongside outreach text.
+- [`02-outreach-sequence-studio.png`](file:///C:/Users/Ashley/.gemini/antigravity/scratch/LeadPulse/screenshots/05-outreach-center/02-outreach-sequence-studio.png): Multi-step email follow-up sequence studio with A/B split testing and deliverability tools.
 
 ---
 

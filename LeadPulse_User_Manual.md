@@ -1,6 +1,6 @@
 # 🚀 The Ultimate LeadPulse User Manual
 
-Welcome to LeadPulse! LeadPulse is your all-in-one platform to magically find new businesses, organize them into a visual pipeline, and reach out to them using perfectly formatted emails and WhatsApp messages—all without breaking a sweat.
+Welcome to LeadPulse! LeadPulse is your all-in-one platform to magically find new businesses, organize them into a visual pipeline, and reach out to them using high-deliverability cold email outreach—all without breaking a sweat.
 
 We designed this manual specifically for non-technical users. If you can click a mouse and type an email, you can master LeadPulse in minutes!
 
@@ -28,19 +28,16 @@ CRM stands for "Customer Relationship Management." Think of it as your digital f
 
 ---
 
-## 3. The Outreach Center (Emails & WhatsApp)
-Once you have leads, it is time to say hello! The Outreach Center is a powerful tool that formats your messages for you.
+## 3. The Outreach Center (High-Deliverability Email Studio)
+Once you have leads, it is time to say hello! The Outreach Center is a powerful tool that formats your email campaigns with precision.
 
-### Sending Beautiful Emails
-1. **Choose a Layout:** Click the **Browse 8 Layouts** button. A gallery will pop up showing different professional email designs (like Newsletters, Product Feeds, or simple text). Pick one that fits your goal!
-2. **Fill in the Blanks:** On the left side of the screen, you will see text boxes. As you type in your Subject, Header, and Message, the live preview on the right will update instantly.
-3. **AI Copilot (Magic Wand):** Stuck on what to write? Look for the **Sparkle Icon** (AI Copilot). Just type a short prompt like *"Write a friendly email offering my plumbing software,"* and the AI will write the entire email for you!
-4. **Dispatch:** Select the lead you want to email and click the **Send Individual Email** button. 
-
-### Sending WhatsApp Messages
-1. **Switch Channels:** At the top of the Outreach Center, click the **WhatsApp Business API** tab.
-2. **Pick a Framework:** Choose from 10 proven conversational scripts on the left.
-3. **Send via WhatsApp Web:** Click **Open in WhatsApp Web**. This will safely open the official WhatsApp Web portal on your computer, automatically pasting your message into a chat with the lead's phone number. No saving contacts required!
+### Sending Beautiful Emails & Sequences
+1. **Choose a Layout:** Click the layout selector to choose from professional email designs (like 1-Column Editorial, Announcement, or High-Placement Plain Text).
+2. **Subject Line A/B Split Testing:** Toggle on A/B Testing to craft Variant A and Variant B subject lines with a live 50/50 recipient preview.
+3. **Smart 3-Step Follow-Up Sequence:** Toggle on the follow-up cadence to prepare Day 0 pitches, Step 2 gentle bumps (+3 days), and Step 3 closing values (+5 days).
+4. **AI Copilot (Magic Wand):** Stuck on what to write? Look for the **Sparkle Icon** (AI Copilot). Just type a short prompt like *"Write a friendly email offering my plumbing software,"* and the AI will write the entire email for you!
+5. **Executive Signature & Deliverability Engine:** Toggle your direct phone, booking link, and anti-spam deliverability jitter to guarantee inbox placement.
+6. **Dispatch:** Select your prospect and click **Launch Email Batch** or **Send Test**.
 
 ---
 

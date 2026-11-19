@@ -17,7 +17,6 @@ import {
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
-import { EMAIL_CAPTURE_BRIDGE_SCRIPT } from '../data/whatsappTemplates';
 import { CrmFlowluDetailModal } from '../components/CrmFlowluDetailModal';
 import { filterOutBannedLeads } from '../utils/bannedLeads';
 import { 
@@ -297,16 +296,15 @@ const CrmPipeline = () => {
     }
   };
 
-  // Toggle contact channels (WhatsApp, Email, Telephonic/Call)
+  // Toggle contact channels (Email, Telephonic/Call)
   const handleToggleContactChannel = async (
     lead: any, 
-    channel: 'whatsapp' | 'email' | 'phone', 
+    channel: 'email' | 'phone', 
     e?: React.MouseEvent
   ) => {
     if (e) e.stopPropagation();
     const leadId = lead._id;
     const currentStatus = 
-      channel === 'whatsapp' ? Boolean(lead.whatsapp_contacted || lead.whatsappContacted) :
       channel === 'email' ? Boolean(lead.email_contacted || lead.emailContacted) :
       Boolean(lead.phone_contacted || lead.telephonic_contacted || lead.phoneContacted);
     const newStatus = !currentStatus;
@@ -314,9 +312,6 @@ const CrmPipeline = () => {
     // Optimistic UI update
     setLeads(prev => prev.map(l => {
       if (l._id !== leadId) return l;
-      if (channel === 'whatsapp') {
-        return { ...l, whatsapp_contacted: newStatus, whatsappContacted: newStatus };
-      }
       if (channel === 'email') {
         return { ...l, email_contacted: newStatus, emailContacted: newStatus };
       }
@@ -325,7 +320,6 @@ const CrmPipeline = () => {
 
     try {
       const payload: any = {};
-      if (channel === 'whatsapp') payload.whatsapp_contacted = newStatus;
       if (channel === 'email') payload.email_contacted = newStatus;
       if (channel === 'phone') payload.phone_contacted = newStatus;
 
@@ -682,17 +676,6 @@ const CrmPipeline = () => {
     }
   };
 
-  // 1-Click Launch WhatsApp with Convenience-Framing Script
-  const handleLaunchWhatsApp = (lead: any) => {
-    const cleanPhone = (lead.phone || '').replace(/[^0-9]/g, '');
-    const message = `Hey ${lead.firstName || lead.businessName}! Came across ${lead.businessName} in ${lead.location}. ${EMAIL_CAPTURE_BRIDGE_SCRIPT}`;
-    const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
-    
-    // Auto-advance stage to WhatsApp Contacted
-    handleUpdateStatus(lead._id, 'WhatsApp Contacted');
-    window.open(url, '_blank');
-  };
-
   const filteredLeads = leads.filter(l => {
     const bName = l.businessName || '';
     const cat = l.category || '';
@@ -720,8 +703,8 @@ const CrmPipeline = () => {
   const getStatusColor = (status: string) => {
     switch(status) {
       case 'New': return 'bg-blue-50 text-blue-700 border-blue-200/60';
-      case 'WhatsApp Contacted': return 'bg-violet-50 text-violet-700 border-violet-200/60';
-      case 'Replied / Awaiting Email': return 'bg-cyan-50 text-cyan-700 border-cyan-200/60';
+      case 'Email Contacted': return 'bg-violet-50 text-violet-700 border-violet-200/60';
+      case 'Meeting Scheduled': return 'bg-cyan-50 text-cyan-700 border-cyan-200/60';
       case 'Email Verified & Captured': return 'bg-indigo-50 text-indigo-700 border-indigo-200/60';
       case 'Proposal Sent': return 'bg-purple-50 text-purple-700 border-purple-200/60';
       case 'Closed Won': return 'bg-emerald-50 text-emerald-700 border-emerald-200/60';
@@ -734,7 +717,7 @@ const CrmPipeline = () => {
       <Sidebar />
 
       <div className="flex-1 flex flex-col h-full overflow-hidden">
-        <Header title="Unified B2B Pipeline & Smart WhatsApp Bridge" />
+        <Header title="Unified B2B Pipeline & Deal Flow" />
 
         <div className="flex-1 flex flex-col px-7 py-7 lg:px-9 lg:py-8 overflow-hidden space-y-6">
           
@@ -1044,21 +1027,6 @@ const CrmPipeline = () => {
                               {/* Bottom Row: Multichannel Contact Badges */}
                               <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] gap-1">
                                 <div className="flex items-center gap-1 min-w-0 flex-wrap">
-                                  {/* WhatsApp Contacted Toggle */}
-                                  <button
-                                    type="button"
-                                    onClick={(e) => handleToggleContactChannel(lead, 'whatsapp', e)}
-                                    className={`font-delight text-[9px] px-1.5 py-0.5 rounded-sm border flex items-center gap-1 transition-colors cursor-pointer ${
-                                      (lead.whatsapp_contacted || lead.whatsappContacted)
-                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-300 font-bold'
-                                        : 'bg-slate-50 text-slate-400 border-slate-200 hover:text-slate-700 hover:border-slate-300 font-medium'
-                                    }`}
-                                    title={(lead.whatsapp_contacted || lead.whatsappContacted) ? 'WhatsApp: Contacted (Click to toggle)' : 'WhatsApp: Not Contacted (Click to toggle)'}
-                                  >
-                                    <MessageCircle className={`w-2.5 h-2.5 ${(lead.whatsapp_contacted || lead.whatsappContacted) ? 'text-emerald-600' : 'text-slate-400'}`} />
-                                    <span>{(lead.whatsapp_contacted || lead.whatsappContacted) ? 'WA ✓' : 'WA ✕'}</span>
-                                  </button>
-
                                   {/* Email Contacted Toggle */}
                                   <button
                                     type="button"
@@ -1378,19 +1346,6 @@ const CrmPipeline = () => {
                               <div className="flex items-center justify-center gap-1">
                                 <button
                                   type="button"
-                                  onClick={(e) => handleToggleContactChannel(lead, 'whatsapp', e)}
-                                  className={`px-1.5 py-0.5 rounded text-[9px] font-medium border flex items-center gap-1 cursor-pointer transition-colors ${
-                                    (lead.whatsapp_contacted || lead.whatsappContacted)
-                                      ? 'bg-emerald-50 text-emerald-700 border-emerald-300 font-bold'
-                                      : 'bg-slate-50 text-slate-400 border-slate-200 hover:text-slate-600'
-                                  }`}
-                                  title={(lead.whatsapp_contacted || lead.whatsappContacted) ? 'WhatsApp: Contacted (Click to toggle)' : 'WhatsApp: Not Contacted (Click to toggle)'}
-                                >
-                                  <MessageCircle className="w-2.5 h-2.5" />
-                                  <span>{(lead.whatsapp_contacted || lead.whatsappContacted) ? 'WA ✓' : 'WA ✕'}</span>
-                                </button>
-                                <button
-                                  type="button"
                                   onClick={(e) => handleToggleContactChannel(lead, 'email', e)}
                                   className={`px-1.5 py-0.5 rounded text-[9px] font-medium border flex items-center gap-1 cursor-pointer transition-colors ${
                                     (lead.email_contacted || lead.emailContacted)
@@ -1427,13 +1382,6 @@ const CrmPipeline = () => {
                                   title="Open Flowlu CRM Workspace"
                                 >
                                   <Maximize2 className="w-3.5 h-3.5" />
-                                </button>
-                                <button 
-                                  onClick={() => handleLaunchWhatsApp(lead)}
-                                  className="p-1 rounded hover:bg-emerald-100 text-emerald-700 transition-colors cursor-pointer"
-                                  title="Launch WhatsApp Hook"
-                                >
-                                  <MessageCircle className="w-3.5 h-3.5" />
                                 </button>
                                 <button 
                                   onClick={() => setEditingLead({ ...lead })}
@@ -1475,7 +1423,7 @@ const CrmPipeline = () => {
                         <th className="py-2.5 px-4 border-r border-[#2C485F] min-w-[200px]">Contact Name</th>
                         <th className="py-2.5 px-4 border-r border-[#2C485F] min-w-[200px]">Organization</th>
                         <th className="py-2.5 px-4 border-r border-[#2C485F] min-w-[200px]">Email</th>
-                        <th className="py-2.5 px-3 border-r border-[#2C485F] w-36">Phone / WhatsApp</th>
+                        <th className="py-2.5 px-3 border-r border-[#2C485F] w-36">Direct Phone</th>
                         <th className="py-2.5 px-3 border-r border-[#2C485F] w-32">Industry</th>
                         <th className="py-2.5 px-3 border-r border-[#2C485F] w-36">Location</th>
                         <th className="py-2.5 px-3 border-r border-[#2C485F] w-28">Stage</th>
@@ -1502,19 +1450,6 @@ const CrmPipeline = () => {
                           </td>
                           <td className="py-2.5 px-3 border-r border-slate-200 text-center">
                             <div className="flex items-center justify-center gap-1">
-                              <button
-                                type="button"
-                                onClick={(e) => handleToggleContactChannel(lead, 'whatsapp', e)}
-                                className={`px-1.5 py-0.5 rounded text-[9px] font-medium border flex items-center gap-1 cursor-pointer transition-colors ${
-                                  (lead.whatsapp_contacted || lead.whatsappContacted)
-                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-300 font-bold'
-                                    : 'bg-slate-50 text-slate-400 border-slate-200 hover:text-slate-600'
-                                }`}
-                                title={(lead.whatsapp_contacted || lead.whatsappContacted) ? 'WhatsApp: Contacted (Click to toggle)' : 'WhatsApp: Not Contacted (Click to toggle)'}
-                              >
-                                <MessageCircle className="w-2.5 h-2.5" />
-                                <span>{(lead.whatsapp_contacted || lead.whatsappContacted) ? 'WA ✓' : 'WA ✕'}</span>
-                              </button>
                               <button
                                 type="button"
                                 onClick={(e) => handleToggleContactChannel(lead, 'email', e)}
@@ -1618,7 +1553,7 @@ const CrmPipeline = () => {
                         </div>
                         <h4 className="text-sm font-bold text-slate-900 tracking-tight">No Verified Dispatches Yet</h4>
                         <p className="text-xs text-slate-500 leading-relaxed font-delight">
-                          Strovr enforces strict delivery verification. Only communications confirmed as delivered by the underlying gateway (SMTP 250 OK, WhatsApp, or Google Calendar) are logged here.
+                          Strovr enforces strict delivery verification. Only communications confirmed as delivered by the underlying gateway (SendGrid, SMTP 250 OK, or Google Calendar) are logged here.
                         </p>
                         <button
                           type="button"
@@ -1667,7 +1602,7 @@ const CrmPipeline = () => {
                                 </td>
                                 <td className="py-2.5 px-3 border-r border-slate-200 text-slate-700 font-medium">
                                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                                    {activity.channel === 'whatsapp' ? 'WhatsApp' : activity.channel === 'calendar' ? 'Calendar' : 'Email'}
+                                    {activity.channel === 'calendar' ? 'Calendar' : 'Email'}
                                     {activity.method && <span className="text-slate-400 font-normal">({activity.method})</span>}
                                   </span>
                                 </td>
@@ -1849,7 +1784,6 @@ const CrmPipeline = () => {
         onClose={() => setSelectedLeadDetails(null)}
         lead={selectedLeadDetails}
         onUpdateLead={handleUpdateLead}
-        onLaunchWhatsApp={handleLaunchWhatsApp}
         onOpenOutreachStudio={() => {
           setSelectedLeadDetails(null);
           navigate('/outreach');
@@ -1897,7 +1831,7 @@ const CrmPipeline = () => {
 
               <div className="grid grid-cols-2 gap-2.5">
                 <div>
-                  <label className="block text-[11px] font-delight font-semibold text-slate-600 mb-1">Phone / WhatsApp</label>
+                  <label className="block text-[11px] font-delight font-semibold text-slate-600 mb-1">Direct Phone</label>
                   <input 
                     type="text"
                     value={editingLead.phone || ''}
@@ -2047,9 +1981,7 @@ const CrmPipeline = () => {
                 <div>
                   <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Channel & Method</div>
                   <div className="font-semibold text-slate-800 mt-0.5 capitalize flex items-center gap-1.5">
-                    {selectedInteraction.activity.channel === 'whatsapp' ? (
-                      <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
-                    ) : selectedInteraction.activity.channel === 'calendar' ? (
+                    {selectedInteraction.activity.channel === 'calendar' ? (
                       <Calendar className="w-3.5 h-3.5 text-blue-600" />
                     ) : (
                       <Mail className="w-3.5 h-3.5 text-indigo-600" />

@@ -4,18 +4,17 @@ import axios from 'axios';
 import { 
   Search, List, Kanban, 
   Plus, Phone, Globe, MapPin,
-  MessageCircle, Send,
+  Send,
   Check, Edit3, ShieldCheck, GripVertical,
   X, ExternalLink, Trash2, Star
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
-import { EMAIL_CAPTURE_BRIDGE_SCRIPT } from '../data/whatsappTemplates';
 
 const KANBAN_STAGES = [
   'New',
-  'WhatsApp Contacted',
+  'Email Contacted',
   'Replied / Awaiting Email',
   'Email Verified & Captured',
   'Proposal Sent',
@@ -164,17 +163,6 @@ const CrmPipeline = () => {
     }
   };
 
-  // 1-Click Launch WhatsApp with Convenience-Framing Script
-  const handleLaunchWhatsApp = (lead: any) => {
-    const cleanPhone = (lead.phone || '').replace(/[^0-9]/g, '');
-    const message = `Hey ${lead.firstName || lead.businessName}! Came across ${lead.businessName} in ${lead.location}. ${EMAIL_CAPTURE_BRIDGE_SCRIPT}`;
-    const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
-    
-    // Auto-advance stage to WhatsApp Contacted
-    handleUpdateStatus(lead._id, 'WhatsApp Contacted');
-    window.open(url, '_blank');
-  };
-
   const filteredLeads = leads.filter(l => {
     const bName = l.businessName || '';
     const cat = l.category || '';
@@ -187,7 +175,7 @@ const CrmPipeline = () => {
   const getStatusColor = (status: string) => {
     switch(status) {
       case 'New': return 'bg-blue-100 text-blue-700 border-blue-200';
-      case 'WhatsApp Contacted': return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+      case 'Email Contacted': return 'bg-emerald-100 text-emerald-800 border-emerald-200';
       case 'Replied / Awaiting Email': return 'bg-amber-100 text-amber-800 border-amber-200';
       case 'Email Verified & Captured': return 'bg-purple-100 text-purple-800 border-purple-200';
       case 'Proposal Sent': return 'bg-indigo-100 text-indigo-800 border-indigo-200';
@@ -201,7 +189,7 @@ const CrmPipeline = () => {
       <Sidebar />
 
       <div className="flex-1 flex flex-col h-full overflow-hidden">
-        <Header title="Unified B2B Pipeline & Smart WhatsApp Bridge" />
+        <Header title="Unified B2B Pipeline & Deal Flow" />
 
         <div className="flex-1 flex flex-col p-6 sm:p-8 overflow-hidden space-y-6">
           
@@ -380,7 +368,7 @@ const CrmPipeline = () => {
                                 {isPhoneOnly ? (
                                   <span className="font-extrabold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 flex items-center gap-1 truncate max-w-[110px]">
                                     <Phone className="w-2.5 h-2.5 shrink-0" />
-                                    <span className="truncate">WhatsApp</span>
+                                    <span className="truncate">Direct Phone</span>
                                   </span>
                                 ) : (
                                   <span className="font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 flex items-center gap-1 truncate max-w-[110px]">
@@ -481,17 +469,19 @@ const CrmPipeline = () => {
                           </td>
                           <td className="py-3 px-4 text-right">
                             <div className="flex items-center justify-end gap-1.5">
-                              <button 
-                                onClick={() => handleLaunchWhatsApp(lead)}
-                                className="bg-emerald-600 hover:bg-emerald-700 text-white p-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer"
-                                title="Send WhatsApp Hook"
-                              >
-                                <MessageCircle className="w-3.5 h-3.5" />
-                              </button>
+                              {lead.phone && (
+                                <a 
+                                  href={`tel:${lead.phone}`}
+                                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 p-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                                  title="Call Direct Phone"
+                                >
+                                  <Phone className="w-3.5 h-3.5" />
+                                </a>
+                              )}
                               <button 
                                 onClick={() => navigate('/outreach')}
                                 className="bg-accent hover:bg-accent-dark text-white p-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer"
-                                title="Send Email Template"
+                                title="Compose Email Outreach"
                               >
                                 <Send className="w-3.5 h-3.5" />
                               </button>
@@ -700,24 +690,23 @@ const CrmPipeline = () => {
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                   Outreach Dispatch Actions:
                 </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <button
-                    onClick={() => {
-                      handleLaunchWhatsApp(selectedLeadDetails);
-                      setSelectedLeadDetails({ ...selectedLeadDetails, status: 'WhatsApp Contacted' });
-                    }}
-                    className="py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                    <span>Launch WhatsApp Hook</span>
-                  </button>
+                <div className="flex items-center gap-3">
+                  {selectedLeadDetails.phone && (
+                    <a
+                      href={`tel:${selectedLeadDetails.phone}`}
+                      className="flex-1 py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+                    >
+                      <Phone className="w-4 h-4" />
+                      <span>Call Direct Phone</span>
+                    </a>
+                  )}
 
                   <button
                     onClick={() => {
                       setSelectedLeadDetails(null);
                       navigate('/outreach');
                     }}
-                    className="py-3 px-4 rounded-xl bg-accent hover:bg-accent-dark text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+                    className="flex-1 py-3 px-4 rounded-xl bg-accent hover:bg-accent-dark text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
                   >
                     <Send className="w-4 h-4" />
                     <span>Open Email Studio</span>

@@ -92,7 +92,7 @@ const TermsOfService = () => {
               2. Nature of Platform Services &amp; Lead Discovery
             </h2>
             <p>
-              Strovr provides high-precision B2B prospect discovery, verified business directory aggregation, sales pipeline management (CRM), and multi-channel outreach tooling (Email, WhatsApp Web relay, and SMS dispatch gateways).
+              Strovr provides high-precision B2B prospect discovery, verified business directory aggregation, sales pipeline management (CRM), and high-deliverability email outreach tooling.
             </p>
             <ul className="list-disc pl-5 space-y-1.5">
               <li><strong>Directory Intelligence:</strong> All prospect information is aggregated from publicly accessible commercial records, verified domain registries, and business publications.</li>

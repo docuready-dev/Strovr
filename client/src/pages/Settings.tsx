@@ -44,10 +44,17 @@ const Settings = () => {
   const [replyTo, setReplyTo] = useState((user as any)?.smtp_settings?.replyTo || '');
   const [complianceFooter, setComplianceFooter] = useState(true);
 
-  // WhatsApp & Outreach Defaults State
+  // Email Outreach & Delivery Defaults State
   const [autoAdvanceStage, setAutoAdvanceStage] = useState(true);
-  const [defaultFallbackBusiness, setDefaultFallbackBusiness] = useState('Business Owner');
-  const [defaultFallbackLocation, setDefaultFallbackLocation] = useState('your area');
+  const [defaultFallbackBusiness, setDefaultFallbackBusiness] = useState(localStorage.getItem('strovr_fallback_biz') || 'Business Owner');
+  const [defaultFallbackLocation, setDefaultFallbackLocation] = useState(localStorage.getItem('strovr_fallback_loc') || 'your area');
+  const [defaultFallbackFirstName, setDefaultFallbackFirstName] = useState(localStorage.getItem('strovr_fallback_first') || 'Team');
+  const [signatureJobTitle, setSignatureJobTitle] = useState(localStorage.getItem('strovr_sig_title') || (user as any)?.signature_settings?.jobTitle || 'Growth & Partnerships Lead');
+  const [signatureCompany, setSignatureCompany] = useState(localStorage.getItem('strovr_sig_company') || (user as any)?.signature_settings?.company || user?.company_name || 'Enterprise Suite');
+  const [signaturePhone, setSignaturePhone] = useState(localStorage.getItem('strovr_sig_phone') || (user as any)?.signature_settings?.phone || (user as any)?.phone || '');
+  const [defaultTrackOpens, setDefaultTrackOpens] = useState(true);
+  const [defaultTrackClicks, setDefaultTrackClicks] = useState(true);
+  const [defaultIncludeUnsubscribe, setDefaultIncludeUnsubscribe] = useState(true);
 
   // Test Outbox state
   const [testEmailSending, setTestEmailSending] = useState(false);
@@ -435,7 +442,7 @@ const Settings = () => {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">Account & System Settings</h2>
-              <p className="text-xs text-slate-500 mt-0.5">Manage your user profile, direct email SMTP transport, WhatsApp defaults, and billing tier.</p>
+              <p className="text-xs text-slate-500 mt-0.5">Manage your user profile, direct email SMTP / SendGrid transport, email signature, and billing tier.</p>
             </div>
 
             {saveSuccess && (
@@ -491,8 +498,8 @@ const Settings = () => {
                 activeTab === 'outreach' ? 'bg-slate-900 text-white border border-slate-900 shadow-xs' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
               }`}
             >
-              <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
-              <span>WhatsApp & Automation</span>
+              <Mail className="w-3.5 h-3.5 text-indigo-600" />
+              <span>Email Defaults & Signature</span>
             </button>
 
             <button
@@ -659,7 +666,7 @@ const Settings = () => {
                 </div>
 
                 <div className="space-y-1 sm:col-span-2">
-                  <label className="font-delight text-[11px] font-medium text-slate-600">Business WhatsApp Contact Number</label>
+                  <label className="font-delight text-[11px] font-medium text-slate-600">Direct Contact Phone / Mobile</label>
                   <input
                     type="tel"
                     value={phone}
@@ -998,71 +1005,174 @@ const Settings = () => {
             </div>
           )}
 
-          {/* TAB 3: WHATSAPP & AUTOMATION */}
+          {/* TAB 3: EMAIL DEFAULTS & SIGNATURE */}
           {activeTab === 'outreach' && (
-            <div className="bg-white rounded-md border border-slate-200 p-5 sm:p-6 shadow-none space-y-5">
+            <div className="bg-white rounded-md border border-slate-200 p-5 sm:p-6 shadow-none space-y-6">
               <div>
-                <h3 className="text-sm font-bold text-slate-900">WhatsApp & Outreach Automation Defaults</h3>
-                <p className="text-xs text-slate-500">Configure fallback parameters and automatic stage advancing for high-speed multi-channel execution.</p>
+                <h3 className="text-sm font-bold text-slate-900">Email Outreach & Executive Signature Defaults</h3>
+                <p className="text-xs text-slate-500">Configure your default sender signature block, fallback variables, and delivery tracking preferences.</p>
               </div>
 
-              <div className="space-y-4 text-xs">
-                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-md space-y-1.5">
-                  <div className="flex items-center gap-2 text-slate-900 font-semibold font-delight text-xs">
-                    <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Organic WhatsApp Convenience Framing Script</span>
+              <div className="space-y-5 text-xs">
+                {/* Executive Signature Block Card */}
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg space-y-3 font-delight">
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                    <span className="font-bold text-slate-900 flex items-center gap-1.5 text-xs">
+                      <Mail className="w-3.5 h-3.5 text-indigo-600" />
+                      <span>Executive Email Signature Block</span>
+                    </span>
+                    <span className="text-[10px] bg-indigo-50 text-indigo-700 font-bold px-2 py-0.5 rounded border border-indigo-200">
+                      Auto-appended to Outbound Emails
+                    </span>
                   </div>
-                  <p className="text-slate-700 text-xs italic bg-white p-2.5 rounded-sm border border-slate-200 font-sans">
-                    "Instead of cramming files into messy WhatsApp chat history, what is the best email address to drop this over to?"
-                  </p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="space-y-1">
+                      <label className="font-medium text-slate-600 text-[11px]">Job Title / Designation</label>
+                      <input
+                        type="text"
+                        value={signatureJobTitle}
+                        onChange={(e) => setSignatureJobTitle(e.target.value)}
+                        placeholder="e.g. Founder & Growth Lead"
+                        className="w-full h-8 px-2.5 bg-white border border-slate-200 rounded-md font-medium text-xs text-slate-900 outline-none focus:border-slate-400"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="font-medium text-slate-600 text-[11px]">Company / Organization</label>
+                      <input
+                        type="text"
+                        value={signatureCompany}
+                        onChange={(e) => setSignatureCompany(e.target.value)}
+                        placeholder="e.g. Strovr Solutions"
+                        className="w-full h-8 px-2.5 bg-white border border-slate-200 rounded-md font-medium text-xs text-slate-900 outline-none focus:border-slate-400"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="font-medium text-slate-600 text-[11px]">Direct Office / Mobile Line</label>
+                      <input
+                        type="text"
+                        value={signaturePhone}
+                        onChange={(e) => setSignaturePhone(e.target.value)}
+                        placeholder="e.g. +91 98765 43210"
+                        className="w-full h-8 px-2.5 bg-white border border-slate-200 rounded-md font-medium text-xs text-slate-900 outline-none focus:border-slate-400"
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="font-delight text-[11px] font-medium text-slate-600">Fallback for Business Name (`&#123;&#123;business_name&#125;&#125;`)</label>
+                {/* Dynamic Variable Fallbacks */}
+                <div className="space-y-3 font-delight">
+                  <h4 className="font-bold text-slate-900 text-xs">Dynamic Personalization Tag Fallbacks</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="space-y-1">
+                      <label className="font-medium text-slate-600 text-[11px]">Fallback for Business (`&#123;&#123;business_name&#125;&#125;`)</label>
+                      <input
+                        type="text"
+                        value={defaultFallbackBusiness}
+                        onChange={(e) => setDefaultFallbackBusiness(e.target.value)}
+                        placeholder="e.g. Business Owner"
+                        className="w-full h-8 px-2.5 bg-white border border-slate-200 rounded-md font-medium text-xs text-slate-900 outline-none focus:border-slate-400"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-medium text-slate-600 text-[11px]">Fallback for Location (`&#123;&#123;location&#125;&#125;`)</label>
+                      <input
+                        type="text"
+                        value={defaultFallbackLocation}
+                        onChange={(e) => setDefaultFallbackLocation(e.target.value)}
+                        placeholder="e.g. your locality or your area"
+                        className="w-full h-8 px-2.5 bg-white border border-slate-200 rounded-md font-medium text-xs text-slate-900 outline-none focus:border-slate-400"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-medium text-slate-600 text-[11px]">Fallback for First Name (`&#123;&#123;first_name&#125;&#125;`)</label>
+                      <input
+                        type="text"
+                        value={defaultFallbackFirstName}
+                        onChange={(e) => setDefaultFallbackFirstName(e.target.value)}
+                        placeholder="e.g. Team"
+                        className="w-full h-8 px-2.5 bg-white border border-slate-200 rounded-md font-medium text-xs text-slate-900 outline-none focus:border-slate-400"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Delivery & Tracking Toggles */}
+                <div className="space-y-2.5 font-delight">
+                  <h4 className="font-bold text-slate-900 text-xs">Default Deliverability &amp; Stage Automation</h4>
+                  
+                  <div className="p-3 rounded-md bg-slate-50 border border-slate-200 flex items-center justify-between">
+                    <div>
+                      <strong className="text-slate-900 block font-semibold text-xs">Auto-Advance Pipeline Stage on Email Launch</strong>
+                      <span className="text-slate-500 text-[11px]">Automatically advance lead from "New" to "Email Captured" or "Proposal Sent" upon successful dispatch.</span>
+                    </div>
                     <input
-                      type="text"
-                      value={defaultFallbackBusiness}
-                      onChange={(e) => setDefaultFallbackBusiness(e.target.value)}
-                      placeholder="e.g. Business Owner or Partner"
-                      className="w-full h-8 px-2.5 bg-white border border-slate-200 rounded-md font-delight font-medium text-xs text-slate-900 outline-none focus:border-slate-400"
+                      type="checkbox"
+                      checked={autoAdvanceStage}
+                      onChange={(e) => setAutoAdvanceStage(e.target.checked)}
+                      className="w-4 h-4 text-blue-600 rounded-sm cursor-pointer"
                     />
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="font-delight text-[11px] font-medium text-slate-600">Fallback for Location (`&#123;&#123;location&#125;&#125;`)</label>
+                  <div className="p-3 rounded-md bg-slate-50 border border-slate-200 flex items-center justify-between">
+                    <div>
+                      <strong className="text-slate-900 block font-semibold text-xs">Track Email Opens (Invisible 1x1 Pixel)</strong>
+                      <span className="text-slate-500 text-[11px]">Track real-time open timestamps across all outbound cold campaigns.</span>
+                    </div>
                     <input
-                      type="text"
-                      value={defaultFallbackLocation}
-                      onChange={(e) => setDefaultFallbackLocation(e.target.value)}
-                      placeholder="e.g. your locality or your area"
-                      className="w-full h-8 px-2.5 bg-white border border-slate-200 rounded-md font-delight font-medium text-xs text-slate-900 outline-none focus:border-slate-400"
+                      type="checkbox"
+                      checked={defaultTrackOpens}
+                      onChange={(e) => setDefaultTrackOpens(e.target.checked)}
+                      className="w-4 h-4 text-blue-600 rounded-sm cursor-pointer"
                     />
                   </div>
-                </div>
 
-                <div className="p-3.5 rounded-md bg-slate-50 border border-slate-200 flex items-center justify-between">
-                  <div>
-                    <strong className="text-slate-900 block font-semibold">Auto-Advance Pipeline Stage on Outreach Launch</strong>
-                    <span className="text-slate-500">Automatically advance lead from "New" to "WhatsApp Contacted" or "Proposal Sent" upon clicking dispatch.</span>
+                  <div className="p-3 rounded-md bg-slate-50 border border-slate-200 flex items-center justify-between">
+                    <div>
+                      <strong className="text-slate-900 block font-semibold text-xs">Track Link Clicks</strong>
+                      <span className="text-slate-500 text-[11px]">Wrap destination URLs and CTA buttons with secure redirection tracking.</span>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={defaultTrackClicks}
+                      onChange={(e) => setDefaultTrackClicks(e.target.checked)}
+                      className="w-4 h-4 text-blue-600 rounded-sm cursor-pointer"
+                    />
                   </div>
-                  <input
-                    type="checkbox"
-                    checked={autoAdvanceStage}
-                    onChange={(e) => setAutoAdvanceStage(e.target.checked)}
-                    className="w-4 h-4 text-blue-600 rounded-sm cursor-pointer"
-                  />
+
+                  <div className="p-3 rounded-md bg-slate-50 border border-slate-200 flex items-center justify-between">
+                    <div>
+                      <strong className="text-slate-900 block font-semibold text-xs">Include CAN-SPAM / GDPR 1-Click Unsubscribe Link</strong>
+                      <span className="text-slate-500 text-[11px]">Protect domain reputation and spam score by including an explicit opt-out footer.</span>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={defaultIncludeUnsubscribe}
+                      onChange={(e) => setDefaultIncludeUnsubscribe(e.target.checked)}
+                      className="w-4 h-4 text-blue-600 rounded-sm cursor-pointer"
+                    />
+                  </div>
                 </div>
               </div>
 
               <div className="pt-3 border-t border-slate-200 flex justify-end">
                 <button
-                  onClick={handleSaveSettings}
+                  onClick={() => {
+                    localStorage.setItem('strovr_fallback_biz', defaultFallbackBusiness);
+                    localStorage.setItem('strovr_fallback_loc', defaultFallbackLocation);
+                    localStorage.setItem('strovr_fallback_first', defaultFallbackFirstName);
+                    localStorage.setItem('strovr_sig_title', signatureJobTitle);
+                    localStorage.setItem('strovr_sig_company', signatureCompany);
+                    localStorage.setItem('strovr_sig_phone', signaturePhone);
+                    handleSaveSettings();
+                  }}
                   disabled={saving}
                   className="bg-slate-900 hover:bg-slate-800 text-white h-8 px-4 rounded-md font-delight font-medium text-xs transition-all flex items-center gap-1.5 cursor-pointer border border-slate-900 disabled:opacity-50"
                 >
                   <Save className="w-3.5 h-3.5" />
-                  <span>{saving ? 'Saving...' : 'Save Automation Defaults'}</span>
+                  <span>{saving ? 'Saving...' : 'Save Email Defaults'}</span>
                 </button>
               </div>
             </div>

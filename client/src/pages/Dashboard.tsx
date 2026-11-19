@@ -280,7 +280,7 @@ const Dashboard = () => {
     tomorrow.setDate(tomorrow.getDate() + 1);
     const tomorrowKey = formatDateKey(tomorrow);
     return [
-      { id: 'ev-1', dateKey: todayKey, time: '10:30', title: 'Follow up with WhatsApp replied leads' },
+      { id: 'ev-1', dateKey: todayKey, time: '10:30', title: 'Review open rates for morning email cohort' },
       { id: 'ev-2', dateKey: todayKey, time: '15:00', title: 'Dispatch cold email batch (Verified Cohort)' },
       { id: 'ev-3', dateKey: tomorrowKey, time: '11:00', title: 'Pipeline review & CRM sync' }
     ];
@@ -291,7 +291,7 @@ const Dashboard = () => {
     return (
       localStorage.getItem('strovr-dashboard-scratchpad-v1') ||
       localStorage.getItem('leadpulse-dashboard-scratchpad-v1') ||
-      '• Focus Niche: B2B SaaS & Healthcare Clinics\n• Use WhatsApp Bridge template #1 before sending PDF deck.'
+      '• Focus Niche: B2B SaaS & Healthcare Clinics\n• Review A/B email subject line test before sending batch.'
     );
   });
   const [checklist, setChecklist] = useState<ChecklistItem[]>(() => {
@@ -386,18 +386,6 @@ const Dashboard = () => {
       }
     } catch (err) {
       console.warn('Failed to fetch automation queue:', err);
-    }
-  };
-
-  const handleCompleteWhatsAppTask = async (enrollmentId: string) => {
-    try {
-      await axios.post(`${API_URL}/api/automations/queue/${enrollmentId}/complete-task`, {}, {
-        headers: { userid: user?._id }
-      });
-      showToast('WhatsApp touch logged. Prospect advanced to next cadence step.');
-      fetchQueue();
-    } catch (err) {
-      console.error('Failed to complete WhatsApp task', err);
     }
   };
 
@@ -534,7 +522,7 @@ const Dashboard = () => {
   const categories = Array.from(new Set(safeLeads.map(l => l.category).filter(Boolean))).slice(0, 6);
   const newLeads = safeLeads.filter(l => (l.status || 'New') === 'New').length;
   const contactedLeads = safeLeads.filter(
-    l => l.status === 'WhatsApp Contacted' || l.status === 'Email Verified & Captured' || l.status === 'Replied / Awaiting Email'
+    l => l.status === 'Email Contacted' || l.status === 'Phone Contacted' || l.status === 'Email Verified & Captured' || l.status === 'Replied / Awaiting Email'
   ).length;
   const proposalLeads = safeLeads.filter(l => l.status === 'Proposal Sent').length;
   const wonLeads = safeLeads.filter(l => l.status === 'Closed Won').length;
@@ -1221,7 +1209,7 @@ const Dashboard = () => {
                 <div className="text-xs font-bold font-delight text-[#191716] group-hover:text-[#C85A32] transition-colors">
                   Outreach Studio
                 </div>
-                <div className="text-[11px] text-[#6E675F]">Launch email or WhatsApp campaign</div>
+                <div className="text-[11px] text-[#6E675F]">Launch high-deliverability email campaign</div>
               </div>
               <ArrowRight className="w-3.5 h-3.5 text-[#9C9488] group-hover:text-[#C85A32] group-hover:translate-x-0.5 transition-all" />
             </button>
@@ -1353,7 +1341,7 @@ const Dashboard = () => {
               </div>
             )}
 
-            {/* Live Automations & 1-Click WhatsApp Action Radar */}
+            {/* Live Automations & Email Drip Engine Radar */}
             <div className="bg-white border border-[#E5E0D5] rounded-xl overflow-hidden shadow-2xs">
               <div className="p-5 lg:p-6 bg-[#FAF8F5] border-b border-[#E5E0D5] flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div className="flex items-center gap-3.5">
@@ -1371,7 +1359,7 @@ const Dashboard = () => {
                       </span>
                     </div>
                     <p className="text-xs font-delight text-[#6E675F] mt-0.5">
-                      Monitors delay intervals, weekend protection, SendGrid cold dispatch, and queued 1-click WhatsApp tasks.
+                      Monitors delay intervals, weekend protection, and SendGrid cold dispatch drip cadences.
                     </p>
                   </div>
                 </div>
@@ -1409,12 +1397,12 @@ const Dashboard = () => {
 
                 <div className="p-5 lg:p-6">
                   <div className="text-[10.5px] font-delight uppercase tracking-wider font-semibold text-[#6E675F]">
-                    Pending 1-Click WhatsApp
+                    Email Sequences Active
                   </div>
                   <div className="text-2xl lg:text-3xl font-bold font-delight text-emerald-700 tabular-nums mt-2">
-                    {queueData?.stats?.pendingTasks ?? 0}
+                    {queueData?.stats?.active ?? 0}
                   </div>
-                  <div className="text-[11px] text-[#6E675F] mt-1">Ready for instant operator ping</div>
+                  <div className="text-[11px] text-[#6E675F] mt-1">Direct-to-inbox cadence active</div>
                 </div>
 
                 <div className="p-5 lg:p-6">
@@ -1440,87 +1428,19 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              {/* Pending 1-Click WhatsApp Action Tasks */}
-              {Array.isArray(queueData?.pendingTasks) && queueData.pendingTasks.length > 0 ? (
-                <div className="p-5 lg:p-6 bg-emerald-50/40 border-t border-[#E5E0D5] space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-xs font-bold font-delight text-emerald-900">
-                      <MessageSquare className="w-4 h-4 text-emerald-600" />
-                      <span>Action Required: {queueData?.pendingTasks?.length ?? 0} WhatsApp Ping{(queueData?.pendingTasks?.length ?? 0) > 1 ? 's' : ''} Pending</span>
-                    </div>
-                    <span className="text-[11px] font-delight text-emerald-800">
-                      Click below to open pre-filled chat in WhatsApp Web / App
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                    {queueData?.pendingTasks?.slice(0, 3).map((task: any) => {
-                      const waLink =
-                        task.pendingManualTask?.waLink ||
-                        `https://wa.me/${(task.leadPhone || '').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(task.pendingManualTask?.message || '')}`;
-
-                      return (
-                        <div
-                          key={task.id}
-                          className="bg-white border border-emerald-200 rounded-md p-3 flex flex-col justify-between gap-2.5 shadow-2xs"
-                        >
-                          <div>
-                            <div className="flex items-center justify-between gap-1">
-                              <span className="font-bold text-xs text-[#191716] truncate font-delight">
-                                {task.leadName}
-                              </span>
-                              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 font-semibold shrink-0">
-                                {task.leadPhone}
-                              </span>
-                            </div>
-                            <div className="text-[10px] text-[#6E675F] truncate font-delight mt-0.5">
-                              {task.leadCompany || 'Prospect Company'} • {task.journeyName}
-                            </div>
-                            <p className="text-[11px] text-[#191716] bg-[#FAF8F5] p-2 rounded border border-[#E5E0D5] mt-1.5 line-clamp-2 italic">
-                              "{task.pendingManualTask?.message || 'Quick follow up message'}"
-                            </p>
-                          </div>
-
-                          <div className="flex items-center gap-1.5 pt-1 border-t border-[#E5E0D5]">
-                            <a
-                              href={waLink}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="flex-1 py-1.5 px-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[11px] font-delight font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
-                            >
-                              <MessageSquare className="w-3 h-3" />
-                              <span>1-Click Ping</span>
-                              <ExternalLink className="w-2.5 h-2.5 opacity-75" />
-                            </a>
-                            <button
-                              onClick={() => handleCompleteWhatsAppTask(task.id)}
-                              title="Mark touch completed and proceed"
-                              className="py-1.5 px-2.5 bg-[#191716] hover:bg-[#C85A32] text-white rounded text-[11px] font-delight font-semibold flex items-center gap-1 cursor-pointer transition-colors"
-                            >
-                              <Check className="w-3 h-3" />
-                              <span>Done</span>
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+              <div className="px-4 py-2.5 bg-[#FAF8F5] flex items-center justify-between text-[11px] font-delight text-[#6E675F]">
+                <div className="flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-[#C85A32]" />
+                  <span>Drip timing guard active: Emails dispatch between 9:00 AM and 6:00 PM, Monday through Friday.</span>
                 </div>
-              ) : (
-                <div className="px-4 py-2.5 bg-[#FAF8F5] flex items-center justify-between text-[11px] font-delight text-[#6E675F]">
-                  <div className="flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5 text-[#C85A32]" />
-                    <span>Drip timing guard active: Emails dispatch between 9:00 AM and 6:00 PM, Monday through Friday.</span>
-                  </div>
-                  <button
-                    onClick={() => navigate('/automations')}
-                    className="text-[#C85A32] hover:underline font-semibold flex items-center gap-1 cursor-pointer"
-                  >
-                    <span>Inspect live queue</span>
-                    <ArrowRight className="w-3 h-3" />
-                  </button>
-                </div>
-              )}
+                <button
+                  onClick={() => navigate('/automations')}
+                  className="text-[#C85A32] hover:underline font-semibold flex items-center gap-1 cursor-pointer"
+                >
+                  <span>Inspect live queue</span>
+                  <ArrowRight className="w-3 h-3" />
+                </button>
+              </div>
             </div>
 
             {/* Dynamic 12-Column Draggable Widget Grid */}

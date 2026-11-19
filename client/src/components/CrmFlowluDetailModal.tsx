@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   X, Globe, Mail, Phone, ExternalLink, Calendar,
-  Clock, CheckCircle2, MessageCircle, Send, MoreVertical,
+  Clock, CheckCircle2, Send, MoreVertical,
   Plus, Edit3, Trash2, Building, Star, Check, Sparkles,
   ArrowRight, FileText, ChevronDown, CheckSquare, Heart
 } from 'lucide-react';
@@ -12,7 +12,6 @@ export interface CrmFlowluModalProps {
   onClose: () => void;
   lead: any;
   onUpdateLead: (updatedLead: any) => Promise<void>;
-  onLaunchWhatsApp: (lead: any) => void;
   onOpenOutreachStudio: (lead: any) => void;
   onDeleteLead?: (lead: any) => void;
   currentUser?: any;
@@ -23,7 +22,6 @@ export const CrmFlowluDetailModal: React.FC<CrmFlowluModalProps> = ({
   onClose,
   lead,
   onUpdateLead,
-  onLaunchWhatsApp,
   onOpenOutreachStudio,
   onDeleteLead,
   currentUser
@@ -39,7 +37,6 @@ export const CrmFlowluDetailModal: React.FC<CrmFlowluModalProps> = ({
   const [editStage, setEditStage] = useState(lead?.status || 'New');
   const [editPriority, setEditPriority] = useState(lead?.priority || 'Medium');
   const [editValue, setEditValue] = useState(lead ? (lead.dealValue || getEstimatedValue(lead)) : 1000);
-  const [editWhatsappContacted, setEditWhatsappContacted] = useState(Boolean(lead?.whatsapp_contacted || lead?.whatsappContacted));
   const [editEmailContacted, setEditEmailContacted] = useState(Boolean(lead?.email_contacted || lead?.emailContacted));
   const [editPhoneContacted, setEditPhoneContacted] = useState(Boolean(lead?.phone_contacted || lead?.telephonic_contacted || lead?.phoneContacted));
 
@@ -51,7 +48,6 @@ export const CrmFlowluDetailModal: React.FC<CrmFlowluModalProps> = ({
       setEditStage(lead.status || 'New');
       setEditPriority(lead.priority || 'Medium');
       setEditValue(lead.dealValue || getEstimatedValue(lead));
-      setEditWhatsappContacted(Boolean(lead.whatsapp_contacted || lead.whatsappContacted));
       setEditEmailContacted(Boolean(lead.email_contacted || lead.emailContacted));
       setEditPhoneContacted(Boolean(lead.phone_contacted || lead.telephonic_contacted || lead.phoneContacted));
     }
@@ -193,7 +189,6 @@ export const CrmFlowluDetailModal: React.FC<CrmFlowluModalProps> = ({
       status: editStage,
       priority: editPriority,
       dealValue: editValue,
-      whatsapp_contacted: editWhatsappContacted,
       email_contacted: editEmailContacted,
       phone_contacted: editPhoneContacted,
       telephonic_contacted: editPhoneContacted
@@ -201,22 +196,18 @@ export const CrmFlowluDetailModal: React.FC<CrmFlowluModalProps> = ({
     setIsEditingContact(false);
   };
 
-  const handleQuickToggleChannel = async (channel: 'whatsapp' | 'email' | 'phone') => {
-    const isWa = channel === 'whatsapp';
+  const handleQuickToggleChannel = async (channel: 'email' | 'phone') => {
     const isEm = channel === 'email';
     const isPh = channel === 'phone';
 
-    const nextWa = isWa ? !editWhatsappContacted : editWhatsappContacted;
     const nextEm = isEm ? !editEmailContacted : editEmailContacted;
     const nextPh = isPh ? !editPhoneContacted : editPhoneContacted;
 
-    if (isWa) setEditWhatsappContacted(nextWa);
     if (isEm) setEditEmailContacted(nextEm);
     if (isPh) setEditPhoneContacted(nextPh);
 
     await onUpdateLead({
       ...lead,
-      whatsapp_contacted: nextWa,
       email_contacted: nextEm,
       phone_contacted: nextPh,
       telephonic_contacted: nextPh
@@ -266,20 +257,6 @@ export const CrmFlowluDetailModal: React.FC<CrmFlowluModalProps> = ({
                 <div className="hidden sm:flex items-center gap-1.5 ml-1">
                   <button
                     type="button"
-                    onClick={() => handleQuickToggleChannel('whatsapp')}
-                    title="Click to toggle WhatsApp Contacted status"
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded-md border flex items-center gap-1 transition-all cursor-pointer ${
-                      editWhatsappContacted
-                        ? 'bg-emerald-50 text-emerald-700 border-emerald-300 shadow-2xs'
-                        : 'bg-slate-50 text-slate-400 border-slate-200 hover:border-emerald-300 hover:text-emerald-600'
-                    }`}
-                  >
-                    <MessageCircle className="w-2.5 h-2.5" />
-                    <span>WA: {editWhatsappContacted ? 'Contacted ✓' : 'Not Contacted'}</span>
-                  </button>
-
-                  <button
-                    type="button"
                     onClick={() => handleQuickToggleChannel('email')}
                     title="Click to toggle Email Contacted status"
                     className={`text-[10px] font-bold px-2 py-0.5 rounded-md border flex items-center gap-1 transition-all cursor-pointer ${
@@ -320,18 +297,11 @@ export const CrmFlowluDetailModal: React.FC<CrmFlowluModalProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={() => onOpenOutreachStudio(lead)}
-              className="p-2 rounded-lg border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
-              title="Compose Email"
+              className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors flex items-center gap-1.5 text-xs font-semibold cursor-pointer"
+              title="Compose Email in Outreach Studio"
             >
-              <Mail className="w-4 h-4" />
-            </button>
-
-            <button
-              onClick={() => onLaunchWhatsApp(lead)}
-              className="p-2 rounded-lg border border-slate-200 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 transition-colors"
-              title="WhatsApp Hook"
-            >
-              <MessageCircle className="w-4 h-4" />
+              <Mail className="w-3.5 h-3.5 text-indigo-600" />
+              <span>Compose Email</span>
             </button>
 
             {/* Blue Primary Create Button */}
@@ -464,12 +434,6 @@ export const CrmFlowluDetailModal: React.FC<CrmFlowluModalProps> = ({
                     <span className="text-[11px] text-slate-400 font-medium block">Phone (Work)</span>
                     <div className="flex items-center justify-between mt-0.5">
                       <span className="font-semibold text-slate-900 font-mono">{lead.phone || 'No phone on file'}</span>
-                      <button 
-                        onClick={() => onLaunchWhatsApp(lead)}
-                        className="text-[10px] text-emerald-600 font-bold hover:underline"
-                      >
-                        WhatsApp &rarr;
-                      </button>
                     </div>
                   </div>
                 </div>
@@ -496,15 +460,6 @@ export const CrmFlowluDetailModal: React.FC<CrmFlowluModalProps> = ({
                     {/* Contact Channels Flags */}
                     <div className="pt-2 border-t border-slate-200/80 space-y-1.5">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Contact Channels Tracked</span>
-                      <label className="flex items-center gap-2 text-xs font-delight cursor-pointer select-none">
-                        <input 
-                          type="checkbox" 
-                          checked={editWhatsappContacted} 
-                          onChange={(e) => setEditWhatsappContacted(e.target.checked)} 
-                          className="w-3.5 h-3.5 rounded text-emerald-600 cursor-pointer" 
-                        />
-                        <span className="text-slate-800 font-medium">WhatsApp Contacted</span>
-                      </label>
                       <label className="flex items-center gap-2 text-xs font-delight cursor-pointer select-none">
                         <input 
                           type="checkbox" 
@@ -564,11 +519,8 @@ export const CrmFlowluDetailModal: React.FC<CrmFlowluModalProps> = ({
                     </div>
                   </div>
                   <div className="flex items-center gap-1 shrink-0 text-slate-400">
-                    <button onClick={() => onOpenOutreachStudio(lead)} className="p-1 hover:text-blue-600">
+                    <button onClick={() => onOpenOutreachStudio(lead)} className="p-1 hover:text-blue-600" title="Compose Email">
                       <Mail className="w-3.5 h-3.5" />
-                    </button>
-                    <button onClick={() => onLaunchWhatsApp(lead)} className="p-1 hover:text-emerald-600">
-                      <Phone className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>

@@ -1453,7 +1453,7 @@ Looking forward to connecting!`;
           price: '₹1,999 / mo', 
           badge: 'Most Popular', 
           imageUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&auto=format&fit=crop&q=80', 
-          description: `Engage decision makers directly across Email and WhatsApp.`, 
+          description: `Engage decision makers directly with high-deliverability email outreach and automated follow-ups.`, 
           ctaText: 'Select Pro', 
           ctaUrl: ctaUrl 
         },

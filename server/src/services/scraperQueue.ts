@@ -610,7 +610,6 @@ class InMemScraperQueue {
             harvestedAt: harvestIso,
             createdAt: harvestIso,
             updatedAt: new Date().toISOString(),
-            whatsapp_contacted: false,
             email_contacted: false,
             phone_contacted: false,
             harvestJobId: job.id
